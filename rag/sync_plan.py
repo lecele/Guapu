@@ -63,7 +63,7 @@ def plan_drive_sync(current_files: list[dict], manifest_rows: list[dict]) -> Dri
         previous = manifest_by_id.get(file_id)
         if previous is None:
             new.append(drive_file)
-        elif previous.get("status") not in {"active", "unsupported"} or not _same_version(drive_file, previous):
+        elif previous.get("status") != "active" or not _same_version(drive_file, previous):
             changed.append(drive_file)
         else:
             unchanged.append(drive_file)

@@ -449,9 +449,16 @@ def _manifest_payload(file_info: dict, result: IngestionResult) -> dict:
         "modified_time": file_info.get("modifiedTime") or now,
         "md5_checksum": file_info.get("md5Checksum"),
         "chunks_count": result.total_chunks,
-        "status": result.status if result.success else "error",
+        # O banco em produção diferencia somente itens sincronizados e erros
+        # técnicos. Um PDF digitalizado é uma sincronização concluída, porém
+        # com aviso em last_error para aparecer no painel sem gerar retentativas.
+        "status": "active" if result.success else "error",
         "last_synced_at": now if result.success else None,
-        "last_error": None if result.success else "; ".join(result.errors)[:4000],
+        "last_error": (
+            None
+            if result.success and result.status == "active"
+            else "; ".join(result.errors)[:4000]
+        ),
         "updated_at": now,
     }
 
