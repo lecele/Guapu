@@ -30,9 +30,16 @@ def get_supabase_client() -> Client:
     """
     settings = get_settings()
 
-    if not settings.supabase_url or not settings.supabase_key:
+    server_key = settings.supabase_service_role_key or settings.supabase_key
+
+    if settings.is_production and not settings.supabase_service_role_key:
         raise ValueError(
-            "Variáveis de ambiente SUPABASE_URL e SUPABASE_KEY são obrigatórias."
+            "SUPABASE_SERVICE_ROLE_KEY é obrigatória para a ingestão em produção."
+        )
+
+    if not settings.supabase_url or not server_key:
+        raise ValueError(
+            "SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY (ou SUPABASE_KEY no ambiente local) são obrigatórias."
         )
 
     logger.info(
@@ -41,7 +48,7 @@ def get_supabase_client() -> Client:
         env=settings.app_env,
     )
 
-    return create_client(settings.supabase_url, settings.supabase_key)
+    return create_client(settings.supabase_url, server_key)
 
 
 async def check_supabase_connection() -> bool:

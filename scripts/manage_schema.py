@@ -37,6 +37,9 @@ def check_schema() -> None:
             cursor.execute("SELECT to_regclass('public.chat_session_state') IS NOT NULL")
             print(f"state_table_exists={cursor.fetchone()[0]}")
 
+            cursor.execute("SELECT to_regclass('public.drive_sync_manifest') IS NOT NULL")
+            print(f"drive_manifest_exists={cursor.fetchone()[0]}")
+
 
 def apply_migration(path: Path) -> None:
     migration = path.resolve()

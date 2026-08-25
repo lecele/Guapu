@@ -11,10 +11,10 @@ Responsável por:
 from __future__ import annotations
 
 import io
+import json
 from functools import lru_cache
 from typing import Optional
 
-import httpx
 import structlog
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
@@ -48,17 +48,23 @@ def get_drive_service():
     service_account_path = settings.google_service_account_file
 
     if service_account_path and os.path.exists(service_account_path):
-        logger.info("drive_service_authenticating_service_account", path=service_account_path)
+        logger.info("drive_service_authenticating_service_account_file")
         credentials = service_account.Credentials.from_service_account_file(
             service_account_path,
             scopes=_SCOPES,
         )
         service = build("drive", "v3", credentials=credentials, cache_discovery=False)
+    elif settings.google_service_account_json:
+        logger.info("drive_service_authenticating_service_account_json")
+        credentials = service_account.Credentials.from_service_account_info(
+            json.loads(settings.google_service_account_json),
+            scopes=_SCOPES,
+        )
+        service = build("drive", "v3", credentials=credentials, cache_discovery=False)
     else:
-        # Fallback para API Key pública
-        api_key = os.environ.get("GOOGLE_DRIVE_API_KEY", "")
-        logger.info("drive_service_authenticating_api_key", api_key_preview=api_key[:10] if api_key else "None")
-        service = build("drive", "v3", developerKey=api_key, cache_discovery=False)
+        raise ValueError(
+            "Configure GOOGLE_SERVICE_ACCOUNT_FILE ou GOOGLE_SERVICE_ACCOUNT_JSON para acessar o Drive."
+        )
 
     logger.info("drive_service_initialized")
     return service
@@ -110,33 +116,49 @@ def list_pdf_files(folder_id: str, recursive: bool = True) -> list[dict]:
         "application/vnd.google-apps.document",  # Google Docs
     }
 
-    def _crawl(fid: str, folder_name: str = "ROOT"):
+    visited_folders: set[str] = set()
+
+    def _crawl(fid: str, folder_path: str = "ROOT"):
+        if fid in visited_folders:
+            return
+        visited_folders.add(fid)
         query = f"'{fid}' in parents and trashed=false"
         try:
-            results = (
-                service.files()
-                .list(
-                    q=query,
-                    pageSize=1000,
-                    fields="files(id, name, mimeType, modifiedTime, size)",
+            page_token = None
+            while True:
+                results = (
+                    service.files()
+                    .list(
+                        q=query,
+                        pageSize=1000,
+                        pageToken=page_token,
+                        supportsAllDrives=True,
+                        includeItemsFromAllDrives=True,
+                        fields="nextPageToken, files(id, name, mimeType, modifiedTime, size, md5Checksum)",
+                    )
+                    .execute()
                 )
-                .execute()
-            )
-            files = results.get("files", [])
-            
-            for f in files:
-                mimetype = f.get("mimeType", "")
-                fid_child = f.get("id")
-                name_child = f.get("name", "")
-                
-                if mimetype == "application/vnd.google-apps.folder":
-                    if recursive:
-                        logger.info("drive_scanning_subfolder", name=name_child, id=fid_child)
-                        _crawl(fid_child, name_child)
-                elif mimetype in supported_mimetypes:
-                    all_files.append(f)
+
+                for drive_file in results.get("files", []):
+                    mimetype = drive_file.get("mimeType", "")
+                    child_id = drive_file.get("id")
+                    child_name = drive_file.get("name", "")
+                    child_path = f"{folder_path}/{child_name}"
+
+                    if mimetype == "application/vnd.google-apps.folder":
+                        if recursive:
+                            logger.info("drive_scanning_subfolder", path=child_path, id=child_id)
+                            _crawl(child_id, child_path)
+                    elif mimetype in supported_mimetypes:
+                        drive_file["drive_path"] = child_path
+                        all_files.append(drive_file)
+
+                page_token = results.get("nextPageToken")
+                if not page_token:
+                    break
         except Exception as e:
-            logger.error("drive_crawl_error", folder_id=fid, folder_name=folder_name, error=str(e))
+            logger.error("drive_crawl_error", folder_id=fid, folder_path=folder_path, error=str(e))
+            raise
 
     _crawl(folder_id)
     logger.info("drive_list_documents_total", folder_id=folder_id, total=len(all_files))
@@ -168,7 +190,7 @@ def download_pdf(file_id: str) -> bytes:
         request = service.files().export_media(fileId=file_id, mimeType="application/pdf")
     else:
         logger.info("drive_downloading_file", file_id=file_id, mime_type=mime_type)
-        request = service.files().get_media(fileId=file_id)
+        request = service.files().get_media(fileId=file_id, supportsAllDrives=True)
 
     buffer = io.BytesIO()
     downloader = MediaIoBaseDownload(buffer, request)
@@ -202,7 +224,11 @@ def get_file_metadata(file_id: str) -> Optional[dict]:
         service = get_drive_service()
         metadata = (
             service.files()
-            .get(fileId=file_id, fields="id, name, mimeType, modifiedTime, size")
+            .get(
+                fileId=file_id,
+                supportsAllDrives=True,
+                fields="id, name, mimeType, modifiedTime, size, md5Checksum, trashed, parents",
+            )
             .execute()
         )
         return metadata

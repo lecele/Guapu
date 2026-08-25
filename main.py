@@ -47,7 +47,12 @@ from db.memory import (
 )
 from db.supabase_client import check_supabase_connection
 from rag.graph import build_crag_graph  # GraphState é TypedDict interno — não importado diretamente
-from rag.ingestion import IngestionResult, ingest_all_from_drive, ingest_pdf_from_bytes
+from rag.ingestion import (
+    IngestionResult,
+    ingest_all_from_drive,
+    ingest_pdf_from_bytes,
+    save_drive_manifest_result,
+)
 from services.drive_service import download_pdf, get_file_metadata
 
 # ==============================================================================
@@ -290,6 +295,8 @@ class IngestResultResponse(BaseModel):
     total_chunks: int
     chunks_inserted: int
     chunks_skipped: int
+    chunks_removed: int
+    action: str
     success: bool
     errors: list[str]
     summary: str
@@ -498,6 +505,7 @@ async def get_session(session_id: str, limit: int = 50) -> SessionHistoryRespons
 )
 async def drive_webhook(
     request: Request,
+    background_tasks: BackgroundTasks,
     x_goog_channel_id: Optional[str] = Header(None, alias="X-Goog-Channel-ID"),
     x_goog_resource_state: Optional[str] = Header(None, alias="X-Goog-Resource-State"),
     x_goog_resource_id: Optional[str] = Header(None, alias="X-Goog-Resource-ID"),
@@ -506,11 +514,9 @@ async def drive_webhook(
     """
     Recebe Push Notifications da Google Drive API.
 
-    Estados tratados:
-    - `sync`:   Confirmação inicial do canal — nenhuma ação.
-    - `add`:    Novo PDF adicionado → dispara ingestion em background.
-    - `update`: PDF atualizado → re-ingere (idempotente via hash).
-    - `remove`: PDF removido → TODO: remover chunks do Supabase.
+    O resource ID de uma notificação identifica o recurso monitorado, não o
+    arquivo alterado. Por isso qualquer mudança dispara uma reconciliação da
+    pasta completa; o manifesto decide o que foi incluído, alterado ou removido.
     """
     # ── Validação do token secreto ────────────────────────────────────────────
     if settings.drive_webhook_secret:
@@ -537,42 +543,12 @@ async def drive_webhook(
         logger.info("drive_webhook_sync_ack")
         return {"status": "sync_acknowledged"}
 
-    elif resource_state in ("add", "update"):
-        file_meta = get_file_metadata(x_goog_resource_id)
-        if file_meta and file_meta.get("mimeType") == "application/pdf":
-            import asyncio
-
-            async def _background_ingest():
-                try:
-                    pdf_bytes = download_pdf(x_goog_resource_id)
-                    result = ingest_pdf_from_bytes(
-                        pdf_bytes=pdf_bytes,
-                        file_name=file_meta["name"],
-                        file_id=x_goog_resource_id,
-                    )
-                    logger.info("drive_webhook_ingestion_done", summary=result.summary)
-                except Exception as exc:
-                    logger.error("drive_webhook_ingestion_error", error=str(exc))
-
-            asyncio.create_task(_background_ingest())
-
-        return {
-            "status": "accepted",
-            "message": f"Ingestion do arquivo '{resource_state}' iniciada em background.",
-        }
-
-    elif resource_state == "remove":
-        logger.info(
-            "drive_webhook_resource_removed",
-            resource_id=x_goog_resource_id,
-            todo="Implementar remoção de chunks no Supabase por drive_file_id",
-        )
-        return {
-            "status": "accepted",
-            "message": "Notificação de remoção recebida. Remoção de chunks pendente de implementação.",
-        }
-
-    return {"status": "received", "resource_state": resource_state}
+    background_tasks.add_task(ingest_all_from_drive)
+    return {
+        "status": "accepted",
+        "message": "Reconciliação completa do Drive agendada em background.",
+        "resource_state": resource_state,
+    }
 
 
 # ==============================================================================
@@ -603,10 +579,15 @@ async def admin_ingest_file(request: IngestFileRequest) -> IngestResultResponse:
                 detail=f"Arquivo '{request.drive_file_id}' não encontrado no Google Drive.",
             )
 
-        if file_meta.get("mimeType") != "application/pdf":
+        supported_types = {
+            "application/pdf",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "application/vnd.google-apps.document",
+        }
+        if file_meta.get("mimeType") not in supported_types:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail=f"O arquivo '{file_meta['name']}' não é um PDF.",
+                detail=f"O arquivo '{file_meta['name']}' não está em um formato suportado.",
             )
 
         pdf_bytes = download_pdf(request.drive_file_id)
@@ -616,7 +597,10 @@ async def admin_ingest_file(request: IngestFileRequest) -> IngestResultResponse:
             file_id=request.drive_file_id,
             chunk_size=request.chunk_size,
             chunk_overlap=request.chunk_overlap,
+            modified_time=file_meta.get("modifiedTime", ""),
+            drive_path=file_meta["name"],
         )
+        save_drive_manifest_result(file_meta, result)
 
     except HTTPException:
         raise
@@ -634,6 +618,8 @@ async def admin_ingest_file(request: IngestFileRequest) -> IngestResultResponse:
         total_chunks=result.total_chunks,
         chunks_inserted=result.chunks_inserted,
         chunks_skipped=result.chunks_skipped,
+        chunks_removed=result.chunks_removed,
+        action=result.action,
         success=result.success,
         errors=result.errors,
         summary=result.summary,

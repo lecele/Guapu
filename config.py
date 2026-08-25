@@ -27,10 +27,21 @@ class Settings(BaseSettings):
         default="",
         description="Caminho para o JSON da Service Account (Google Drive API)",
     )
+    google_service_account_json: str = Field(
+        default="",
+        description="JSON da Service Account injetado como segredo em CI/produção",
+    )
 
     # ─── Supabase ──────────────────────────────────────────────────────────────
     supabase_url: str = Field(..., description="URL do projeto Supabase")
-    supabase_key: str = Field(..., description="Chave de API do Supabase (anon ou service_role)")
+    supabase_key: str = Field(
+        default="",
+        description="Chave anon do Supabase usada pelo aplicativo",
+    )
+    supabase_service_role_key: str = Field(
+        default="",
+        description="Chave service_role usada somente pelos processos server-side",
+    )
     supabase_db_url: str = Field(default="", description="URL de conexão direta ao PostgreSQL")
 
     # ─── Google Drive ──────────────────────────────────────────────────────────
@@ -64,6 +75,12 @@ class Settings(BaseSettings):
     ingestion_chunk_size: int = Field(default=1000, ge=200, le=4000)
     ingestion_chunk_overlap: int = Field(default=150, ge=0, le=500)
     ingestion_batch_size: int = Field(default=20, ge=1, le=100)
+    drive_sync_max_files: int = Field(
+        default=10,
+        ge=1,
+        le=1000,
+        description="Máximo de arquivos novos/alterados processados por execução",
+    )
 
     @property
     def is_production(self) -> bool:

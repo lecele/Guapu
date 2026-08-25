@@ -1,0 +1,42 @@
+name: Validar Gapu V2
+
+on:
+  push:
+    branches: [main, "codex/**"]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    env:
+      GOOGLE_API_KEY: test-only
+      SUPABASE_URL: https://example.supabase.co
+      SUPABASE_KEY: test-only
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci
+      - run: npm run test:flow
+      - run: npx tsc --noEmit
+      - run: npm run build
+
+  drive-sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Instalar dependências dos testes
+        run: python -m pip install google-api-python-client google-auth pydantic-settings structlog
+      - run: python -m compileall -q config.py db rag services cron_sync.py main.py
+      - run: python -m unittest discover -s tests -p "test_*.py" -v

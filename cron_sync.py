@@ -1,8 +1,4 @@
-"""
-cron_sync.py — Sincronização automática diária do RAG com o Google Drive.
-
-Pode ser agendado no Agendador de Tarefas do Windows ou via cron no Linux/VPS.
-"""
+"""Reconciliação agendada do Google Drive com o RAG."""
 
 import os
 import sys
@@ -34,7 +30,7 @@ structlog.configure(
 logger = structlog.get_logger("cron_sync")
 
 def main():
-    logger.info("cron_sync_started", message="Iniciando sincronização diária com o Google Drive...")
+    logger.info("cron_sync_started", message="Iniciando reconciliação com o Google Drive...")
     start_time = time.time()
     
     try:
@@ -43,15 +39,23 @@ def main():
         
         total_inserted = sum(r.chunks_inserted for r in results)
         total_skipped = sum(r.chunks_skipped for r in results)
+        total_removed = sum(r.chunks_removed for r in results)
         successful_files = sum(1 for r in results if r.success)
+        failed_files = [result for result in results if not result.success]
         
         logger.info(
             "cron_sync_completed",
             duration_sec=round(elapsed, 2),
             total_files=len(results),
             successful_files=successful_files,
+            failed_files=len(failed_files),
             total_chunks_inserted=total_inserted,
-            total_chunks_skipped=total_skipped
+            total_chunks_skipped=total_skipped,
+            total_chunks_removed=total_removed,
+            actions={
+                action: sum(1 for result in results if result.action == action)
+                for action in sorted({result.action for result in results})
+            },
         )
         
         print("\n" + "="*60)
@@ -60,6 +64,13 @@ def main():
         for r in results:
             print(f"- {r.summary}")
         print("="*60)
+
+        if failed_files:
+            logger.error(
+                "cron_sync_completed_with_errors",
+                failed_file_ids=[result.file_id for result in failed_files],
+            )
+            sys.exit(1)
         
     except Exception as exc:
         logger.error("cron_sync_failed", error=str(exc), exc_info=True)

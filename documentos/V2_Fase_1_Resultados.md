@@ -58,7 +58,7 @@ Nunca expor `SUPABASE_SERVICE_ROLE_KEY` em variável `NEXT_PUBLIC_*`.
 
 ## Domínios do deploy
 
-- Chatbot: `app.gapu.app`
-- Painel administrativo: `painel.gapu.app`
+- Chatbot: `gapu.vercel.app`
+- Painel administrativo: `gapu-painel.vercel.app`
 
-`gapu.painel` não é um domínio público registrável. A separação será feita por subdomínios válidos de `gapu.app`, com aliases temporários `*.vercel.app` até o DNS estar configurado.
+Os dois endereços serão projetos separados na Vercel. A disponibilidade dos nomes será confirmada no momento do deploy.

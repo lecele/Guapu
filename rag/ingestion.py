@@ -37,19 +37,20 @@ import hashlib
 import io
 import zipfile
 import xml.etree.ElementTree as ET
-import uuid
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from typing import Optional
 
 import pdfplumber
 import structlog
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_google_genai import GoogleGenerativeAIEmbeddings
+from langchain_core.embeddings import Embeddings
 from tenacity import retry, stop_after_attempt, wait_exponential
 
 from config import get_settings
 from db.supabase_client import get_supabase_client
 from rag.graph import _get_embeddings
+from rag.sync_plan import chunk_record_id, plan_drive_sync, select_file_batch
 
 logger = structlog.get_logger(__name__)
 
@@ -67,6 +68,8 @@ class IngestionResult:
     total_chunks: int = 0
     chunks_inserted: int = 0
     chunks_skipped: int = 0       # Já existiam no banco (deduplicação)
+    chunks_removed: int = 0
+    action: str = "processed"
     errors: list[str] = field(default_factory=list)
     success: bool = True
 
@@ -77,8 +80,9 @@ class IngestionResult:
             f"[{status}] | {self.file_name} | "
             f"{self.total_pages} paginas | "
             f"{self.total_chunks} chunks | "
-            f"{self.chunks_inserted} inseridos | "
-            f"{self.chunks_skipped} duplicados"
+            f"{self.chunks_inserted} gravados | "
+            f"{self.chunks_removed} removidos | "
+            f"acao={self.action}"
         )
 
 
@@ -216,7 +220,7 @@ def chunk_text(
     wait=wait_exponential(multiplier=1, min=2, max=10),
     reraise=True,
 )
-def _embed_batch(texts: list[str], embeddings_model: GoogleGenerativeAIEmbeddings) -> list[list[float]]:
+def _embed_batch(texts: list[str], embeddings_model: Embeddings) -> list[list[float]]:
     """
     Gera embeddings para um lote de textos.
     Retry automático em caso de falha da API.
@@ -227,13 +231,15 @@ def _embed_batch(texts: list[str], embeddings_model: GoogleGenerativeAIEmbedding
 def upsert_chunks_to_supabase(
     chunks: list[dict],
     file_id: str,
+    modified_time: str = "",
+    drive_path: str = "",
     batch_size: int = 20,
-) -> tuple[int, int]:
+) -> tuple[int, set[str]]:
     """
     Insere os chunks com seus embeddings no Supabase.
 
-    Estratégia de deduplicação: usa `content_hash` como chave única.
-    Se o chunk já existir (mesmo hash), ignora (ON CONFLICT DO NOTHING).
+    O ID determinístico combina o ID do arquivo no Drive com o hash do conteúdo.
+    Isso preserva a origem quando dois arquivos contêm o mesmo texto.
 
     Args:
         chunks:     Lista de chunks (saída de chunk_text).
@@ -241,17 +247,18 @@ def upsert_chunks_to_supabase(
         batch_size: Número de chunks por lote de embed + insert.
 
     Returns:
-        Tupla (chunks_inseridos, chunks_ignorados).
+        Tupla (chunks_gravados, ids_atuais).
     """
     if not chunks:
-        return 0, 0
+        return 0, set()
 
     settings = get_settings()
     client = get_supabase_client()
     embeddings_model = _get_embeddings()
 
     inserted = 0
-    skipped = 0
+    current_ids: set[str] = set()
+    existing_ids_before = {row["id"] for row in _document_rows_for_file(file_id)}
 
     # Processa em lotes para respeitar rate limits da API
     for batch_start in range(0, len(chunks), batch_size):
@@ -269,13 +276,21 @@ def upsert_chunks_to_supabase(
             vectors = _embed_batch(texts, embeddings_model)
         except Exception as exc:
             logger.error("ingestion_embed_error", error=str(exc))
-            skipped += len(batch)
-            continue
+            try:
+                _delete_document_rows(sorted(current_ids - existing_ids_before))
+            except Exception as cleanup_exc:
+                logger.error("ingestion_partial_cleanup_error", error=str(cleanup_exc))
+            raise RuntimeError(f"Falha ao gerar embeddings: {exc}") from exc
 
         # Prepara os registros para INSERT
         records = [
             {
-                "id": str(uuid.uuid5(uuid.NAMESPACE_DNS, chunk["content_hash"])),
+                "id": chunk_record_id(
+                    file_id,
+                    chunk["content_hash"],
+                    chunk["page_number"],
+                    chunk["chunk_index"],
+                ),
                 "content": chunk["content"],
                 "embedding": vector,
                 "source": chunk["source"],
@@ -284,34 +299,171 @@ def upsert_chunks_to_supabase(
                     "chunk_index": chunk["chunk_index"],
                     "content_hash": chunk["content_hash"],
                     "drive_file_id": file_id,
+                    "drive_modified_time": modified_time,
+                    "drive_path": drive_path,
                 },
             }
             for chunk, vector in zip(batch, vectors)
         ]
 
-        # Upsert: ignora duplicatas por ID determinístico gerado a partir do content_hash
+        current_ids.update(record["id"] for record in records)
+
         try:
             result = (
                 client.table(settings.rag_table_name)
-                .upsert(records, on_conflict="id", ignore_duplicates=True)
+                .upsert(records, on_conflict="id", ignore_duplicates=False)
                 .execute()
             )
             batch_inserted = len(result.data) if result.data else 0
-            batch_skipped = len(batch) - batch_inserted
             inserted += batch_inserted
-            skipped += batch_skipped
 
             logger.info(
                 "ingestion_batch_done",
-                inserted=batch_inserted,
-                skipped=batch_skipped,
+                written=batch_inserted,
             )
 
         except Exception as exc:
             logger.error("ingestion_upsert_error", error=str(exc))
-            skipped += len(batch)
+            try:
+                _delete_document_rows(sorted(current_ids - existing_ids_before))
+            except Exception as cleanup_exc:
+                logger.error("ingestion_partial_cleanup_error", error=str(cleanup_exc))
+            raise RuntimeError(f"Falha ao gravar chunks no Supabase: {exc}") from exc
 
-    return inserted, skipped
+    return inserted, current_ids
+
+
+def _delete_document_rows(row_ids: list[str], batch_size: int = 200) -> int:
+    """Exclui IDs explícitos em lotes pequenos para evitar URLs muito grandes."""
+    if not row_ids:
+        return 0
+    settings = get_settings()
+    client = get_supabase_client()
+    removed = 0
+    for start in range(0, len(row_ids), batch_size):
+        batch = row_ids[start : start + batch_size]
+        response = client.table(settings.rag_table_name).delete().in_("id", batch).execute()
+        removed += len(response.data) if response.data is not None else len(batch)
+    return removed
+
+
+def _document_rows_for_file(file_id: str) -> list[dict]:
+    """Busca todos os chunks de um arquivo respeitando o limite do PostgREST."""
+    settings = get_settings()
+    client = get_supabase_client()
+    rows: list[dict] = []
+    page_size = 1000
+    offset = 0
+    while True:
+        response = (
+            client.table(settings.rag_table_name)
+            .select("id,source,metadata")
+            .eq("metadata->>drive_file_id", file_id)
+            .range(offset, offset + page_size - 1)
+            .execute()
+        )
+        page = response.data or []
+        rows.extend(page)
+        if len(page) < page_size:
+            break
+        offset += page_size
+    return rows
+
+
+def _remove_stale_chunks(file_id: str, current_ids: set[str]) -> int:
+    existing_ids = {row["id"] for row in _document_rows_for_file(file_id)}
+    return _delete_document_rows(sorted(existing_ids - current_ids))
+
+
+def _remove_legacy_chunks_for_unique_source(file_name: str, file_id: str) -> int:
+    """Remove chunks antigos sem drive_file_id após a nova versão estar íntegra."""
+    settings = get_settings()
+    client = get_supabase_client()
+    rows: list[dict] = []
+    offset = 0
+    page_size = 1000
+    while True:
+        response = (
+            client.table(settings.rag_table_name)
+            .select("id,metadata")
+            .eq("source", file_name)
+            .range(offset, offset + page_size - 1)
+            .execute()
+        )
+        page = response.data or []
+        rows.extend(page)
+        if len(page) < page_size:
+            break
+        offset += page_size
+
+    legacy_ids = [
+        row["id"]
+        for row in rows
+        if not (row.get("metadata") or {}).get("drive_file_id")
+    ]
+    removed = _delete_document_rows(legacy_ids)
+    if removed:
+        logger.info(
+            "ingestion_legacy_chunks_removed",
+            file_name=file_name,
+            file_id=file_id,
+            removed=removed,
+        )
+    return removed
+
+
+def _load_drive_manifest() -> list[dict]:
+    client = get_supabase_client()
+    rows: list[dict] = []
+    offset = 0
+    page_size = 1000
+    while True:
+        response = (
+            client.table("drive_sync_manifest")
+            .select("*")
+            .range(offset, offset + page_size - 1)
+            .execute()
+        )
+        page = response.data or []
+        rows.extend(page)
+        if len(page) < page_size:
+            break
+        offset += page_size
+    return rows
+
+
+def _manifest_payload(file_info: dict, result: IngestionResult) -> dict:
+    now = datetime.now(timezone.utc).isoformat()
+    return {
+        "drive_file_id": file_info["id"],
+        "name": file_info["name"],
+        "drive_path": file_info.get("drive_path", file_info["name"]),
+        "mime_type": file_info.get("mimeType", "application/octet-stream"),
+        "modified_time": file_info.get("modifiedTime") or now,
+        "md5_checksum": file_info.get("md5Checksum"),
+        "chunks_count": result.total_chunks,
+        "status": "active" if result.success else "error",
+        "last_synced_at": now if result.success else None,
+        "last_error": None if result.success else "; ".join(result.errors)[:4000],
+        "updated_at": now,
+    }
+
+
+def save_drive_manifest_result(file_info: dict, result: IngestionResult) -> None:
+    get_supabase_client().table("drive_sync_manifest").upsert(
+        _manifest_payload(file_info, result),
+        on_conflict="drive_file_id",
+    ).execute()
+
+
+def _remove_drive_file(file_id: str) -> int:
+    """Remove os chunks antes de apagar o manifesto; falhas preservam o rastreio."""
+    rows = _document_rows_for_file(file_id)
+    removed = _delete_document_rows([row["id"] for row in rows])
+    get_supabase_client().table("drive_sync_manifest").delete().eq(
+        "drive_file_id", file_id
+    ).execute()
+    return removed
 
 
 # ==============================================================================
@@ -324,6 +476,9 @@ def ingest_pdf_from_bytes(
     file_id: str,
     chunk_size: int = 1000,
     chunk_overlap: int = 150,
+    modified_time: str = "",
+    drive_path: str = "",
+    cleanup_legacy_source: bool = False,
 ) -> IngestionResult:
     """
     Pipeline completo de ingestion para um único PDF.
@@ -372,9 +527,17 @@ def ingest_pdf_from_bytes(
         result.total_chunks = len(chunks)
 
         # ── Passo 3 & 4: Embed + Upsert ──────────────────────────────────────
-        inserted, skipped = upsert_chunks_to_supabase(chunks, file_id=file_id)
+        inserted, current_ids = upsert_chunks_to_supabase(
+            chunks,
+            file_id=file_id,
+            modified_time=modified_time,
+            drive_path=drive_path,
+            batch_size=get_settings().ingestion_batch_size,
+        )
         result.chunks_inserted = inserted
-        result.chunks_skipped = skipped
+        result.chunks_removed = _remove_stale_chunks(file_id, current_ids)
+        if cleanup_legacy_source:
+            result.chunks_removed += _remove_legacy_chunks_for_unique_source(file_name, file_id)
 
     except Exception as exc:
         result.success = False
@@ -395,10 +558,9 @@ def ingest_pdf_from_bytes(
 
 def ingest_all_from_drive() -> list[IngestionResult]:
     """
-    Varre toda a pasta do Google Drive e ingere todos os PDFs encontrados.
-
-    Usado para a sincronização inicial da base de conhecimento.
-    Arquivos já processados são ignorados automaticamente (deduplicação por hash).
+    Reconcilia a pasta do Drive com o RAG usando um manifesto persistente.
+    Arquivos inalterados não geram novos embeddings; alterações substituem chunks
+    obsoletos somente depois do novo conteúdo ser gravado; remoções limpam o RAG.
 
     Returns:
         Lista de IngestionResult, um por arquivo processado.
@@ -414,13 +576,55 @@ def ingest_all_from_drive() -> list[IngestionResult]:
 
     files = list_pdf_files(settings.drive_folder_id)
 
-    if not files:
-        logger.warning("ingestion_no_files_found", folder_id=settings.drive_folder_id)
-        return []
+    manifest_rows = _load_drive_manifest()
+    plan = plan_drive_sync(files, manifest_rows)
+    logger.info(
+        "drive_sync_plan",
+        new=len(plan.new),
+        changed=len(plan.changed),
+        unchanged=len(plan.unchanged),
+        removed=len(plan.removed),
+    )
 
-    results = []
+    results: list[IngestionResult] = [
+        IngestionResult(
+            file_name=item["name"],
+            file_id=item["id"],
+            total_chunks=int(
+                next(
+                    (row.get("chunks_count", 0) for row in manifest_rows if row["drive_file_id"] == item["id"]),
+                    0,
+                )
+            ),
+            chunks_skipped=int(
+                next(
+                    (row.get("chunks_count", 0) for row in manifest_rows if row["drive_file_id"] == item["id"]),
+                    0,
+                )
+            ),
+            action="unchanged",
+        )
+        for item in plan.unchanged
+    ]
 
-    for file_info in files:
+    name_counts: dict[str, int] = {}
+    for current_file in files:
+        name_counts[current_file["name"]] = name_counts.get(current_file["name"], 0) + 1
+
+    files_to_process, deferred_files = select_file_batch(
+        plan,
+        settings.drive_sync_max_files,
+    )
+    results.extend(
+        IngestionResult(
+            file_name=file_info["name"],
+            file_id=file_info["id"],
+            action="deferred",
+        )
+        for _, file_info in deferred_files
+    )
+
+    for action, file_info in files_to_process:
         file_id = file_info["id"]
         file_name = file_info["name"]
 
@@ -432,7 +636,11 @@ def ingest_all_from_drive() -> list[IngestionResult]:
                 pdf_bytes=pdf_bytes,
                 file_name=file_name,
                 file_id=file_id,
+                modified_time=file_info.get("modifiedTime", ""),
+                drive_path=file_info.get("drive_path", file_name),
+                cleanup_legacy_source=name_counts[file_name] == 1,
             )
+            result.action = action
         except Exception as exc:
             logger.error(
                 "ingestion_file_error",
@@ -445,9 +653,35 @@ def ingest_all_from_drive() -> list[IngestionResult]:
                 file_id=file_id,
                 success=False,
                 errors=[str(exc)],
+                action=action,
             )
 
+        save_drive_manifest_result(file_info, result)
         results.append(result)
+
+    for manifest_entry in plan.removed:
+        file_id = manifest_entry["drive_file_id"]
+        try:
+            removed_count = _remove_drive_file(file_id)
+            results.append(
+                IngestionResult(
+                    file_name=manifest_entry["name"],
+                    file_id=file_id,
+                    chunks_removed=removed_count,
+                    action="removed",
+                )
+            )
+        except Exception as exc:
+            logger.error("drive_sync_remove_error", file_id=file_id, error=str(exc))
+            results.append(
+                IngestionResult(
+                    file_name=manifest_entry["name"],
+                    file_id=file_id,
+                    success=False,
+                    errors=[str(exc)],
+                    action="remove_failed",
+                )
+            )
 
     total_inserted = sum(r.chunks_inserted for r in results)
     total_chunks = sum(r.total_chunks for r in results)
@@ -457,6 +691,9 @@ def ingest_all_from_drive() -> list[IngestionResult]:
         files_processed=len(results),
         total_chunks=total_chunks,
         total_inserted=total_inserted,
+        total_removed=sum(r.chunks_removed for r in results),
+        unchanged=len(plan.unchanged),
+        deferred=len(deferred_files),
         successful=sum(1 for r in results if r.success),
     )
 
