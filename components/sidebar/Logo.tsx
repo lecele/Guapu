@@ -2,7 +2,6 @@
 
 // components/sidebar/Logo.tsx — Branding da "Agents na Saúde"
 
-import { Activity } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export function Logo() {
@@ -36,7 +35,7 @@ export function Logo() {
       {/* Texto do logo */}
       <div className="flex flex-col">
         <span className="text-[17px] font-black leading-tight tracking-tight text-white font-display">
-          Agentes na Saúde
+          Guapu
         </span>
         <span className="text-[10px] font-bold leading-tight tracking-[0.12em] uppercase mt-0.5" style={{
           background: 'linear-gradient(90deg, #0ea5e9, #38bdf8, #ffffff, #0ea5e9)',

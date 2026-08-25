@@ -1,4 +1,4 @@
-# Gapu V2 — Fase 2: sincronização Google Drive → RAG
+# Guapu — Fase 2: sincronização Google Drive → RAG
 
 Data: 25 de agosto de 2026
 
@@ -35,7 +35,7 @@ A sincronização continua desativada até os Secrets do GitHub estarem configur
 
 ## Segredos do GitHub Actions
 
-Cadastrar em `lecele/Gapu` → Settings → Secrets and variables → Actions:
+Cadastrar em `lecele/Guapu` → Settings → Secrets and variables → Actions:
 
 - `GOOGLE_API_KEY`
 - `GOOGLE_SERVICE_ACCOUNT_JSON`
@@ -68,7 +68,7 @@ Workflow: `.github/workflows/sync-drive-rag.yml`
 
 A conta Vercel autenticada ainda não possui domínios personalizados cadastrados. Serão criados dois projetos com os aliases padrão:
 
-- `gapu.vercel.app` para o chatbot;
-- `gapu-painel.vercel.app` para o painel administrativo.
+- `guapu.vercel.app` para o chatbot;
+- `guapu-painel.vercel.app` para o painel administrativo.
 
 A disponibilidade exata dos dois nomes será confirmada na etapa de deploy.

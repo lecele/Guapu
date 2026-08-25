@@ -13,6 +13,7 @@ dist/
 *.tsbuildinfo
 next-env.d.ts
 .vercel
+.tmp-guapu-icons/
 
 # Cópias redundantes descartadas durante a criação inicial da V2
 /documentos/Interface/Interface/

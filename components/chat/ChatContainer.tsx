@@ -2,7 +2,7 @@
 
 // components/chat/ChatContainer.tsx — Área de conversação de alto padrão, pixel-perfect e imersiva
 
-import { useRef, RefObject } from 'react';
+import { RefObject } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Sparkles } from 'lucide-react';
 import { Message } from '@/types/chat';
@@ -49,7 +49,7 @@ export function ChatContainer({
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#02080f] opacity-75" />
               <span className="relative inline-flex h-2 w-2 rounded-full bg-[#02080f]" />
             </div>
-            <span className="text-[13px] font-black tracking-widest text-[#02080f] font-display uppercase">Tutor de Enfermagem</span>
+            <span className="text-[13px] font-black tracking-widest text-[#02080f] font-display uppercase">Guapu · Tutor de Enfermagem</span>
           </div>
         </div>
       </div>

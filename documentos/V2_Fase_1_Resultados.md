@@ -1,4 +1,4 @@
-# Gapu V2 — resultados da Fase 1
+# Guapu — resultados da Fase 1
 
 Data: 25 de agosto de 2026
 
@@ -54,7 +54,7 @@ Nunca expor `SUPABASE_SERVICE_ROLE_KEY` em variável `NEXT_PUBLIC_*`.
 
 ## Domínios do deploy
 
-- Chatbot: `gapu.vercel.app`
-- Painel administrativo: `gapu-painel.vercel.app`
+- Chatbot: `guapu.vercel.app`
+- Painel administrativo: `guapu-painel.vercel.app`
 
 Os dois endereços serão projetos separados na Vercel. A disponibilidade dos nomes será confirmada no momento do deploy.

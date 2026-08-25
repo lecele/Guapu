@@ -4,6 +4,7 @@
 // Tutor de Enfermagem INT 5224 — UFSC
 
 import { useState, useEffect, useMemo } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 
 interface SessionMessage {
@@ -693,7 +694,10 @@ export default function AdminDashboardPage() {
   };
 
   useEffect(() => {
-    fetchStats();
+    const timeoutId = window.setTimeout(() => {
+      void fetchStats();
+    }, 0);
+    return () => window.clearTimeout(timeoutId);
   }, []);
 
   // Agregação de mensagens por hora do dia (00h a 23h)
@@ -710,7 +714,7 @@ export default function AdminDashboardPage() {
       });
     }
     return hours;
-  }, [stats?.sessions]);
+  }, [stats]);
 
   // Datasets dinâmicos e únicos para cada mini gráfico Sparkline dos 4 KPIs
   const sparkConversations = useMemo(() => {
@@ -718,7 +722,7 @@ export default function AdminDashboardPage() {
       return stats.timeline.slice(-7).map(t => t.count);
     }
     return [3, 8, 12, 15, 22, 18, stats?.summary.totalConversations || 24];
-  }, [stats?.timeline, stats?.summary.totalConversations]);
+  }, [stats]);
 
   const sparkUsers = useMemo(() => {
     return [1, 2, 3, 5, 4, 6, stats?.summary.uniqueUsers || 8];
@@ -755,7 +759,7 @@ export default function AdminDashboardPage() {
         return matchSearch;
       })
       .sort((a, b) => new Date(b.lastAt).getTime() - new Date(a.lastAt).getTime());
-  }, [stats?.sessions, searchTerm, modeFilter]);
+  }, [stats, searchTerm, modeFilter]);
 
   const [isExporting, setIsExporting] = useState(false);
 
@@ -766,7 +770,7 @@ export default function AdminDashboardPage() {
     try {
       const ExcelJS = (await import('exceljs')).default;
       const workbook = new ExcelJS.Workbook();
-      workbook.creator = 'Tutor de Enfermagem INT 5224';
+      workbook.creator = 'Guapu INT 5224';
       workbook.created = new Date();
 
       // ── ABA 1: INDICADORES & MÉTRICAS EXECUTIVAS ───────────────────────────
@@ -1034,10 +1038,10 @@ export default function AdminDashboardPage() {
         {/* Logo Branding (Significativamente Ampliada) */}
         <div className="flex items-center gap-4 pb-4 border-b border-blue-900/40 pt-1">
           <div className="w-20 h-20 shrink-0 flex items-center justify-center">
-            <img src="/logo.png" alt="Logo Tutor de Enfermagem" className="w-full h-full object-contain tutor-logo-premium drop-shadow-2xl scale-105" />
+            <Image src="/guapu-icon-192.png" alt="Guapu" width={192} height={192} className="w-full h-full object-contain tutor-logo-premium drop-shadow-2xl scale-105" />
           </div>
           <div className="flex flex-col">
-            <strong className="text-lg font-black text-white tracking-wide leading-tight">Tutor Analytics</strong>
+            <strong className="text-lg font-black text-white tracking-wide leading-tight">Guapu Analytics</strong>
           </div>
         </div>
 
@@ -1102,7 +1106,7 @@ export default function AdminDashboardPage() {
             className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-xs font-semibold bg-white/10 hover:bg-white/20 text-white transition-all active:scale-95"
           >
             <span className="material-symbols-outlined text-[16px]">arrow_back</span>
-            Voltar ao Tutor
+            Voltar ao Guapu
           </Link>
         </div>
       </aside>
@@ -1112,7 +1116,7 @@ export default function AdminDashboardPage() {
         {/* Top Header */}
         <header className="h-16 shrink-0 border-b border-blue-900/40 bg-[#020b18]/90 backdrop-blur-md px-6 flex items-center justify-between z-10">
           <div>
-            <h1 className="text-base font-bold text-white tracking-wide">Painel Tutor de Enfermagem</h1>
+            <h1 className="text-base font-bold text-white tracking-wide">Painel Guapu</h1>
             <p className="text-[11px] text-slate-400">Visão geral · Atualizado agora</p>
           </div>
 
@@ -1662,8 +1666,8 @@ export default function AdminDashboardPage() {
                   }`}
                 >
                   <div className="flex items-center justify-between mb-1.5 pb-1 border-b border-white/10 text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                    <span>{m.role === 'user' ? '👤 Estudante' : '🩺 Tutor de Enfermagem'}</span>
-                    <span>{new Date(m.created_at || Date.now()).toLocaleTimeString('pt-BR')}</span>
+                    <span>{m.role === 'user' ? '👤 Estudante' : '🩺 Guapu'}</span>
+                    <span>{m.created_at ? new Date(m.created_at).toLocaleTimeString('pt-BR') : '—'}</span>
                   </div>
                   <p className="whitespace-pre-wrap leading-relaxed">{m.content}</p>
                 </div>

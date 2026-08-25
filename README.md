@@ -1,4 +1,4 @@
-# Guapu V2 — Tutor de Enfermagem
+# Guapu — Tutor de Enfermagem
 
 Esta é a base independente da nova versão do Guapu. O aplicativo legado permanece no diretório pai e não deve receber novas alterações funcionais.
 
@@ -9,7 +9,7 @@ Esta é a base independente da nova versão do Guapu. O aplicativo legado perman
 - Configurar segredos localmente e nas variáveis protegidas da plataforma de deploy.
 - O arquivo `.env.example` contém apenas nomes e valores de exemplo.
 
-## Estado da V2
+## Estado do Guapu
 
 - Backend principal do chat: Next.js Route Handler em `app/api/chat/route.ts`.
 - Migração de estado persistente preparada em `db/migrations/004_add_persistent_chat_state.sql`.
@@ -24,8 +24,8 @@ O **Tutor de Enfermagem** é um assistente virtual de inteligência artificial g
 
 O projeto faz parte do ecossistema de soluções voltadas à saúde da plataforma **Agentes na Saúde**.
 
-* **Produção (Vercel):** [https://tutor-de-enfermagem.vercel.app](https://tutor-de-enfermagem.vercel.app)
-* **Painel Administrativo & Analytics:** [https://tutor-de-enfermagem.vercel.app/admin](https://tutor-de-enfermagem.vercel.app/admin)
+* **Chatbot (Vercel):** [https://guapu.vercel.app](https://guapu.vercel.app)
+* **Painel Administrativo & Analytics:** [https://guapu-painel.vercel.app](https://guapu-painel.vercel.app)
 
 ---
 
