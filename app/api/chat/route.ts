@@ -223,6 +223,15 @@ function normalizeReferencesFormat(text: string): string {
   const formattedRefLines = lines.map(line => {
     let clean = line.replace(/^(?:•|-|\*|\d+[\.\)]|○)\s*/, '').trim();
     if (!clean) return '';
+    // O modelo às vezes inclui o separador ou a pergunta de continuidade na
+    // seção de referências. Esses textos não são fontes e não devem aparecer
+    // como citação para o estudante.
+    if (
+      /^(?:refer[êe]ncia:\s*)?[-–—]+$/i.test(clean) ||
+      /(?:refer[êe]ncia:\s*)?(?:gostaria de|deseja aprofundar|deseja continuar|voltar ao menu|encerrar a sess[aã]o)/i.test(clean)
+    ) {
+      return '';
+    }
     if (!clean.toLowerCase().startsWith('referência:') && !clean.toLowerCase().startsWith('referencia:')) {
       clean = `Referência: ${clean}`;
     }
