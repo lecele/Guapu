@@ -1,0 +1,49 @@
+# ==============================================================================
+# IA Ensino Enfermagem Aplicada - Backend Dependencies
+# ==============================================================================
+
+# --- Web Framework ---
+fastapi>=0.111.0
+uvicorn[standard]>=0.30.1
+
+# --- AI / LangChain Stack ---
+# STRICT: Only Google Generative AI. No OpenAI, No VertexAI.
+langchain>=0.2.5
+langchain-core>=0.2.10
+langchain-google-genai>=1.0.7
+langchain-community>=0.2.5   # RecursiveCharacterTextSplitter
+langgraph>=0.1.19
+langgraph-checkpoint>=1.0.2
+langgraph-checkpoint-postgres>=1.0.0  # AsyncPostgresSaver para memória persistente
+
+# --- PostgreSQL async driver (para langgraph-checkpoint-postgres) ---
+psycopg[binary]>=3.1.19              # Driver assíncrono psycopg v3
+
+# --- Database / Vector Store ---
+supabase>=2.5.3
+vecs>=0.4.3          # Supabase pgvector client helper
+
+# --- Data Validation & Settings ---
+pydantic>=2.7.4
+pydantic-settings>=2.3.4
+
+# --- Environment & Config ---
+python-dotenv>=1.0.1
+
+# --- HTTP & Async ---
+httpx>=0.27.0
+anyio>=4.4.0
+
+# --- Utility ---
+python-multipart>=0.0.9   # For form data in FastAPI
+tenacity>=8.4.1           # Retry logic for API calls
+structlog>=24.2.0         # Structured logging for production
+
+# --- PDF Processing ---
+pdfplumber>=0.11.0        # Extração de texto e layout de PDFs
+
+# --- Google Drive API ---
+google-api-python-client>=2.134.0   # Drive API v3
+google-auth>=2.30.0                  # Autenticação Service Account
+google-auth-httplib2>=0.2.0
+google-auth-oauthlib>=1.2.0

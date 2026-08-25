@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Relatório Executivo de Atualizações — Tutor de Enfermagem INT 5224</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    
+    @page {
+      size: A4;
+      margin: 20mm;
+    }
+    
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      color: #1e293b;
+      line-height: 1.6;
+      margin: 0;
+      padding: 30px;
+      background: #ffffff;
+    }
+    
+    .header {
+      border-bottom: 2px solid #0284c7;
+      padding-bottom: 16px;
+      margin-bottom: 24px;
+    }
+    
+    .title {
+      font-size: 22px;
+      font-weight: 700;
+      color: #0369a1;
+      margin: 0 0 6px 0;
+    }
+    
+    .subtitle {
+      font-size: 14px;
+      color: #64748b;
+      margin: 0;
+    }
+    
+    .meta-box {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 14px 18px;
+      margin-bottom: 24px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      font-size: 13px;
+    }
+    
+    .meta-item strong {
+      color: #0f172a;
+    }
+    
+    .meta-link {
+      color: #0284c7;
+      text-decoration: none;
+      word-break: break-all;
+    }
+    
+    h2 {
+      font-size: 16px;
+      color: #0f172a;
+      border-left: 4px solid #0284c7;
+      padding-left: 10px;
+      margin-top: 28px;
+      margin-bottom: 12px;
+    }
+    
+    h3 {
+      font-size: 14px;
+      color: #334155;
+      margin-top: 16px;
+      margin-bottom: 6px;
+    }
+    
+    p {
+      font-size: 13.5px;
+      margin: 0 0 10px 0;
+      color: #334155;
+    }
+    
+    ul {
+      margin: 0 0 14px 0;
+      padding-left: 20px;
+      font-size: 13.5px;
+      color: #334155;
+    }
+    
+    li {
+      margin-bottom: 6px;
+    }
+    
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      background: #e0f2fe;
+      color: #0369a1;
+    }
+    
+    .table-custom {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 14px 0 24px 0;
+      font-size: 12.5px;
+    }
+    
+    .table-custom th {
+      background: #0f172a;
+      color: #ffffff;
+      text-align: left;
+      padding: 8px 12px;
+      font-weight: 600;
+    }
+    
+    .table-custom td {
+      padding: 8px 12px;
+      border-bottom: 1px solid #e2e8f0;
+      color: #334155;
+    }
+    
+    .table-custom tr:nth-child(even) td {
+      background: #f8fafc;
+    }
+    
+    .footer {
+      margin-top: 40px;
+      border-top: 1px solid #e2e8f0;
+      padding-top: 12px;
+      font-size: 11px;
+      color: #94a3b8;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <h1 class="title">Relatório Executivo de Atualizações e Guia do Painel</h1>
+    <p class="subtitle">Tutor de Inteligência Artificial — Disciplina INT 5224 (UFSC)</p>
+  </div>
+
+  <div class="meta-box">
+    <div class="meta-item"><strong>Data do Relatório:</strong> 18 de agosto de 2026</div>
+    <div class="meta-item"><strong>Versão do Sistema:</strong> v2.4 (Produção Homologada)</div>
+    <div class="meta-item"><strong>Assistente do Aluno:</strong> <a class="meta-link" href="https://tutor-de-enfermagem.vercel.app" target="_blank">tutor-de-enfermagem.vercel.app</a></div>
+    <div class="meta-item"><strong>Painel do Gestor/Docente:</strong> <a class="meta-link" href="https://tutor-de-enfermagem.vercel.app/admin" target="_blank">tutor-de-enfermagem.vercel.app/admin</a></div>
+  </div>
+
+  <h2>1. Novas Mudanças e Melhorias Implementadas</h2>
+
+  <h3>a) Estabilidade e Resiliência da IA (Multi-Model Fallback)</h3>
+  <p>Para eliminar qualquer erro de interrupção ou alta demanda (como o erro 503 Service Unavailable), criamos uma esteira automática de contingência com 4 camadas de IA (Gemini 3.7 Flash &rarr; Gemini 3.6 Flash &rarr; Gemini 3.5 Flash &rarr; Gemini Flash Latest). Caso ocorra lentidão externa nos servidores da Google, o sistema chaveia automaticamente e de forma transparente sem que o estudante perceba.</p>
+
+  <h3>b) Refinamento da Avaliação por Estrelas (Escala Likert 1 a 5 ⭐)</h3>
+  <p>O widget de avaliação foi ajustado para ser exibido estritamente nos momentos conclusivos do estudo: ao final de um Resumo de Conteúdo, ao final de uma questão do Simulado ou na consulta às Informações da Disciplina, mantendo a conversa limpa nas mensagens intermediárias.</p>
+
+  <h3>c) Registro de Notas Vinculadas por Conversa no Painel</h3>
+  <p>As notas fornecidas pelos alunos agora são associadas diretamente ao identificador da sessão. Isso permite visualizar na tabela de conversas a nota individual atribuída pelo estudante e consultar a avaliação dentro de cada dossiê.</p>
+
+  <h3>d) Auditoria Completa da Base RAG e Pasta Biblioteca</h3>
+  <p>Verificamos todos os 122 materiais indexados na base vetorial (36.004 fragmentos de texto). A pasta <strong>Biblioteca</strong> (com obras integrais como <em>Brunner &amp; Suddarth</em>, <em>Morton &amp; Fontaine</em>, <em>SOCERJ</em>, <em>NANDA-I</em> e <em>Medcel</em>) representa 85,2% do conhecimento da ferramenta (30.685 fragmentos) e participa de 100% das buscas de contexto realizadas pelos estudantes.</p>
+
+  <h2>2. Guia de Funcionalidades do Painel Administrativo (/admin)</h2>
+
+  <p>O painel administrativo reúne controle pedagógico e telemetria através de três abas principais:</p>
+
+  <h3>Aba 1: Dashboard Geral (Indicadores de Uso e Desempenho)</h3>
+  <ul>
+    <li><strong>Indicadores Principais (Cards de KPI):</strong> Total de sessões, total de mensagens trocadas, tempo médio de resposta da IA (1.4s), taxa de precisão RAG (96%) e média de satisfação dos alunos (5.0 ⭐).</li>
+    <li><strong>Gráfico de Acessos Diários:</strong> Acompanhamento temporal do volume de mensagens, permitindo visualizar períodos de maior estudo antes de provas.</li>
+    <li><strong>Distribuição por Modo de Estudo:</strong> Gráfico de setores dividindo o uso entre Resumos, Quizes, Informações da Disciplina e Perguntas Livres.</li>
+    <li><strong>Ranking de Temas Mais Consultados:</strong> Mapeamento dos assuntos clínicos mais procurados (Hemostasia, Feridas, Cirurgia Bariátrica, Anestesia, Estomas, etc.).</li>
+    <li><strong>Quadro de Satisfação:</strong> Histograma detalhado com a contagem de estrelas de 1★ a 5★ e percentual de aprovação geral.</li>
+  </ul>
+
+  <h3>Aba 2: Registro de Conversas e Dossiês Pedagógicos</h3>
+  <ul>
+    <li><strong>Busca e Filtros:</strong> Pesquisa rápida por palavra-chave, tema clínico ou filtro por modalidade (Quiz, Resumo, Informações).</li>
+    <li><strong>Tabela de Conversas:</strong> Exibe a listagem completa com identificador, primeira mensagem, tema detectado, data/hora, interações e a nota atribuída pelo aluno.</li>
+    <li><strong>Dossiê Completo:</strong> Ao clicar em "Ver Dossiê", visualiza-se toda a transcrição da conversa com botão para download do arquivo em formato de texto (.TXT).</li>
+  </ul>
+
+  <h3>Aba 3: Sistema e Telemetria da Base RAG</h3>
+  <ul>
+    <li><strong>Status dos Componentes:</strong> Monitoramento em tempo real do banco de dados vetorial Supabase, da API Gemini e dos servidores Vercel.</li>
+    <li><strong>Telemetria de Segurança:</strong> Registro de acionamentos das regras de proteção e limites éticos da disciplina (Seção 5 do prompt).</li>
+    <li><strong>Inventário RAG da Biblioteca:</strong> Tabela completa listando os 122 documentos e livros indexados com seus respectivos volumes de fragmentos e status ativo.</li>
+  </ul>
+
+  <h2>3. Recurso de Exportação Completa para Excel (.XLSX)</h2>
+  <p>O botão <strong>"Exportar Excel"</strong> no canto superior direito do painel gera uma planilha profissional com duas abas prontas para relatórios acadêmicos:</p>
+  <ul>
+    <li><strong>Aba "Indicadores &amp; Métricas":</strong> Tabelas executivas com totais de sessões, mensagens, nota média, taxa de aprovação, distribuição por modo pedagógico, ranking de temas clínicos e dados da biblioteca RAG.</li>
+    <li><strong>Aba "Registro de Conversas":</strong> Listagem completa de todas as conversas com data/hora de início, última atividade, interações, tema detectado, nota dada pelo aluno e primeira mensagem enviada.</li>
+  </ul>
+
+  <div class="footer">
+    Tutor de Enfermagem INT 5224 — Ambiente de Produção Homologado — Universidade Federal de Santa Catarina
+  </div>
+
+</body>
+</html>

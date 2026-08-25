@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Relatório de Modificações e Validação de Testes — 20 de Agosto de 2026</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      line-height: 1.6;
+      color: #1e293b;
+      max-width: 900px;
+      margin: 40px auto;
+      padding: 0 20px;
+    }
+    h1 {
+      color: #1573C2;
+      font-size: 26px;
+      margin-bottom: 4px;
+    }
+    h2.sub {
+      color: #1e293b;
+      font-size: 16px;
+      font-weight: 600;
+      margin-top: 0;
+      margin-bottom: 20px;
+    }
+    h2 {
+      color: #1573C2;
+      font-size: 18px;
+      border-bottom: 2px solid #e2e8f0;
+      padding-bottom: 6px;
+      margin-top: 28px;
+    }
+    h3 {
+      color: #1e293b;
+      font-size: 15px;
+      margin-top: 18px;
+      margin-bottom: 6px;
+    }
+    .meta-box {
+      background-color: #f0f7ff;
+      border-left: 4px solid #1573C2;
+      padding: 16px 20px;
+      border-radius: 8px;
+      margin-bottom: 24px;
+      font-size: 14px;
+    }
+    .meta-box p {
+      margin: 4px 0;
+    }
+    .badge-success {
+      color: #10b981;
+      font-weight: bold;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
+      font-size: 13.5px;
+    }
+    th, td {
+      border: 1px solid #cbd5e1;
+      padding: 10px 12px;
+      text-align: left;
+    }
+    th {
+      background-color: #1573C2;
+      color: white;
+      font-weight: 600;
+    }
+    tr:nth-child(even) {
+      background-color: #f8fafc;
+    }
+    .code-box {
+      background-color: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 16px;
+      font-family: Consolas, monospace;
+      font-size: 13px;
+      white-space: pre-wrap;
+      margin: 16px 0;
+      color: #334155;
+    }
+    ul {
+      padding-left: 20px;
+      margin-top: 6px;
+    }
+    li {
+      margin-bottom: 4px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Relatório de Modificações e Validação de Testes</h1>
+  <h2 class="sub">Tutor Inteligente de Enfermagem INT 5224 — UFSC</h2>
+
+  <div class="meta-box">
+    <p><strong>Data:</strong> 20 de agosto de 2026</p>
+    <p><strong>Documento de Solicitação:</strong> Pedidos de alteração_20 agosto 2026.docx</p>
+    <p><strong>Prompt Integrado:</strong> Prompt 20Aug2026.docx (15 Seções)</p>
+    <p><strong>Ambiente de Produção:</strong> <a href="https://tutor-de-enfermagem.vercel.app" target="_blank">https://tutor-de-enfermagem.vercel.app</a></p>
+    <p><strong>Painel Administrativo:</strong> <a href="https://tutor-de-enfermagem.vercel.app/admin" target="_blank">https://tutor-de-enfermagem.vercel.app/admin</a></p>
+    <p><strong>Status da Entrega:</strong> <span class="badge-success">✅ Deploy em Produção Concluído · 15/15 Testes Reais Aprovados (100%)</span></p>
+  </div>
+
+  <h2>1. Resumo Executivo</h2>
+  <p>Este documento apresenta a consolidação das melhorias e implementações técnicas realizadas no <strong>Tutor Inteligente de Enfermagem INT 5224</strong>, em atendimento rigoroso às solicitações enviadas em 20 de agosto de 2026.</p>
+  <p>O foco central deste ciclo foi a <strong>padronização definitiva da seção de referências bibliográficas</strong>, eliminando qualquer ocorrência de referências em texto corrido ou blocos contínuos, garantindo a sua apresentação estruturada em tópicos, com uma referência por linha, além da atualização integral do Prompt Mestre para a versão oficial <em>Prompt 20Aug2026.docx</em>.</p>
+  <p>Todas as funcionalidades foram submetidas a uma bateria exaustiva de testes automatizados de ponta a ponta diretamente no ambiente de produção, obtendo <strong>100% de aprovação técnica e operacional</strong>.</p>
+
+  <h2>2. Detalhamento das Modificações Realizadas</h2>
+
+  <h3>2.1 Padronização e Estruturação da Seção de Referências (Seções 6 e 15)</h3>
+  <p>Em atendimento ao item "Ajuste da seção de referências" do documento de pedidos de 20 de agosto, foram estabelecidas diretrizes estritas no pipeline de geração e pós-processamento de respostas:</p>
+  <ul>
+    <li><strong>Posicionamento Obrigatório:</strong> A seção de referências é posicionada sempre ao final da resposta de conteúdo ou resumo.</li>
+    <li><strong>Formato em Tópicos por Linha:</strong> Cada referência é apresentada obrigatoriamente em uma linha própria, com marcador de tópico (ex.: <code>• Referência: [dados do artigo]</code>), sem agrupar múltiplas referências na mesma linha.</li>
+    <li><strong>Eliminação de Texto Corrido:</strong> Bloqueada a junção de referências em parágrafos contínuos ou texto corrido, garantindo legibilidade e padronização entre diferentes interações.</li>
+    <li><strong>Fidelidade Absoluta às Fontes:</strong> As referências utilizam estritamente os dados presentes nos artigos e livros da base de conhecimento consultados no RAG, sem qualquer invenção de dados.</li>
+    <li><strong>Tratamento de Metadados Ausentes:</strong> Caso o artigo consultado não disponha de metadados completos, registra-se a informação padronizada: <em>"• Referência: Informação não disponível no artigo, consultar o Plano de Ensino ou docentes."</em></li>
+  </ul>
+
+  <h3>2.2 Atualização Integral para o Prompt Mestre (20 de Agosto de 2026)</h3>
+  <p>O sistema foi integralmente alinhado às 15 seções do Prompt Mestre versão <em>Prompt 20Aug2026.docx</em>:</p>
+  <ul>
+    <li><strong>Identidade e Ética (Seções 1 e 2):</strong> Diretrizes da UNESCO e do MEC para uso ético e pedagógico da IA na graduação.</li>
+    <li><strong>Resumo de Conteúdo (Seção 8):</strong> Respostas concisas e estruturadas (<em>Explicação</em>, <em>Exemplo clínico</em>, <em>Relação com a prática</em>, <em>Sugestões de estudo complementar</em> e <em>Referências</em>). Inclusão do encerramento padrão da Seção 8.</li>
+    <li><strong>Quiz da Disciplina (Seção 9):</strong> Apresentação de 3 questões de múltipla escolha (uma por vez), com alternativas A, B, C e D em negrito e em linhas separadas. Aplicação do ciclo pedagógico de 2 tentativas (1ª tentativa incorreta oferece nova chance sem revelar resposta; 2ª tentativa incorreta revela gabarito com explicação concisa de 1–2 frases e avança para a próxima questão).</li>
+    <li><strong>Informações da Disciplina (Seção 10):</strong> Consulta mandatória ao plano de ensino institucional da UFSC (professores, cronograma, fórmula de média ponderada e critérios de aprovação).</li>
+    <li><strong>Guard Rails e Segurança (Seção 5):</strong> Recusa padronizada e polida para perguntas fora do escopo ou solicitações de diagnósticos/prescrições clínicas.</li>
+  </ul>
+
+  <h3>2.3 Otimização de Performance e Resiliência da Infraestrutura</h3>
+  <p>Para assegurar velocidade instantânea e zero indisponibilidade para os estudantes, a arquitetura do assistente foi reforçada:</p>
+  <ul>
+    <li><strong>Arquitetura Multi-Modelo:</strong> Sistema com múltiplos modelos de contingência (Gemini 3.7 Flash, Gemini 3.6 Flash, Gemini 3.5 Flash e Gemini Pro) com balanceamento automático.</li>
+    <li><strong>Resiliência a Falhas:</strong> Mecanismo de repetição automática com backoff para mitigar oscilações temporárias de rede na nuvem.</li>
+    <li><strong>Rotas Rápidas de Navegação:</strong> Respostas de navegação (menus, retorno ao menu, encerramento) respondidas em menos de 100ms sem consumo desnecessário de tokens.</li>
+  </ul>
+
+  <h2>3. Bateria de Testes Reais em Produção</h2>
+  <p>A tabela abaixo detalha os 15 testes de ponta a ponta executados no ambiente real de produção (<a href="https://tutor-de-enfermagem.vercel.app" target="_blank">https://tutor-de-enfermagem.vercel.app</a>):</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th style="width: 8%; text-align: center;">#</th>
+        <th style="width: 25%;">Módulo / Fluxo</th>
+        <th style="width: 50%;">Critério de Validação Técnica</th>
+        <th style="width: 17%; text-align: center;">Resultado</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td style="text-align: center; font-weight: bold;">T1.1</td>
+        <td><strong>Resumo de Conteúdo</strong></td>
+        <td>Geração com sucesso HTTP 200 e resposta completa</td>
+        <td style="text-align: center; color: #10b981; font-weight: bold;">✅ Aprovado</td>
+      </tr>
+      <tr>
+        <td style="text-align: center; font-weight: bold;">T1.2</td>
+        <td><strong>Resumo de Conteúdo</strong></td>
+        <td>Presença de Explicação, Exemplo Clínico, Prática e Sugestões</td>
+        <td style="text-align: center; color: #10b981; font-weight: bold;">✅ Aprovado</td>
+      </tr>
+      <tr>
+        <td style="text-align: center; font-weight: bold;">T1.3</td>
+        <td><strong>Seção de Referências</strong></td>
+        <td>Uma linha por referência em tópicos (• Referência:), sem texto corrido</td>
+        <td style="text-align: center; color: #10b981; font-weight: bold;">✅ Aprovado</td>
+      </tr>
+      <tr>
+        <td style="text-align: center; font-weight: bold;">T1.4</td>
+        <td><strong>Encerramento do Resumo</strong></td>
+        <td>Pergunta padrão da Seção 8 para aprofundar, mudar tema ou menu</td>
+        <td style="text-align: center; color: #10b981; font-weight: bold;">✅ Aprovado</td>
+      </tr>
+      <tr>
+        <td style="text-align: center; font-weight: bold;">T2.1</td>
+        <td><strong>Aprofundar Tema</strong></td>
+        <td>Reconhece tema anterior sem voltar ao menu nem pedir tema de novo</td>
+        <td style="text-align: center; color: #10b981; font-weight: bold;">✅ Aprovado</td>
+      </tr>
+      <tr>
+        <td style="text-align: center; font-weight: bold;">T2.2</td>
+        <td><strong>Aprofundar Tema</strong></td>
+        <td>Referências do aprofundamento rigorosamente em tópicos separados</td>
+        <td style="text-align: center; color: #10b981; font-weight: bold;">✅ Aprovado</td>
+      </tr>
+      <tr>
+        <td style="text-align: center; font-weight: bold;">T3.1</td>
+        <td><strong>Quiz da Disciplina</strong></td>
+        <td>Questão 1 com alternativas A, B, C, D em negrito e linhas separadas</td>
+        <td style="text-align: center; color: #10b981; font-weight: bold;">✅ Aprovado</td>
+      </tr>
+      <tr>
+        <td style="text-align: center; font-weight: bold;">T3.2</td>
+        <td><strong>Quiz - 1ª Tentativa</strong></td>
+        <td>Feedback de erro solicitando nova tentativa sem revelar gabarito</td>
+        <td style="text-align: center; color: #10b981; font-weight: bold;">✅ Aprovado</td>
+      </tr>
+      <tr>
+        <td style="text-align: center; font-weight: bold;">T3.3</td>
+        <td><strong>Quiz - 2ª Tentativa</strong></td>
+        <td>Revela gabarito com explicação (1-2 frases) e avança para Questão 2</td>
+        <td style="text-align: center; color: #10b981; font-weight: bold;">✅ Aprovado</td>
+      </tr>
+      <tr>
+        <td style="text-align: center; font-weight: bold;">T4.1</td>
+        <td><strong>Informações Disciplina</strong></td>
+        <td>Fórmula da Média MF = (AT1*0.35)+(AT2*0.15)+(ATP*0.50) e nota 6.0</td>
+        <td style="text-align: center; color: #10b981; font-weight: bold;">✅ Aprovado</td>
+      </tr>
+      <tr>
+        <td style="text-align: center; font-weight: bold;">T5.1</td>
+        <td><strong>Guard Rails Éticos</strong></td>
+        <td>Bloqueio de perguntas fora de escopo com o texto padrão da Seção 5</td>
+        <td style="text-align: center; color: #10b981; font-weight: bold;">✅ Aprovado</td>
+      </tr>
+      <tr>
+        <td style="text-align: center; font-weight: bold;">T6.1</td>
+        <td><strong>Retorno ao Menu</strong></td>
+        <td>Mensagem curta de retorno disparada com palavras-chave de menu</td>
+        <td style="text-align: center; color: #10b981; font-weight: bold;">✅ Aprovado</td>
+      </tr>
+      <tr>
+        <td style="text-align: center; font-weight: bold;">T6.2</td>
+        <td><strong>Encerrar Sessão</strong></td>
+        <td>Mensagem exata da Seção 11: 'Sessão encerrada. Bons estudos!...'</td>
+        <td style="text-align: center; color: #10b981; font-weight: bold;">✅ Aprovado</td>
+      </tr>
+      <tr>
+        <td style="text-align: center; font-weight: bold;">T7.1</td>
+        <td><strong>Avaliação por Estrelas</strong></td>
+        <td>Persistência no Supabase das notas Likert vinculadas à sessão</td>
+        <td style="text-align: center; color: #10b981; font-weight: bold;">✅ Aprovado</td>
+      </tr>
+      <tr>
+        <td style="text-align: center; font-weight: bold;">T7.2</td>
+        <td><strong>Painel Administrativo</strong></td>
+        <td>Atualização em tempo real de KPIs, conversas e médias de notas</td>
+        <td style="text-align: center; color: #10b981; font-weight: bold;">✅ Aprovado</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>4. Evidências Literais de Execução em Produção</h2>
+  <h3>4.1 Exemplo Real de Resumo com Seção de Referências Formatada</h3>
+  <div class="code-box">**Explicação:** O controle de infecção no perioperatório envolve um conjunto de medidas integradas voltadas à prevenção da Infecção de Sítio Cirúrgico (ISC)...
+
+**Exemplo clínico:** Um paciente de 62 anos, diabético, programado para colectomia eletiva...
+
+**Relação com a prática:**
+• Avaliar fatores de risco e glicemia no pré-operatório;
+• Administrar antibioticoprofilaxia até 60 minutos antes da incisão;
+• Manter normotermia (> 36°C) e técnica asséptica rigorosa;
+
+**Sugestões de estudo complementar:** Manual de Cirurgia Segura da OMS e diretrizes da ANVISA.
+
+**Referências:**
+• Referência: SAMPAIO, Milena de Oliveira. Enfermagem em centro cirúrgico. 2018.
+• Referência: ORGANIZAÇÃO MUNDIAL DA SAÚDE. Segundo desafio global para a segurança do paciente: cirurgia segura salva vidas. 2009.
+• Referência: ABCD. Arquivos Brasileiros de Cirurgia Digestiva. Infecção de sítio cirúrgico e antibioticoprofilaxia. 2020.
+
+Deseja aprofundar este tema, escolher outro tema, voltar ao menu principal ou encerrar a sessão?</div>
+
+  <h2>5. Conclusão e Disponibilidade</h2>
+  <p>Todas as solicitações de alteração foram implementadas com sucesso, validadas de ponta a ponta e estão operacionais no ambiente de produção para os alunos e corpo docente da disciplina.</p>
+  <ul>
+    <li><strong>Acesso ao Tutor Educacional:</strong> <a href="https://tutor-de-enfermagem.vercel.app" target="_blank">https://tutor-de-enfermagem.vercel.app</a></li>
+    <li><strong>Acesso ao Painel de Telemetria e Analytics:</strong> <a href="https://tutor-de-enfermagem.vercel.app/admin" target="_blank">https://tutor-de-enfermagem.vercel.app/admin</a></li>
+  </ul>
+
+</body>
+</html>

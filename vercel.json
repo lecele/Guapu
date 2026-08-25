@@ -1,0 +1,18 @@
+{
+  "framework": "nextjs",
+  "regions": ["iad1"],
+  "functions": {
+    "app/api/chat/route.ts": {
+      "maxDuration": 120
+    },
+    "app/api/admin/stats/route.ts": {
+      "maxDuration": 60
+    },
+    "app/api/feedback/route.ts": {
+      "maxDuration": 30
+    },
+    "app/api/health/route.ts": {
+      "maxDuration": 10
+    }
+  }
+}

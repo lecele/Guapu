@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manual Técnico - Tutor de Enfermagem</title>
+    <!-- Tailwind CSS para estilização moderna -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts - Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            color: #1e293b;
+        }
+        .color-primary {
+            color: #1573C2;
+            border-color: #1573C2;
+        }
+        .color-secondary {
+            color: #0d4a87;
+        }
+        .color-tertiary {
+            color: #1e3a8a;
+        }
+        /* Estilização para impressão em PDF */
+        @media print {
+            body {
+                background-color: white;
+                font-size: 12pt;
+            }
+            .no-print {
+                display: none;
+            }
+            .page-break {
+                page-break-before: always;
+            }
+            pre, blockquote, table, img {
+                page-break-inside: avoid;
+            }
+            a {
+                text-decoration: none;
+                color: #1e293b;
+            }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 py-10 px-4 sm:px-6 lg:px-8">
+
+    <div class="max-w-4xl mx-auto bg-white p-8 md:p-16 rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.05)] border border-slate-100 relative">
+        
+        <!-- Botão Flutuante para Imprimir (No-Print) -->
+        <div class="absolute top-8 right-8 no-print">
+            <button onclick="window.print()" class="bg-[#1573C2] hover:bg-[#0d4a87] text-white font-bold py-2.5 px-5 rounded-full shadow-md transition-all hover:shadow-lg active:scale-95 flex items-center gap-2 cursor-pointer">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                </svg>
+                Gerar PDF / Imprimir
+            </button>
+        </div>
+
+        <!-- Cabeçalho Institucional -->
+        <div class="flex items-center gap-4 border-b border-slate-100 pb-6 mb-8">
+            <div class="w-16 h-16 bg-[#1573C2]/10 rounded-2xl flex items-center justify-center text-[#1573C2]">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+            </div>
+            <div>
+                <div class="text-xs font-bold uppercase tracking-wider text-[#1573C2]">Agentes na Saúde • UFSC</div>
+                <div class="text-sm text-slate-500">Documentação Técnica Oficial</div>
+            </div>
+        </div>
+
+        <!-- Conteúdo Principal -->
+        <div class="prose prose-slate max-w-none">
+            <h1 class="text-3xl font-bold border-b pb-3 mb-6 color-primary">Manual Técnico de Arquitetura, Engenharia e Operação: Tutor de Enfermagem 🩺</h1>
+
+<p class="mb-4 text-slate-700 leading-relaxed text-base">Este documento constitui o memorial descritivo e manual técnico completo do <strong>Tutor de Enfermagem</strong>, um assistente virtual de inteligência artificial generativa educacional especializado em <strong>Enfermagem Perioperatória</strong> desenvolvido para a Universidade Federal de Santa Catarina (UFSC). </p>
+
+<p class="mb-4 text-slate-700 leading-relaxed text-base">---</p>
+
+<h2 class="text-2xl font-semibold mt-8 mb-4 color-secondary">1. Fundamentação Pedagógica e Diretrizes Éticas</h2>
+
+<p class="mb-4 text-slate-700 leading-relaxed text-base">O desenvolvimento do Tutor de Enfermagem não visa a substituição do corpo docente ou a automatização de tarefas intelectuais dos alunos, mas sim a criação de um mediador de aprendizagem ativa.</p>
+
+<h3 class="text-xl font-medium mt-6 mb-3 color-tertiary">A. O Método Socrático na Enfermagem</h3>
+<p class="mb-4 text-slate-700 leading-relaxed text-base">Na prática clínica da enfermagem, a tomada de decisão sob pressão exige raciocínio diagnóstico rápido e preciso. O método socrático (maiêutica) funciona por meio de perguntas indutivas que forçam o estudante a:</p>
+<p class="mb-4 text-slate-700 leading-relaxed text-base">* Identificar lacunas em seu próprio conhecimento.</p>
+<p class="mb-4 text-slate-700 leading-relaxed text-base">* Relacionar a teoria fisiopatológica com sinais clínicos observados.</p>
+<p class="mb-4 text-slate-700 leading-relaxed text-base">* Formular hipóteses diagnósticas com base em evidências científicas.</p>
+<p class="mb-4 text-slate-700 leading-relaxed text-base">* Desenvolver autonomia intelectual em vez de memorizar respostas prontas.</p>
+
+<p class="mb-4 text-slate-700 leading-relaxed text-base">O Tutor implementa essa técnica limitando-se a fazer <strong>uma pergunta reflexiva de cada vez</strong> e guiando o aluno na correção de seus próprios erros.</p>
+
+<h3 class="text-xl font-medium mt-6 mb-3 color-tertiary">B. Diretrizes da UNESCO e do MEC</h3>
+<p class="mb-4 text-slate-700 leading-relaxed text-base">O Tutor está alinhado com a recomendação da <strong>UNESCO</strong> sobre a Ética da Inteligência Artificial (2021) e as diretrizes do <strong>MEC</strong> (Ministério da Educação do Brasil) para o uso de tecnologias digitais de informação e comunicação (TDICs):</p>
+<p class="mb-4 text-slate-700 leading-relaxed text-base">* <strong>Transparência Acadêmica:</strong> O sistema deixa claro para o estudante que se trata de um assistente de IA.</p>
+<p class="mb-4 text-slate-700 leading-relaxed text-base">* <strong>Privacidade dos Dados:</strong> O histórico de conversas é criptografado e persistido de forma segura no Supabase, indexado apenas por um identificador anônimo de sessão.</p>
+<p class="mb-4 text-slate-700 leading-relaxed text-base">* <strong>Combate ao Plágio:</strong> A IA é instruída a recusar pedidos de elaboração direta de trabalhos acadêmicos ou respostas diretas a avaliações, atuando estritamente como um facilitador de estudos.</p>
+
+<p class="mb-4 text-slate-700 leading-relaxed text-base">---</p>
+
+<h2 class="text-2xl font-semibold mt-8 mb-4 color-secondary">2. Especificação Detalhada das Funções do Aplicativo</h2>
+
+<p class="mb-4 text-slate-700 leading-relaxed text-base">O comportamento do Tutor é baseado em quatro fluxos de estudo principais, selecionados a partir do Menu Principal.</p>
+
+<h3 class="text-xl font-medium mt-6 mb-3 color-tertiary">A. Opção 1: Resumo de Conteúdo</h3>
+<ol class="my-4"><li class="ml-6 list-decimal mb-1.5"><strong>Delimitação de Tema:</strong> Caso o aluno solicite um tema genérico (ex: <em>"Quero estudar Anestesia"</em>), o Tutor aplica um questionamento socrático para ajudá-lo a delimitar o escopo (ex: <em>"Dentre os tipos de anestesia, você prefere focar em Anestesia Geral ou Regional?"</em>).</li></ol>
+<ol class="my-4"><li class="ml-6 list-decimal mb-1.5"><strong>Estruturação do Resumo:</strong> Uma vez definido o tema, a IA recupera o conteúdo da base vetorial e constrói um resumo estruturado contendo:</li></ol>
+<ul class="my-4"><li class="ml-6 list-disc mb-1.5"><strong>Explicação Técnica:</strong> Conceitos científicos baseados na literatura, acompanhados de citações numéricas.</li></ul>
+<ul class="my-4"><li class="ml-6 list-disc mb-1.5"><strong>Exemplo Clínico:</strong> Um caso clínico simulado onde o conceito é aplicado na prática perioperatória.</li></ul>
+<ul class="my-4"><li class="ml-6 list-disc mb-1.5"><strong>Relação com a Prática:</strong> Impacto direto na assistência de enfermagem.</li></ul>
+<ul class="my-4"><li class="ml-6 list-disc mb-1.5"><strong>Referências Bibliográficas:</strong> Lista dos artigos ou livros de onde os dados foram extraídos.</li></ul>
+<ol class="my-4"><li class="ml-6 list-decimal mb-1.5"><strong>Questionamento Sequencial:</strong> O Tutor gera <strong>3 perguntas socráticas</strong> personalizadas para avaliar a compreensão do aluno. O sistema faz a primeira pergunta e bloqueia o envio de novas perguntas até que o aluno responda a ela. A IA avalia a resposta do aluno e, apenas quando este demonstra entendimento, apresenta a segunda pergunta, e assim sucessivamente.</li></ol>
+
+<h3 class="text-xl font-medium mt-6 mb-3 color-tertiary">B. Opção 2: Simulado de Prova</h3>
+<ol class="my-4"><li class="ml-6 list-decimal mb-1.5"><strong>Geração do Simulado:</strong> A IA gera um bloco contendo exatamente <strong>5 questões</strong> (3 de múltipla escolha com 4 alternativas e 2 discursivas curtas) baseadas no tema escolhido. O gabarito não é exibido inicialmente.</li></ol>
+<ol class="my-4"><li class="ml-6 list-decimal mb-1.5"><strong>Fluxo de Correção Socrática:</strong></li></ol>
+<ul class="my-4"><li class="ml-6 list-disc mb-1.5">O aluno envia as suas respostas.</li></ul>
+<ul class="my-4"><li class="ml-6 list-disc mb-1.5">Para cada questão incorreta, a IA <strong>não fornece a resposta certa</strong>. Em vez disso, ela aponta o erro por meio de uma pista reflexiva (ex: <em>"Na questão 2, você considerou a hipotermia benéfica na SRPA. Lembre-se dos efeitos do frio sobre a coagulação sanguínea. O que ocorre com as plaquetas sob baixas temperaturas?"</em>).</li></ul>
+<ul class="my-4"><li class="ml-6 list-disc mb-1.5">O aluno tem até <strong>3 tentativas</strong> para corrigir cada resposta incorreta.</li></ul>
+<ul class="my-4"><li class="ml-6 list-disc mb-1.5">Se o aluno falhar nas 3 tentativas, o Tutor exibe a explicação técnica detalhada e o gabarito oficial daquela questão.</li></ul>
+
+<h3 class="text-xl font-medium mt-6 mb-3 color-tertiary">C. Opção 3: Informações do Curso</h3>
+<p class="mb-4 text-slate-700 leading-relaxed text-base">* O Tutor responde a perguntas organizacionais sobre a disciplina (critérios de aprovação, peso das avaliações, cálculo de média, frequência mínima, bibliografia recomendada e datas importantes). Estas informações são extraídas de arquivos administrativos (como o plano de ensino da UFSC) carregados no RAG.</p>
+
+<h3 class="text-xl font-medium mt-6 mb-3 color-tertiary">D. Opção 4: Encerrar Sessão</h3>
+<p class="mb-4 text-slate-700 leading-relaxed text-base">* A IA encerra a interação com uma mensagem de incentivo acadêmico padrão e limpa a sessão ativa no frontend.</p>
+
+<p class="mb-4 text-slate-700 leading-relaxed text-base">---</p>
+
+<h2 class="text-2xl font-semibold mt-8 mb-4 color-secondary">3. Arquitetura de Software e Stack Tecnológica</h2>
+
+<p class="mb-4 text-slate-700 leading-relaxed text-base">O sistema utiliza uma arquitetura puramente serverless de alta performance, minimizando latências e custos operacionais.</p>
+
+<p class="mb-4 text-slate-700 leading-relaxed text-base">* <strong>Interface Visual (Next.js 15 + React 19 + TailwindCSS 4):</strong></p>
+<ul class="my-4"><li class="ml-6 list-disc mb-1.5">Interface responsiva com foco em dispositivos móveis (iOS/Android).</li></ul>
+<ul class="my-4"><li class="ml-6 list-disc mb-1.5">Design system customizado baseado na paleta <strong>Azul Médico</strong> (primário em azul royal e secundário em azul escuro, com fundos claros em azul suave).</li></ul>
+<ul class="my-4"><li class="ml-6 list-disc mb-1.5">Transmissão de respostas em tempo real (streaming), reduzindo a latência de carregamento para o usuário.</li></ul>
+<ul class="my-4"><li class="ml-6 list-disc mb-1.5">Alternador de temas (Claro/Escuro) integrado com salvamento persistente na memória do navegador para evitar oscilações de luz ao recarregar.</li></ul>
+<p class="mb-4 text-slate-700 leading-relaxed text-base">* <strong>Processamento do Servidor (Next.js API Routes):</strong></p>
+<ul class="my-4"><li class="ml-6 list-disc mb-1.5">Rota de chat unificada que elimina a necessidade de servidores de backend adicionais.</li></ul>
+<ul class="my-4"><li class="ml-6 list-disc mb-1.5">Configuração de tempo de execução expandido para garantir que o fluxo completo de busca e classificação de dados ocorra sem interrupções.</li></ul>
+<p class="mb-4 text-slate-700 leading-relaxed text-base">* <strong>Banco de Dados (Supabase + pgvector):</strong></p>
+<ul class="my-4"><li class="ml-6 list-disc mb-1.5"><strong>Tabela de Documentos:</strong> Armazena os blocos de textos dos livros de enfermagem, suas referências de origem, o identificador de similaridade e uma assinatura única do texto (hash) para evitar repetições.</li></ul>
+<ul class="my-4"><li class="ml-6 list-disc mb-1.5"><strong>Tabela de Histórico:</strong> Salva as interações da conversa por sessão, permitindo que a IA lembre do contexto da conversa atual do estudante.</li></ul>
+<p class="mb-4 text-slate-700 leading-relaxed text-base">* <strong>Modelos de Linguagem (Google Gemini API):</strong></p>
+<ul class="my-4"><li class="ml-6 list-disc mb-1.5"><strong>Modelo de Tradução Semântica:</strong> Transforma as palavras dos textos e das perguntas em coordenadas matemáticas para busca de significado.</li></ul>
+<ul class="my-4"><li class="ml-6 list-disc mb-1.5"><strong>Modelo de Geração:</strong> Utiliza a inteligência do Gemini para avaliar a relevância do material e redigir a resposta pedagógica final de forma rápida.</li></ul>
+
+<p class="mb-4 text-slate-700 leading-relaxed text-base">---</p>
+
+<h2 class="text-2xl font-semibold mt-8 mb-4 color-secondary">4. Engenharia de RAG e Pipeline de Ingestão de Dados</h2>
+
+<p class="mb-4 text-slate-700 leading-relaxed text-base">O pipeline de RAG (Geração Aumentada por Recuperação) do Tutor foi projetado para processar volumes massivos de textos acadêmicos de forma autônoma e eficiente.</p>
+
+<h3 class="text-xl font-medium mt-6 mb-3 color-tertiary">A. O Papel do Docling e a Conversão de PDF para Markdown Estruturado</h3>
+<p class="mb-4 text-slate-700 leading-relaxed text-base">A extração de informações de documentos acadêmicos e manuais técnicos enfrenta um grande obstáculo: a complexidade de layout de arquivos em PDF de duas colunas, com imagens, cabeçalhos de página e notas de rodapé.</p>
+
+<p class="mb-4 text-slate-700 leading-relaxed text-base">* <strong>O Problema dos Extratores Tradicionais:</strong> Leitores de PDF lineares tradicionais apenas extraem os caracteres de forma sequencial na página. Se o documento tiver duas colunas, o extrator tradicional lerá a primeira linha da coluna da esquerda e imediatamente a primeira linha da coluna da direita, misturando textos de assuntos diferentes e destruindo o contexto semântico.</p>
+<p class="mb-4 text-slate-700 leading-relaxed text-base">* <strong>A Solução por Visão Computacional do Docling:</strong> O Docling (desenvolvido pela IBM) utiliza modelos de aprendizado profundo (Deep Learning) baseados em visão computacional para "enxergar" a página do documento como uma imagem. Ele detecta as coordenadas das caixas de texto (bounding boxes) e a ordem de leitura correta, permitindo reconstruir o fluxo de leitura lógico de colunas e parágrafos.</p>
+<p class="mb-4 text-slate-700 leading-relaxed text-base">* <strong>Extração de Tabelas Complexas:</strong> Um dos maiores trunfos do Docling é a leitura de tabelas de dados clínicos. Ele reconhece a grade de linhas e colunas (mesmo que as linhas divisórias sejam invisíveis no PDF) e reconstrói a tabela estruturada em formato Markdown (com colunas separadas por barras verticais e alinhamentos). Isso permite que a IA faça buscas matemáticas exatas em tabelas de dosagens e parâmetros.</p>
+<p class="mb-4 text-slate-700 leading-relaxed text-base">* <strong>Por que o Markdown é o "Combustível" Ideal para o Gemini?</strong> O modelo Gemini 2.5 Flash lê e compreende o formato Markdown com extrema naturalidade. Ao contrário do texto sem formatação, o Markdown sinaliza claramente para a IA a hierarquia das informações:</p>
+<ul class="my-4"><li class="ml-6 list-disc mb-1.5">O que é um título principal (mapeado pelo Docling com `#`).</li></ul>
+<ul class="my-4"><li class="ml-6 list-disc mb-1.5">O que é um subtópico importante (`##` ou `###`).</li></ul>
+<ul class="my-4"><li class="ml-6 list-disc mb-1.5">O que é um item de lista estruturado (`-` ou `*`).</li></ul>
+<ul class="my-4"><li class="ml-6 list-disc mb-1.5">O que é um dado de tabela.</li></ul>
+<p class="mb-4 text-slate-700 leading-relaxed text-base">  Essa estruturação rica em Markdown é o que permite ao Tutor construir resumos impecáveis e simulados com alto rigor técnico.</p>
+
+<h3 class="text-xl font-medium mt-6 mb-3 color-tertiary">B. A Estratégia Híbrida de Ingestão (Docling + pypdf)</h3>
+<p class="mb-4 text-slate-700 leading-relaxed text-base">Embora o Docling seja extremamente inteligente na conversão visual, a execução local de seus modelos neurais consome muito processamento de CPU e memória RAM. </p>
+<p class="mb-4 text-slate-700 leading-relaxed text-base">Ao tentar ingerir manuais inteiros de enfermagem com milhares de páginas (como o <em>Brunner & Suddarth</em>), o servidor sofria com travamentos de falta de memória RAM. Para solucionar este problema de engenharia, implementamos uma <strong>arquitetura híbrida de roteamento</strong>:</p>
+<ol class="my-4"><li class="ml-6 list-decimal mb-1.5"><strong>Para Livros e Manuais Extensos (Roteamento pypdf):</strong> Arquivos em formato `.pdf` são roteados diretamente para o `pypdf`, um leitor leve escrito em Python puro. Ele lê o texto de forma sequencial página a página sem carregar modelos de imagem na RAM, processando 1.000 páginas em menos de 1 minuto com estabilidade de 100%.</li></ol>
+<ol class="my-4"><li class="ml-6 list-decimal mb-1.5"><strong>Para Slides e Protocolos Médicos (Roteamento Docling):</strong> Arquivos em formato `.docx` e `.pptx` são enviados para o `Docling`. Como esses arquivos costumam ser menores e possuem tabelas importantes ou layouts de slides que se perderiam na leitura sequencial, o Docling extrai toda a sua riqueza de layout estruturado de forma perfeita.</li></ol>
+
+<h3 class="text-xl font-medium mt-6 mb-3 color-tertiary">C. Divisão Inteligente de Texto (Chunking Semântico)</h3>
+<p class="mb-4 text-slate-700 leading-relaxed text-base">A quebra do texto bruto em blocos menores segue regras estritas para evitar perda de contexto:</p>
+<p class="mb-4 text-slate-700 leading-relaxed text-base">* O tamanho alvo de cada bloco é de 1200 caracteres (cerca de 180 palavras).</p>
+<p class="mb-4 text-slate-700 leading-relaxed text-base">* O algoritmo não corta o texto no limite exato de caracteres. Ele busca marcas de pontuação final (como pontos finais ou quebras de parágrafo) próximas ao limite. Isso impede que frases explicativas ou diagnósticos clínicos tenham seu sentido cortado pela metade.</p>
+
+<h3 class="text-xl font-medium mt-6 mb-3 color-tertiary">D. Deduplicação Inteligente</h3>
+<p class="mb-4 text-slate-700 leading-relaxed text-base">Para economizar processamento e tempo, o sistema calcula uma assinatura digital única (hash SHA-256) para cada bloco de texto. Antes de enviar o bloco para a inteligência artificial, o banco de dados é consultado. Se a assinatura já existir, o bloco é pulado. Isso permite sincronizar novos arquivos do Google Drive em poucos segundos.</p>
+
+<h3 class="text-xl font-medium mt-6 mb-3 color-tertiary">E. Busca por Significado Semântico</h3>
+<p class="mb-4 text-slate-700 leading-relaxed text-base">Quando um aluno faz uma pergunta no chat:</p>
+<ol class="my-4"><li class="ml-6 list-decimal mb-1.5">A pergunta é convertida em um vetor de coordenadas que representa o seu significado conceitual.</li></ol>
+<ol class="my-4"><li class="ml-6 list-decimal mb-1.5">O banco de dados do Supabase calcula a <strong>similaridade de cosseno</strong> entre a pergunta do aluno e os milhares de blocos armazenados. Termos médicos parecidos (como <em>"hipotensão"</em> e <em>"pressão baixa"</em>) são identificados como equivalentes pela proximidade dos seus conceitos.</li></ol>
+<ol class="my-4"><li class="ml-6 list-decimal mb-1.5"><strong>Indexação de Alta Velocidade (HNSW):</strong> O banco de dados organiza os blocos em um grafo de atalhos. Isso permite encontrar os blocos de texto mais relevantes em menos de 15 milissegundos, sem precisar ler todo o banco de dados a cada mensagem.</li></ol>
+<ol class="my-4"><li class="ml-6 list-decimal mb-1.5">O sistema seleciona os <strong>5 trechos</strong> mais similares que atinjam o limite de relevância configurado. Trechos fora do contexto são descartados.</li></ol>
+
+<p class="mb-4 text-slate-700 leading-relaxed text-base">---</p>
+
+<h2 class="text-2xl font-semibold mt-8 mb-4 color-secondary">5. Algoritmo de Decisão do Chat (Corrective RAG - CRAG)</h2>
+
+<p class="mb-4 text-slate-700 leading-relaxed text-base">Toda mensagem enviada pelo estudante passa por um processo de avaliação antes de receber resposta:</p>
+<ol class="my-4"><li class="ml-6 list-decimal mb-1.5"><strong>Triagem de Saudação:</strong> Se a mensagem for um simples cumprimento ou solicitação de menu, a resposta padrão do menu é enviada imediatamente, economizando tempo e processamento do servidor.</li></ol>
+<ol class="my-4"><li class="ml-6 list-decimal mb-1.5"><strong>Busca Vetorial:</strong> Se for uma dúvida conceitual, o sistema faz a busca no Supabase e recupera os 5 trechos mais parecidos.</li></ol>
+<ol class="my-4"><li class="ml-6 list-decimal mb-1.5"><strong>Avaliador de Relevância (Grader):</strong> O Gemini avalia os 5 trechos individualmente, marcando cada um como relevante ou irrelevante para a dúvida do aluno.</li></ol>
+<ol class="my-4"><li class="ml-6 list-decimal mb-1.5"><strong>Geração Socrática (Se houver dados):</strong> Se houver trechos relevantes na base de dados, a IA formula a resposta técnica baseando-se estritamente neles, inserindo as referências de origem, um exemplo clínico prático e finalizando com uma pergunta socrática para o aluno responder.</li></ol>
+<ol class="my-4"><li class="ml-6 list-decimal mb-1.5"><strong>Bloqueio e Fallback (Se não houver dados):</strong> Se nenhum trecho for considerado relevante (ou se a pergunta for de outro assunto), a IA <strong>bloqueia</strong> a geração de texto livre. Ela exibe estritamente a mensagem padrão de recusa, indicando que a base não tem dados suficientes com precisão acadêmica e direciona o aluno para os professores e bases científicas (como PubMed e COFEN). Isso impede que a IA invente procedimentos ou protocolos médicos.</li></ol>
+<ol class="my-4"><li class="ml-6 list-decimal mb-1.5"><strong>Histórico:</strong> A pergunta e a resposta são salvas no banco para manter o contexto da conversa ativo.</li></ol>
+
+<p class="mb-4 text-slate-700 leading-relaxed text-base">---</p>
+
+<h2 class="text-2xl font-semibold mt-8 mb-4 color-secondary">6. Otimizações para Dispositivos Móveis e Responsividade</h2>
+
+<p class="mb-4 text-slate-700 leading-relaxed text-base">Para garantir que os estudantes possam utilizar o Tutor confortavelmente em seus smartphones durante as aulas práticas ou estágios hospitalares, aplicamos as seguintes soluções de interface:</p>
+
+<p class="mb-4 text-slate-700 leading-relaxed text-base">* <strong>Prevenção de Zoom Automático no iOS:</strong> O navegador Safari em iPhones força um zoom visual na tela sempre que o usuário clica em um campo de texto com letra muito pequena. Ajustamos o tamanho do campo de digitação para o padrão que impede esse zoom automático, mantendo o layout fixo e confortável.</p>
+<p class="mb-4 text-slate-700 leading-relaxed text-base">* <strong>Abertura do Teclado Virtual:</strong> O layout foi projetado de forma dinâmica para que a abertura do teclado do celular empurre o campo de digitação para cima sem esconder as mensagens anteriores da tela.</p>
+<p class="mb-4 text-slate-700 leading-relaxed text-base">* <strong>Margens de Segurança (Safe Areas):</strong> A interface adapta o espaçamento automaticamente no topo e no rodapé para evitar que botões e textos fiquem escondidos sob a câmera frontal ("Notch") ou a barra de gestos inferior do celular.</p>
+<p class="mb-4 text-slate-700 leading-relaxed text-base">* <strong>Modo Escuro Sem Oscilações:</strong> A aplicação do tema escuro é executada antes da página carregar na tela, eliminando aquele incômodo clarão branco ao recarregar o site à noite.</p>
+<p class="mb-4 text-slate-700 leading-relaxed text-base">* <strong>Borda de Contraste no Modo Claro:</strong> Para melhorar a usabilidade sob luz solar ou ambientes muito iluminados (como postos de enfermagem), o menu lateral conta com uma borda física destacada na cor azul royal do projeto.</p>
+
+<p class="mb-4 text-slate-700 leading-relaxed text-base">---</p>
+
+<h2 class="text-2xl font-semibold mt-8 mb-4 color-secondary">7. Manutenção e Sincronização</h2>
+
+<p class="mb-4 text-slate-700 leading-relaxed text-base">A atualização dos materiais de estudo é simples e automática:</p>
+<ol class="my-4"><li class="ml-6 list-decimal mb-1.5">Os professores adicionam ou removem arquivos (PDF, Word ou Slides) na pasta compartilhada do Google Drive.</li></ol>
+<ol class="my-4"><li class="ml-6 list-decimal mb-1.5">O script de sincronização automática compara os arquivos locais com os do Drive.</li></ol>
+<ol class="my-4"><li class="ml-6 list-decimal mb-1.5">Arquivos deletados no Drive são removidos e arquivos novos são baixados.</li></ol>
+<ol class="my-4"><li class="ml-6 list-decimal mb-1.5">O script de ingestão é executado e insere apenas os novos blocos no banco de dados do Supabase, mantendo a base atualizada em segundos.</li></ol>
+
+        </div>
+
+        <!-- Rodapé -->
+        <div class="mt-16 pt-6 border-t border-slate-100 text-center text-xs text-slate-400">
+            © 2026 Agentes na Saúde - Tutor de Enfermagem. Todos os direitos reservados.
+        </div>
+
+    </div>
+
+</body>
+</html>

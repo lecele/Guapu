@@ -1,0 +1,85 @@
+# ==============================================================================
+# .gitignore — IA Ensino Enfermagem Aplicada (Tutor de Enfermagem)
+# ==============================================================================
+
+# Node / Next.js Dependencies & Output
+node_modules/
+.pnp
+.pnp.js
+.next/
+out/
+build/
+dist/
+*.tsbuildinfo
+next-env.d.ts
+.vercel
+
+# Cópias redundantes descartadas durante a criação inicial da V2
+/documentos/Interface/Interface/
+/documentos/AI_Assistant_User_Flow_25Aug2026/AI_Assistant_User_Flow_25Aug2026/
+
+# Python Environment
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+ENV/
+*.egg-info/
+
+# Environment variables & Credentials (NEVER commit these!)
+.env
+.env.*
+!.env.example
+!.env.local.example
+!.env.*.example
+credentials/*.json
+
+# Local Test & Deploy Scripts containing credentials
+deploy_tutor_enfermagem.py
+check_docs.py
+scratch_fetch_keys.py
+scratch_fetch_projects.py
+test_drive_api.py
+test_drive_recursive.py
+test_new_supabase.py
+test_supabase.py
+test_chat.py
+Prompt.pdf
+
+# Base de documentos (PDFs grandes — armazenados no Google Drive / Supabase)
+nova_base/
+
+# Scripts de scratch e exploração local
+scratch/
+scratch_*.py
+download_drive.py
+explore_drive.py
+extracted_prompt.txt
+update_vercel_env.ps1
+
+# PDFs de documentação enviados localmente
+"Manual Técnico - Tutor de Enfermagem.pdf"
+"Pedidos de alteração_July 19 2026.pdf"
+"Prompt 21Jul2026.pdf"
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+logs/
+
+# OS / Editor Files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+
+.vercel

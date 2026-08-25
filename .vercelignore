@@ -1,0 +1,32 @@
+# Ignorar dependências locais
+node_modules/
+.next/
+out/
+
+# Ignorar pastas de dados do RAG (PDFs locais)
+nova_base/
+documentos/
+*.pdf
+*.docx
+*.pptx
+*.xlsx
+*.csv
+
+# Ignorar versionamento e IDEs
+.git/
+.idea/
+.vscode/
+
+# Ignorar Python e cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+venv/
+.venv/
+env/
+
+# Ignorar credenciais locais
+credentials/
+.env*local
