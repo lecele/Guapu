@@ -83,6 +83,21 @@ class DriveSyncPlanTests(unittest.TestCase):
 
         self.assertEqual([item["id"] for item in plan.changed], ["retry"])
 
+    def test_keeps_unsupported_file_unchanged_until_it_is_replaced(self):
+        current = [{"id": "scan", "name": "scan.pdf", "modifiedTime": "2026-08-25T10:00:00Z"}]
+        manifest = [
+            {
+                "drive_file_id": "scan",
+                "name": "scan.pdf",
+                "modified_time": "2026-08-25T10:00:00+00:00",
+                "status": "unsupported",
+            }
+        ]
+
+        plan = plan_drive_sync(current, manifest)
+
+        self.assertEqual([item["id"] for item in plan.unchanged], ["scan"])
+
     def test_rename_is_a_change_even_when_checksum_matches(self):
         current = [
             {

@@ -70,12 +70,19 @@ class IngestionResult:
     chunks_skipped: int = 0       # Já existiam no banco (deduplicação)
     chunks_removed: int = 0
     action: str = "processed"
+    status: str = "active"
     errors: list[str] = field(default_factory=list)
     success: bool = True
 
     @property
     def summary(self) -> str:
-        status = "OK" if self.success else "FALHOU"
+        status = (
+            "FALHOU"
+            if not self.success
+            else "AVISO"
+            if self.status == "unsupported"
+            else "OK"
+        )
         return (
             f"[{status}] | {self.file_name} | "
             f"{self.total_pages} paginas | "
@@ -442,7 +449,7 @@ def _manifest_payload(file_info: dict, result: IngestionResult) -> dict:
         "modified_time": file_info.get("modifiedTime") or now,
         "md5_checksum": file_info.get("md5Checksum"),
         "chunks_count": result.total_chunks,
-        "status": "active" if result.success else "error",
+        "status": result.status if result.success else "error",
         "last_synced_at": now if result.success else None,
         "last_error": None if result.success else "; ".join(result.errors)[:4000],
         "updated_at": now,
@@ -512,9 +519,19 @@ def ingest_pdf_from_bytes(
         result.total_pages = len(pages)
 
         if not pages:
-            result.errors.append("Nenhum texto extraível encontrado no arquivo.")
-            result.success = False
-            logger.warning("ingestion_no_text", file_name=file_name)
+            # PDFs digitalizados não podem ser pesquisados sem OCR. Não devem
+            # interromper a reconciliação inteira, mas também não podem manter
+            # chunks de uma versão anterior do mesmo arquivo no RAG.
+            result.errors.append(
+                "Nenhum texto extraível encontrado; envie uma versão com OCR para indexação."
+            )
+            result.status = "unsupported"
+            result.chunks_removed = _remove_stale_chunks(file_id, set())
+            logger.warning(
+                "ingestion_no_text",
+                file_name=file_name,
+                chunks_removed=result.chunks_removed,
+            )
             return result
 
         # ── Passo 2: Chunking ─────────────────────────────────────────────────
