@@ -7,10 +7,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test:flow": "node --test --experimental-strip-types tests/session-flow.test.ts"
+    "test:flow": "node --test --experimental-strip-types tests/session-flow.test.ts tests/session-store.test.ts"
   },
   "dependencies": {
-    "@google/generative-ai": "^0.24.1",
+    "@google/genai": "^2.18.0",
     "@supabase/supabase-js": "^2.107.0",
     "@tailwindcss/typography": "^0.5.19",
     "exceljs": "^4.4.0",

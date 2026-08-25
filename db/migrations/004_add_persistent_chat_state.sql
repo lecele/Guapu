@@ -15,9 +15,26 @@ ALTER TABLE public.chat_messages
 CREATE INDEX IF NOT EXISTS chat_messages_session_created_idx
   ON public.chat_messages (session_id, created_at ASC);
 
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1
+    FROM pg_index AS index_definition
+    JOIN pg_class AS index_class
+      ON index_class.oid = index_definition.indexrelid
+    JOIN pg_namespace AS index_namespace
+      ON index_namespace.oid = index_class.relnamespace
+    WHERE index_namespace.nspname = 'public'
+      AND index_class.relname = 'chat_messages_turn_role_unique_idx'
+      AND index_definition.indpred IS NOT NULL
+  ) THEN
+    DROP INDEX public.chat_messages_turn_role_unique_idx;
+  END IF;
+END
+$$;
+
 CREATE UNIQUE INDEX IF NOT EXISTS chat_messages_turn_role_unique_idx
-  ON public.chat_messages (session_id, request_id, role)
-  WHERE request_id IS NOT NULL;
+  ON public.chat_messages (session_id, request_id, role);
 
 CREATE TABLE IF NOT EXISTS public.chat_session_state (
   session_id       TEXT PRIMARY KEY,
@@ -52,4 +69,3 @@ CREATE POLICY "service_role_all_chat_session_state"
   WITH CHECK (true);
 
 COMMIT;
-

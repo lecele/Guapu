@@ -15,12 +15,14 @@ export interface Message {
 
 export interface ChatRequest {
   session_id: string;
+  request_id: string;
   message: string;
 }
 
 export interface ChatResponse {
   answer: string;
   session_id: string;
+  request_id: string;
   sources_found: number;
   has_context: boolean;
   chat_history_length: number;

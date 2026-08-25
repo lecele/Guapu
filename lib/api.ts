@@ -4,6 +4,15 @@ import { ChatRequest, ChatResponse } from '@/types/chat';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? '/api';
 
+function generateRequestId(): string {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (character) => {
+    const random = Math.floor(Math.random() * 16);
+    const value = character === 'x' ? random : (random & 0x3) | 0x8;
+    return value.toString(16);
+  });
+}
+
 /**
  * Envia uma mensagem para o tutor de IA com re-tentativa automática (auto-retry)
  * em caso de oscilações temporárias de rede ou timeouts (504/503/502).
@@ -13,7 +22,9 @@ export async function sendChatMessage(
   message: string,
   maxRetries: number = 2
 ): Promise<ChatResponse> {
-  const payload: ChatRequest = { session_id, message };
+  // O mesmo request_id é reutilizado em todas as tentativas para impedir
+  // mensagens/respostas duplicadas quando a rede oscila.
+  const payload: ChatRequest = { session_id, request_id: generateRequestId(), message };
 
   let lastError: Error | null = null;
 
@@ -44,10 +55,10 @@ export async function sendChatMessage(
 
       const data: ChatResponse = await response.json();
       return data;
-    } catch (err: any) {
-      lastError = err;
+    } catch (err: unknown) {
+      lastError = err instanceof Error ? err : new Error(String(err));
       if (attempt < maxRetries) {
-        console.warn(`[sendChatMessage] Erro na tentativa ${attempt}: ${err?.message}. Tentando novamente...`);
+        console.warn(`[sendChatMessage] Erro na tentativa ${attempt}: ${lastError.message}. Tentando novamente...`);
         await new Promise((resolve) => setTimeout(resolve, 1000 * attempt));
       }
     }

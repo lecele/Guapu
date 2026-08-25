@@ -1,9 +1,30 @@
 // app/api/chat/route.ts — Tutor de Enfermagem INT 5224
 // Prompt Mestre conforme Prompt 10Aug2026.docx (15 seções implementadas)
 
+import { randomUUID } from 'node:crypto';
+
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenAI, ThinkingLevel } from '@google/genai';
+
+import {
+  finalizeGeneratedTurn,
+  resolveTurn,
+  type FastResponseKey,
+  type GenerationMode,
+} from '@/lib/chat/session-flow';
+import {
+  findCompletedTurn,
+  getSessionHistory,
+  inferLegacySessionState,
+  loadSessionState,
+  saveTurn,
+  type ChatHistoryItem,
+  type TurnMetadata,
+} from '@/lib/chat/session-store';
+import { buildCorePrompt, PROMPT_VERSION } from '@/lib/chat/prompts/core';
+import { FLOW_PROMPT } from '@/lib/chat/prompts/flow';
+import { buildModePrompt } from '@/lib/chat/prompts/modes';
 
 export const runtime = 'nodejs';
 export const maxDuration = 120;
@@ -42,21 +63,8 @@ const SIMULADO_MENU_RESPONSE =
   '*(Exemplos: Hemostasia, Cirurgia Bariátrica, Estomas, Capacitação Hospitalar, Teleconsulta, Cuidados pós-operatórios, entre outros)*';
 
 const INFO_MENU_RESPONSE =
-  '**Informações da Disciplina INT 5224 — O Cuidado no Processo de Viver Humano II (Condição Cirúrgica)**\n\n' +
-  '**Professores e Atendimento:**\n' +
-  '- Profª Ana Graziela Alvarez (Coordenadora): Terças 14h-16h (Sala 416)\n' +
-  '- Profª Lúcia Nazareth Amante: Segundas 15h-17h (Sala 106)\n' +
-  '- Profª Juliana Balbinot: Sextas 14h-16h (Sala 313)\n' +
-  '- Equipe: Profas. Neide Knihs, Luciara Sebold, Keyla Nascimento e Vanessa Fernandes.\n\n' +
-  '**Critérios de Avaliação:**\n' +
-  '- Média Final = (AT1 × 0,35) + (AT2 × 0,15) + (ATP × 0,50)\n' +
-  '- Nota mínima de aprovação: 6,0 | Frequência mínima: 75%\n\n' +
-  '**Aulas Teóricas:** Segundas-feiras (07h30 às 11h50) na Sala B109 do CCS.\n\n' +
-  '**Trabalhos e Atestados:** Formato ABNT. Atestados médicos até 48h via Moodle.\n\n' +
-  'Deseja fazer outra pergunta, voltar ao menu principal ou encerrar a sessão?';
-
-const REFUSAL_RESPONSE =
-  'Não posso responder a essa solicitação porque está fora do escopo da disciplina ou das diretrizes éticas do assistente. Posso ajudar com temas relacionados à disciplina O cuidado no processo de viver humano II - a condição cirúrgica. Deseja voltar ao menu principal ou repetir a pergunta?';
+  'Que informação da disciplina você deseja consultar?\n\n' +
+  'Você pode perguntar sobre o plano de ensino, professores, horários, cronograma, avaliações, frequência, trabalhos ou conteúdo programático.';
 
 const FALLBACK_RESPONSE =
   'Desculpe, o material de estudo disponível não contém informações suficientes ' +
@@ -67,118 +75,35 @@ const FALLBACK_RESPONSE =
   '- Bases de dados científicas: **LILACS**, **BVS**, **PubMed**\n' +
   '- Publicações do **COFEN** (cofen.gov.br) e **Ministério da Saúde** (saude.gov.br)';
 
-const LOCAL_COURSE_INFO = `
-Documento: PLANO ENSINO INT5224 2026-2.pdf
-Conteúdo:
-1. PROFESSORES E HORÁRIOS DE ATENDIMENTO:
-- Ana Graziela Alvarez (Coordenadora): terça-feira das 14h às 16h na Sala 416 (E-mail: a.graziela@ufsc.br)
-- Lúcia Nazareth Amante: segunda-feira das 15h às 17h na Sala 106 (E-mail: lucia.amante@ufsc.br)
-- Juliana Balbinot Reis Girondi: sexta-feira das 14h às 16h na Sala 313 (E-mail: juliana.balbinot@ufsc.br)
-- Outras professoras da equipe: Neide da Silva Knihs (neide.knihs@ufsc.br), Luciara Fabiane Sebold (fabiane.sebold@ufsc.br), Keyla Cristiane do Nascimento (keyla.n@ufsc.br) e Vanessa Martinhago Borges Fernandes (vanessa.fernandes@ufsc.br).
-- Canais de comunicação preferenciais: Moodle (AVA) ou e-mail institucional.
-
-2. FORMATO DE ENTREGA DE TRABALHOS:
-- Todos os trabalhos escritos devem ser apresentados e entregues de acordo com as últimas atualizações das normas da ABNT para trabalhos científicos. O tutorial de normas está disponível no portal da Biblioteca Universitária (BU UFSC).
-- A entrega de atestados médicos deve respeitar o prazo máximo de 48 horas.
-- Contatos e envios devem ser feitos preferencialmente pelo AVA Moodle ou e-mail institucional das professoras.
-
-3. CRITÉRIOS DE AVALIAÇÃO E NOTAS:
-- A Média Final (MF) é calculada pela fórmula ponderada:
-  MF = (AT1 * 0.35) + (AT2 * 0.15) + (ATP * 0.50)
-  Onde:
-  * AT1 (Avaliação Teórica 1): Prova individual escrita (peso 3,5 / 35% da nota).
-  * AT2 (Avaliação Teórica 2): Prova em dupla escrita (peso 1,5 / 15% da nota).
-  * ATP (Avaliação Teórico-Prática): Individual em simulação realística no laboratório (peso 5,0 / 50% da nota).
-- Critérios de Aprovação: Média Final (MF) igual ou superior a 6,0 (seis) e frequência mínima de 75% tanto nas atividades teóricas quanto nas teórico-práticas. Caso contrário, o estudante será reprovado.
-
-4. CRONOGRAMA E CALENDÁRIO DE ATIVIDADES:
-- Aulas teóricas ocorrem na Sala B109 do CCS, no período matutino (07h30 às 11h50).
-- Calendário inicial das aulas teóricas:
-  * 10/08: Abertura da disciplina, orientações gerais, apresentação do plano de ensino e metodologia (Profs. Ana e Neide).
-  * 17/08: Unidade Cirúrgica: estrutura, funcionamento e recursos humanos (Prof. Luciara).
-  * 24/08: Terminologia cirúrgica: nomenclatura e conceitos básicos (Prof. Vanessa).
-  * 31/08: Cuidados pré-operatórios: avaliação pré-operatória e preparo do paciente (Prof. Juliana).
-  * 07/09: Feriado (Independência do Brasil).
-  * 14/09: Cuidados transoperatórios: posicionamento cirúrgico e segurança (Prof. Keyla).
-  * 21/09: Anestesia: tipos, drogas e repercussões sistêmicas (Prof. Luciara).
-  * 28/09: Sala de Recuperação Pós-Anestésica (SRPA): cuidados e monitorização (Prof. Neide).
-  * 05/10: Cuidados pós-operatórios na unidade de internação (Prof. Ana).
-  * 12/10: Feriado (Nossa Senhora Aparecida).
-  * 19/10: Avaliação Teórica 1 (AT1).
-
-5. CONTEÚDO PROGRAMÁTICO DA DISCIPLINA:
-- O cuidado de enfermagem no processo perioperatório (pré-operatório, transoperatório, recuperação anestésica na SRPA e pós-operatório na unidade clínica).
-- Dinâmica organizacional do Centro Cirúrgico e Central de Materiais e Esterilização (CME).
-- Terminologia, nomenclatura, anestesias, posicionamento cirúrgico do paciente e protocolos de segurança cirúrgica (cirurgia segura).
-`;
 
 // ── Tipos ─────────────────────────────────────────────────────────────────────
 
 interface ChatRequest {
   session_id: string;
+  request_id?: string;
   message: string;
 }
 
 interface Document {
+  id: string;
   content: string;
   source: string;
   similarity: number;
 }
 
-// ── Roteamento por intenção (sem LLM) ────────────────────────────────────────
-
-type Intent = 'greeting' | 'menu_return' | 'farewell' | 'menu_resumo' | 'menu_simulado' | 'menu_info' | 'aprofundar' | 'content';
-
-function detectIntent(text: string): Intent {
-  const norm = text
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^\w\s]/g, ' ')
-    .trim();
-
-  if (!norm) return 'greeting';
-
-  // Retorno explícito ao menu
-  if (
-    /^(menu|voltar|inicio|home|opcoes|opcao|voltar pro comeco|quero o menu|menu principal|voltar ao menu|quero voltar ao menu|voltar para o menu|ir para o menu|retornar ao menu|quero voltar)$/.test(norm) ||
-    (norm.length < 30 && /\bvoltar\b/.test(norm) && /\bmenu\b/.test(norm)) ||
-    (norm.length < 30 && /\bmenu\b/.test(norm) && /\bprincipal\b/.test(norm))
-  ) {
-    return 'menu_return';
-  }
-
-  // Correspondência exata das escolhas do menu (sem "aprofundar" — não é menu_return)
-  if (/^(1|opcao 1|resumo de conteudo|1 resumo de conteudo|resumo)$/.test(norm)) {
-    return 'menu_resumo';
-  }
-  if (/^(2|opcao 2|quiz da disciplina|quiz|simulado de prova|simulado|2 quiz da disciplina|2 simulado de prova)$/.test(norm)) {
-    return 'menu_simulado';
-  }
-  if (/^(3|opcao 3|informacoes da disciplina|informacao da disciplina|3 informacoes da disciplina|informacoes|informacao)$/.test(norm)) {
-    return 'menu_info';
-  }
-  if (/^(4|opcao 4|encerrar sessao|encerrar|sair|tchau|bye|adeus|finalizar)$/.test(norm)) {
-    return 'farewell';
-  }
-
-  // Aprofundamento do tema atual (NÃO é retorno ao menu)
-  if (/^(aprofundar|aprofundar este tema|aprofundar mais|aprofundar o tema)$/.test(norm)) {
-    return 'aprofundar';
-  }
-
-  const words = norm.split(/\s+/).filter(Boolean);
-
-  // Saudação / navegação inicial
-  if (
-    words.length <= 3 &&
-    words.some((w) => ['oi', 'ola', 'opa', 'bom', 'boa', 'hello', 'hi', 'salve', 'comecar', 'tutor', 'bot'].includes(w))
-  ) {
-    return 'greeting';
-  }
-
-  return 'content';
+interface MatchDocumentRow {
+  id?: string;
+  content: string;
+  source?: string;
+  similarity?: number;
 }
+
+type MatchDocumentsRpc = (
+  functionName: 'match_documents',
+  args: { query_embedding: number[]; match_threshold: number; match_count: number },
+) => Promise<{ data: MatchDocumentRow[] | null; error: { message: string } | null }>;
+
+// ── Roteamento por intenção (sem LLM) ────────────────────────────────────────
 
 // ── Helpers de formatação RAG ─────────────────────────────────────────────────
 
@@ -201,211 +126,58 @@ function formatHistory(history: Array<{ role: string; content: string }>): strin
 // ── Clientes lazy ────────────────────────────────────────────────────────────
 
 let _supabase: ReturnType<typeof createClient> | null = null;
-let _genai: GoogleGenerativeAI | null = null;
+let _genai: GoogleGenAI | null = null;
 
 function getSupabase() {
-  if (!_supabase) _supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_KEY!);
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.SUPABASE_KEY;
+  if (!url || !key) throw new Error('CONFIGURATION_MISSING_SUPABASE');
+  if (!_supabase) _supabase = createClient(url, key);
   return _supabase;
 }
 function getGenAI() {
-  if (!_genai) _genai = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY!);
+  const apiKey = process.env.GOOGLE_API_KEY ?? process.env.GEMINI_API_KEY;
+  if (!apiKey) throw new Error('CONFIGURATION_MISSING_GEMINI');
+  if (!_genai) _genai = new GoogleGenAI({ apiKey });
   return _genai;
 }
 
 // ── Embedding ─────────────────────────────────────────────────────────────────
 
 async function embedQuery(text: string): Promise<number[]> {
-  const model = getGenAI().getGenerativeModel({ model: 'gemini-embedding-2' });
-  const result = await model.embedContent({
-    content: { role: 'user', parts: [{ text }] },
-    outputDimensionality: 768,
-  } as any);
-  return result.embedding.values;
+  const result = await getGenAI().models.embedContent({
+    model: 'gemini-embedding-2',
+    contents: text,
+    config: {
+      outputDimensionality: 768,
+      taskType: 'RETRIEVAL_QUERY',
+    },
+  });
+  const values = result.embeddings?.[0]?.values;
+  if (!values?.length) throw new Error('EMBEDDING_EMPTY');
+  return values;
 }
 
 // ── Retrieval ─────────────────────────────────────────────────────────────────
 
 async function retrieveDocs(embedding: number[], threshold = 0.35): Promise<Document[]> {
   const supabase = getSupabase();
-  const { data, error } = await (supabase.rpc as any)('match_documents', {
+  const matchDocuments = supabase.rpc.bind(supabase) as unknown as MatchDocumentsRpc;
+  const { data, error } = await matchDocuments('match_documents', {
     query_embedding: embedding,
     match_threshold: threshold,
     match_count: parseInt(process.env.RAG_MATCH_COUNT || '5'),
   });
-  if (error) { console.error('[retrieve]', error); return []; }
-  return (data || []).map((r: Record<string, unknown>) => ({
-    content: r.content as string,
-    source: (r.source as string) || 'desconhecido',
-    similarity: (r.similarity as number) || 0,
+  if (error) throw new Error(`RETRIEVAL_FAILED: ${error.message}`);
+  return (data || []).map((row) => ({
+    id: String(row.id ?? ''),
+    content: row.content,
+    source: row.source || 'desconhecido',
+    similarity: row.similarity || 0,
   }));
 }
 
 // ── System Prompt Mestre (Prompt 20Aug2026 — 15 seções) ──────────────────────
-
-function buildSystemPrompt(context: string, historyText: string): string {
-  return `Prompt Mestre — INT 5224 – O cuidado no processo de viver humano II: a condição cirúrgica (UFSC)
-Versão: 20 de agosto de 2026
-
-1 Identidade do Assistente
-Você é um Assistente de Inteligência Artificial Generativa Educacional da disciplina de código INT 5224 e nome "O cuidado no processo de viver humano II - a condição cirúrgica" da Universidade Federal de Santa Catarina (UFSC).
-Seu propósito é apoiar estudantes de graduação em enfermagem, promovendo aprendizagem personalizada, pensamento crítico e autonomia intelectual. Você não substitui o raciocínio do estudante e nunca fornece respostas prontas para avaliações, trabalhos ou provas.
-
-2 Princípios Éticos Obrigatórios
-- Princípios da UNESCO para Ética da IA: centralidade humana; equidade, inclusão e acessibilidade; transparência e explicabilidade; privacidade e proteção de dados; segurança e bem-estar; promoção do pensamento crítico; uso responsável e pedagógico.
-- Diretrizes da UNESCO para IA Generativa na Educação: evitar dependência excessiva; estimular autonomia intelectual; garantir integridade acadêmica; evitar vieses e discriminação; promover literacia digital e ética.
-- Diretrizes do MEC (Brasil): evitar plágio e respostas completas para avaliações; atuar como apoio, não substituto; promover ética, cidadania e responsabilidade profissional.
-
-3 Perfil dos Usuários
-- Público: estudantes de graduação em enfermagem; níveis variados (iniciante, intermediário, avançado).
-- Preferências: respostas concisas com opção de aprofundamento; indicação de fontes confiáveis.
-- Formatos preferidos: Resumo de Conteúdo; Quiz da Disciplina.
-
-4 Estilo de Comunicação
-- Linguagem acadêmica e técnica adequada à área da saúde; tom motivador e respeitoso; clareza e rigor conceitual.
-- Respostas concisas, com opção de aprofundamento.
-- Explicações por analogias, exemplos clínicos e cenários práticos.
-- Referências sempre listadas como tópicos (ver seção 6).
-
-5 Guard Rails – Escopo e Segurança
-Recusar educadamente solicitações que envolvam:
-- Temas fora do escopo da disciplina; conteúdos não relacionados à enfermagem/saúde; questões antiéticas, imorais, ilegais; diagnósticos, prescrições ou condutas clínicas; respostas prontas para avaliações; temas políticos, religiosos, sexuais ou ideológicos; conteúdos discriminatórios ou ofensivos; perguntas metanarrativas fora do conteúdo (ex.: "qual o meu nível de interação com você?", "me dê um relatório de uso", "quantas mensagens enviei", "como você me avalia", "qual é o seu modelo").
-
-Texto de recusa padrão (copiar EXATAMENTE):
-"Não posso responder a essa solicitação porque está fora do escopo da disciplina ou das diretrizes éticas do assistente. Posso ajudar com temas relacionados à disciplina O cuidado no processo de viver humano II - a condição cirúrgica. Deseja voltar ao menu principal ou repetir a pergunta?"
-
-6 Regras para Referências (OBRIGATÓRIO EM TODA RESPOSTA DE CONTEÚDO E RESUMO)
-- A seção de referências deve ser apresentada SEMPRE ao final da resposta, quando aplicável.
-- As referências devem ser construídas EXCLUSIVAMENTE com informações disponíveis dentro do artigo/livro consultado na base de conhecimentos, sem inventar dados ou completar informações ausentes.
-- O formato das referências não precisa seguir um padrão bibliográfico específico, mas DEVE ser consistente e estável, mantendo sempre a mesma estrutura independentemente do usuário ou da interação.
-- CADA REFERÊNCIA DEVE SER APRESENTADA EM UMA LINHA SEPARADA, COMO ITEM DE LISTA / TÓPICO. É terminantemente proibido texto corrido ou transformar referências em parágrafos contínuos.
-- Formato obrigatório de cada item de referência:
-  • Referência: [informações disponíveis no artigo/livro]
-- Se o artigo/livro não fornecer informações suficientes para compor uma referência, registrar apenas o que estiver disponível (ex.: "• Referência: [informações disponíveis no artigo]").
-- Se nenhuma informação estiver disponível, indicar obrigatoriamente: "• Referência: Informação não disponível no artigo, consultar o Plano de Ensino ou docentes."
-
-7 Comportamento Inicial – Menu Principal
-
-7.1 Mensagem inicial completa (primeira interação da sessão):
-"Olá! Que bom ter você aqui no Assistente de Inteligência Artificial da INT 5224 – O cuidado no processo de viver humano II: a condição cirúrgica
-
-Este espaço foi pensado para facilitar sua jornada de aprendizagem sobre o cuidado no processo de viver humano em condição cirúrgica. Aqui você revisa conteúdos, prática com quizes e acessa informações essenciais da disciplina.
-
-Nota de transparência: Este assistente utiliza inteligência artificial para apoiar seu estudo. Ele não substitui o raciocínio clínico, a leitura das aulas ou a orientação docente. Todas as respostas seguem o plano de ensino e os limites éticos da disciplina.
-
-Como usar: Fale comigo como se estivesse conversando com um tutor. Peça explicações, tire dúvidas ou escolha uma das opções abaixo.
-
-O que esperar: Clareza, objetividade e apoio contínuo — sempre dentro dos limites da disciplina.
-
-Opções:
-• Resumo de Conteúdo
-• Quiz da Disciplina
-• Informações da Disciplina
-• Encerrar Sessão"
-
-7.2 Mensagem curta quando o usuário retorna ao menu dentro da mesma sessão:
-"Você voltou ao menu principal.
-
-Escolha uma opção ou envie uma pergunta livre relacionada à disciplina:
-• Resumo de Conteúdo
-• Quiz da Disciplina
-• Informações da Disciplina
-• Encerrar Sessão"
-
-7.3 Validação de entrada:
-Se a entrada do usuário não corresponder a uma das opções, pedir que digite novamente:
-"Não entendi sua entrada. Por favor, escolha uma das opções abaixo ou envie uma pergunta relacionada à disciplina.
-Exemplos válidos: Resumo de Conteúdo, Resumo, Quiz da Disciplina, Quiz, Informações da Disciplina, Encerrar Sessão, Encerrar."
-
-7.4 Interações Livres – Regras e Validações:
-- Dentro do escopo: responder normalmente; manter rigor técnico; oferecer caminhos adicionais (resumo, quiz, aprofundamento).
-- Parcialmente relacionada: responder o que for possível; indicar limites; conectar ao conteúdo da disciplina.
-- Fora do escopo: usar o texto de recusa padrão da seção 5.
-
-7.5 Detecção de retorno ao menu:
-Exibir a mensagem curta quando o usuário digitar: "menu", "voltar", "início", "home", "opções", "voltar pro começo", "quero o menu"; ou ao concluir um resumo ou quiz.
-
-8 Fluxo da Opção 1 – Resumo de Conteúdo
-1. Solicitação de tema: perguntar: "Qual tema da disciplina O cuidado no processo de viver humano II - a condição cirúrgica você deseja estudar?"
-   - Validação: Se a entrada for ampla ou ambígua, solicitar especificação e oferecer exemplos de temas válidos (ex.: Controle de infecção no perioperatório, Feridas, Nomenclatura Cirúrgica, Suturas, Dor pós-operatória, Cuidados pré-operatórios, Avaliação Nutricional).
-   - Regra adicional: Se o usuário escolher "Resumo de Conteúdo" (ou variações equivalentes) e já informar o tema no mesmo comando, o assistente não deve perguntar novamente o tema. Ele deve identificar o tema informado e gerar diretamente o resumo.
-2. Refinamento: Se o tema informado for muito amplo, solicitar um subtema e oferecer exemplos adequados.
-3. Estrutura do resumo (entregue de forma concisa):
-   - **Explicação:** texto claro e conciso sobre o tema.
-   - **Exemplo clínico:** caso contextualizado na enfermagem perioperatória.
-   - **Relação com a prática:** ações de enfermagem relacionadas ao perioperatório.
-   - **Sugestões de estudo complementar:** indicações para aprofundamento.
-   - **Referências:** (SEMPRE UMA POR LINHA, EM TÓPICOS, conforme Seção 6: "• Referência: [informações disponíveis no artigo]")
-4. Correção ao escolher "Aprofundar": se optar por "Aprofundar", o assistente DEVE reconhecer o tema estudado e gerar explicação mais detalhada sobre o mesmo tema, mantendo o fluxo no Resumo sem retornar ao menu nem exibir mensagens de boas-vindas.
-5. Encerramento: após o resumo/aprofundamento, perguntar: "Deseja aprofundar este tema, escolher outro tema, voltar ao menu principal ou encerrar a sessão?"
-
-9 Fluxo da Opção 2 – Quiz da Disciplina
-1. Solicitação de tema: perguntar: "Qual tema você deseja para o Quiz da Disciplina? Após a declaração do tema, farei três perguntas de múltipla escolha onde apenas uma resposta é a correta."
-   - Validação: Se a entrada for ampla ou ambígua, solicitar especificação e oferecer exemplos de temas válidos (ex.: Hemostasia, Cirurgia Bariátrica, Estomas, Capacitação Hospitalar, Teleconsulta, Cuidados pós-operatórios).
-   - Regra adicional: Se o usuário escolher "Quiz da Disciplina" (ou variações equivalentes) e já informar o tema no mesmo comando, o assistente não deve perguntar novamente o tema. Ele deve identificar o tema informado e iniciar diretamente o quiz.
-2. Refinamento: Se o tema informado for muito amplo, solicitar um subtema e oferecer exemplos adequados.
-3. Geração do quiz: Criar 3 questões de múltipla escolha (níveis variados), apresentadas uma por vez.
-   - Formatação obrigatória das questões:
-     - O título da questão (ex.: **Questão 1:**) deve estar em **negrito**.
-     - Cada alternativa deve aparecer em **linha separada** (nunca texto corrido).
-     - O texto de cada alternativa deve estar em **negrito** (ex.: **A)**, **B)**, **C)**, **D)**).
-4. Apresentação das questões: o assistente apresenta uma questão por vez e aguarda a resposta do estudante antes de prosseguir.
-5. Comportamento para respostas (REGRA DE 2 TENTATIVAS):
-   - Se correta -> confirmar e reforçar o conceito brevemente (1–2 frases).
-   - Se incorreta -> oferecer uma nova chance ("Sua resposta está incorreta. Tente novamente! Qual das alternativas você escolheria agora?"); se a segunda tentativa também estiver incorreta -> fornecer a resposta correta com uma explicação super breve (1–2 frases), e prosseguir para a próxima questão.
-6. Apresentação de respostas e feedback: em formato de tópicos.
-7. Encerramento: após as 3 questões, perguntar: "Deseja continuar o quiz, escolher outro tema, voltar ao menu principal ou encerrar a sessão?"
-
-10 Fluxo da Opção 3 – Informações da Disciplina
-- Responder perguntas sobre conteúdo programático, calendário de atividades, formato de entrega de trabalhos, critérios de avaliação, perguntas frequentes.
-- Regra adicional: Se o usuário escolher "Informações da Disciplina" (ou variações equivalentes) e já informar a pergunta específica no mesmo comando, o assistente não deve solicitar tema adicional. Ele deve identificar a pergunta e responder diretamente.
-- Fonte obrigatória: Usar sempre o plano de ensino disponível na base de conhecimentos (RAG). Se a informação não estiver disponível ou estiver incompleta, orientar: "Consultar o plano de ensino na página da disciplina no Moodle."
-- Após cada resposta: "Deseja fazer outra pergunta, voltar ao menu principal ou encerrar a sessão?"
-
-11 Fluxo da Opção 4 – Encerrar Sessão
-Responder: "Sessão encerrada. Bons estudos! Estarei aqui sempre quando precisar."
-
-12 Regras Pedagógicas Gerais
-- Nunca entregar respostas prontas para avaliações.
-- Estimular raciocínio clínico e metacognição.
-- Adaptar explicações ao nível do estudante (iniciante, intermediário, avançado).
-- Repetir conceitos com variação quando houver dúvida.
-- Oferecer caminhos de estudo, não soluções fechadas.
-
-13 Comportamento Adaptativo e Validação de Entrada
-- Detectar nível: iniciante / intermediário / avançado.
-- Ajuste automático de exemplos e profundidade conforme nível detectado.
-- Validação universal: em todas as etapas, verificar formato recebido; se inválido, pedir reentrada com 2–3 exemplos aceitáveis ("Não entendi sua entrada. Por favor, digite novamente. Exemplos válidos: X, Y e Z").
-
-14 Regras de Recusa e Alternativas
-- Ao recusar por escopo ou ética, utilizar o texto de recusa padrão (seção 5) e oferecer alternativas seguras dentro da disciplina.
-
-15 Instruções Técnicas para Integração com a Interface Web
-- Entradas do usuário: normalizar espaços, maiúsculas/minúsculas e acentos antes da validação.
-- Referências: A seção de referências deve ser apresentada sempre ao final da resposta, quando aplicável.
-- As referências devem ser construídas exclusivamente com informações disponíveis dentro do artigo/livro consultado na base de conhecimentos, sem inventar dados ou completar informações ausentes.
-- O formato das referências não precisa seguir um padrão bibliográfico específico, mas deve ser consistente e estável, mantendo sempre a mesma estrutura independentemente do usuário ou da interação.
-- Cada referência DEVE OBRIGATORIAMENTE ser apresentada em uma linha separada, como item de lista (formato de tópicos: "• Referência: [informações disponíveis no artigo]").
-- Se o artigo/livro não fornecer informações suficientes para compor uma referência, registrar apenas o que estiver disponível.
-- Se nenhuma informação estiver disponível, indicar: "• Referência: Informação não disponível no artigo, consultar o Plano de Ensino ou docentes."
-
----
-
-## Materiais de Estudo Disponíveis (Base de Conhecimento RAG):
-${context}
-
-${historyText ? `## Histórico da Conversa:\n${historyText}` : ''}
-
----
-REGRAS CRÍTICAS FINAIS:
-1. TODA resposta de conteúdo (resumo, aprofundamento, informações) DEVE obrigatoriamente incluir a seção "**Referências:**" com cada referência em uma linha separada em tópicos ("• Referência: [informações disponíveis no artigo]"). NUNCA transformar em texto corrido ou parágrafo contínuo. NUNCA inventar.
-2. O formato e a estrutura das respostas DEVEM ser SEMPRE IDÊNTICOS entre interações.
-3. NUNCA usar markdown de links clicáveis ([texto](url)) nas respostas. Usar apenas texto puro e formatação em negrito/tópicos.
-4. NUNCA gerar campos interativos aleatórios.
-5. "Aprofundar" significa aprofundar o MESMO tema já estudado — NUNCA retornar ao menu ou perguntar o tema novamente.
-6. No Quiz/Simulado: NUNCA incluir Referências nas questões. Alternativas SEMPRE em linhas separadas com negrito.`;
-}
-
-// ── Formatador Pós-Processamento para Garantir Referências em Tópicos ─────────
 
 function normalizeReferencesFormat(text: string): string {
   if (!text) return text;
@@ -469,454 +241,386 @@ function normalizeReferencesFormat(text: string): string {
 
 // ── Geração de resposta ───────────────────────────────────────────────────────
 
-type SessionMode = 'simulado_tema' | 'simulado_respondendo' | 'simulado_segunda_tentativa' | 'resumo_aprofundar' | 'resumo' | 'info' | 'livre';
+interface GenerationResult {
+  text: string;
+  modelRequested: string;
+  modelUsed: string | null;
+  fallbackUsed: boolean;
+  fallbackReason: string | null;
+  errorCode: string | null;
+  latencyMs: number;
+}
 
 async function generateResponse(
   question: string,
   docs: Document[],
   history: Array<{ role: string; content: string }>,
-  sessionMode: SessionMode = 'livre',
-  inlineTheme?: string
-): Promise<string> {
-  const systemPrompt = buildSystemPrompt(formatContext(docs), formatHistory(history));
+  sessionMode: GenerationMode = 'livre',
+  inlineTheme?: string,
+  quizQuestion = 0,
+): Promise<GenerationResult> {
+  const generationStartedAt = Date.now();
+  const systemPrompt = `${buildCorePrompt({
+    context: formatContext(docs),
+    history: formatHistory(history),
+  })}\n\n${FLOW_PROMPT}`;
 
-  const candidateModels = [
-    'gemini-3.5-flash-lite',
-    'gemini-3.1-flash-lite',
-    'gemini-flash-lite-latest',
+  const requestedModel = process.env.GEMINI_CHAT_MODEL ?? 'gemini-3.5-flash';
+  const candidateModels = [...new Set([
+    requestedModel,
     'gemini-3.5-flash',
+    'gemini-3.1-flash-lite',
+    'gemini-3.5-flash-lite',
+    'gemini-3.6-flash',
     'gemini-3.7-flash',
-    'gemini-3.6-flash'
-  ];
+  ])];
 
-  const themeToUse = inlineTheme || question;
-
-  // Instrução de contexto de sessão injetada para garantir o modo correto
-  let modeInstruction = '';
-  let promptSuffix = `Estudante: ${question}`;
-
-  if (sessionMode === 'simulado_tema') {
-    modeInstruction = `[MODO ATIVO: SIMULADO DE PROVA — GERAR QUESTÃO 1]
-VOCÊ ESTÁ GERANDO UM SIMULADO DE PROVA (OPÇÃO 2) SOBRE O TEMA "${themeToUse}".
-NUNCA GERE RESUMO DE CONTEÚDO. NUNCA USE OS TÍTULOS **Explicação:** OU **Exemplo clínico:**. NUNCA INCLUA REFERÊNCIAS EM QUESTÕES DE QUIZ.
-
-GERAR OBRIGATORIAMENTE A QUESTÃO 1 NO SEGUINTE FORMATO EXATO (CADA ALTERNATIVA EM SUA PRÓPRIA LINHA SEPARADA, UMA EMBAIXO DA OUTRA — PROIBIDO LINHA ÚNICA):
-**Questão 1:** [Enunciado claro e contextualizado da primeira questão sobre ${themeToUse}]
-
-**A)** [Texto da alternativa A]
-
-**B)** [Texto da alternativa B]
-
-**C)** [Texto da alternativa C]
-
-**D)** [Texto da alternativa D]
-
-Por favor, responda com a letra da alternativa correta (A, B, C ou D).`;
-    promptSuffix = `Tema do simulado: ${themeToUse}`;
-
-  } else if (sessionMode === 'simulado_respondendo') {
-    modeInstruction = `[MODO ATIVO: QUIZ DA DISCIPLINA — AVALIANDO 1ª TENTATIVA DO ALUNO]
-VOCÊ ESTÁ AVALIANDO A 1ª TENTATIVA DO ESTUDANTE NA QUESTÃO DO QUIZ/SIMULADO SOBRE "${themeToUse || 'o tema em estudo'}".
-O ESTUDANTE DIGITOU COMO RESPOSTA: "${question}".
-
-ESTA SOLICITAÇÃO É A RESPOSTA DE UMA QUESTÃO DO QUIZ DA DISCIPLINA INT 5224. ELA ESTÁ 100% DENTRO DO ESCOPO DA DISCIPLINA. JAMAIS RECUSE OU USE O TEXTO DE RECUSA PADRÃO. NUNCA INCLUA BLOCO DE REFERÊNCIAS.
-
-INSTRUÇÕES OBRIGATÓRIAS DE RESPOSTA:
-1. Se a resposta "${question}" estiver CORRETA:
-   - Confirme brevemente a resposta correta (1-2 frases).
-   - Apresente a **Questão 2:** sobre o tema "${themeToUse}" com as alternativas **A)**, **B)**, **C)** e **D)** em negrito e cada uma em sua própria linha separada (uma embaixo da outra).
-2. Se a resposta "${question}" estiver INCORRETA:
-   - Responda EXATAMENTE: "Sua resposta está incorreta. Tente novamente! Qual das alternativas você escolheria agora?"
-   - NÃO revele a alternativa correta ainda. NÃO avance para a próxima questão ainda.`;
-    promptSuffix = `Resposta do estudante (1ª tentativa no Quiz de ${themeToUse}): ${question}`;
-
-  } else if (sessionMode === 'simulado_segunda_tentativa') {
-    modeInstruction = `[MODO ATIVO: QUIZ DA DISCIPLINA — AVALIANDO 2ª TENTATIVA DO ALUNO]
-VOCÊ ESTÁ AVALIANDO A 2ª TENTATIVA DO ESTUDANTE NA MESMA QUESTÃO DO QUIZ/SIMULADO SOBRE "${themeToUse || 'o tema em estudo'}".
-O ESTUDANTE DIGITOU COMO SEGUNDA RESPOSTA: "${question}".
-
-ESTA SOLICITAÇÃO É A SEGUNDA TENTATIVA DE UMA QUESTÃO DO QUIZ DA DISCIPLINA INT 5224. ELA ESTÁ 100% DENTRO DO ESCOPO DA DISCIPLINA. JAMAIS RECUSE OU USE O TEXTO DE RECUSA PADRÃO. NUNCA INCLUA BLOCO DE REFERÊNCIAS.
-
-INSTRUÇÕES OBRIGATÓRIAS DE RESPOSTA:
-1. Se a resposta "${question}" estiver CORRETA:
-   - Confirme a resposta correta (1 frase) e apresente a **Questão 2:** sobre "${themeToUse}" com as alternativas **A)**, **B)**, **C)** e **D)** em negrito e cada uma em sua própria linha separada (uma embaixo da outra).
-2. Se a resposta "${question}" estiver INCORRETA pela 2ª vez:
-   - Revele a resposta correta: "A alternativa correta é a **X)**. [explicação super breve em 1-2 frases]"
-   - Apresente em seguida a **Questão 2:** sobre "${themeToUse}" com as alternativas **A)**, **B)**, **C)** e **D)** em negrito e cada uma em sua própria linha separada (uma embaixo da outra).`;
-    promptSuffix = `Resposta do estudante (2ª tentativa no Quiz de ${themeToUse}): ${question}`;
-
-  } else if (sessionMode === 'resumo_aprofundar') {
-    const targetTopic = themeToUse || 'o tema estudado anteriormente';
-    modeInstruction = `[MODO ATIVO: APROFUNDAMENTO DE RESUMO — OPÇÃO 1]
-VOCÊ ESTÁ APROFUNDANDO O RESUMO SOBRE O TEMA "${targetTopic}".
-NÃO PERGUNTE O TEMA NOVAMENTE. NÃO VOLTE AO MENU. NÃO EXIBA MENSAGEM DE BOAS-VINDAS.
-
-GERAR OBRIGATORIAMENTE O APROFUNDAMENTO NO SEGUINTE FORMATO EXATO:
-**Explicação aprofundada:** [Explicação detalhada e aprofundada sobre ${targetTopic}]
-**Aspectos avançados:** [Conceitos mais complexos do tema]
-**Implicações clínicas:** [Aplicações práticas avançadas na enfermagem]
-**Sugestões de estudo complementar:** [Indicações de leitura]
-**Referências:**
-• Referência: [informações disponíveis no artigo/livro]
-
-Ao final, inclua EXATAMENTE a pergunta:
-"Deseja aprofundar este tema, escolher outro tema, voltar ao menu principal ou encerrar a sessão?"`;
-    promptSuffix = `Tema a aprofundar: ${targetTopic}`;
-
-  } else if (sessionMode === 'resumo') {
-    modeInstruction = `[INSTRUÇÃO OBRIGATÓRIA — MODO RESUMO ATIVO]
-O estudante solicitou um resumo sobre "${themeToUse}".
-NÃO pergunte o tema novamente. Gere o resumo completo sobre "${themeToUse}" seguindo EXATAMENTE a estrutura obrigatória:
-**Explicação:** texto claro e conciso sobre o tema.
-**Exemplo clínico:** caso contextualizado na enfermagem perioperatória.
-**Relação com a prática:** ações de enfermagem relacionadas ao perioperatório.
-**Sugestões de estudo complementar:** indicações para aprofundamento.
-**Referências:** (SEMPRE UMA POR LINHA, EM TÓPICOS: "• Referência: [informações disponíveis no artigo]")
-Ao final: "Deseja aprofundar este tema, escolher outro tema, voltar ao menu principal ou encerrar a sessão?"`;
-    promptSuffix = `Tema solicitado pelo estudante: ${themeToUse}`;
-  }
-
-  const prompt = modeInstruction
-    ? `${modeInstruction}\n\n${promptSuffix}`
-    : `Estudante: ${question}`;
+  const prompt = buildModePrompt({
+    mode: sessionMode,
+    question,
+    topic: inlineTheme || question,
+    quizQuestion,
+  });
 
   let text = '';
-  let lastErr: any = null;
+  let lastErrorMessage = '';
 
   for (const modelName of candidateModels) {
     try {
-      const model = getGenAI().getGenerativeModel({
+      const result = await getGenAI().models.generateContent({
         model: modelName,
-        systemInstruction: systemPrompt,
-        generationConfig: {
-          temperature: 0.2,
+        contents: prompt,
+        config: {
+          systemInstruction: systemPrompt,
           maxOutputTokens: 2500,
+          thinkingConfig: {
+            thinkingLevel: ThinkingLevel.LOW,
+          },
         },
       });
-
-      const result = await model.generateContent(prompt);
-      text = result.response.text();
+      text = result.text ?? '';
 
       // Garante a presença da pergunta de encerramento sem re-execução custosa
-      if ((sessionMode === 'resumo' || sessionMode === 'resumo_aprofundar') && !text.includes('Deseja')) {
+      if (
+        (sessionMode === 'resumo' || sessionMode === 'resumo_aprofundar' || sessionMode === 'resumo_reformular') &&
+        !text.includes('Deseja')
+      ) {
         text = `${text.trim()}\n\n` + 'Deseja aprofundar este tema, escolher outro tema, voltar ao menu principal ou encerrar a sessão?';
       }
 
       if (text && text.trim().length > 0) {
-        return normalizeReferencesFormat(text);
+        return {
+          text: normalizeReferencesFormat(text),
+          modelRequested: candidateModels[0],
+          modelUsed: modelName,
+          fallbackUsed: modelName !== candidateModels[0],
+          fallbackReason: modelName !== candidateModels[0] ? 'PRIMARY_MODEL_FAILED' : null,
+          errorCode: null,
+          latencyMs: Date.now() - generationStartedAt,
+        };
       }
-    } catch (err: any) {
-      lastErr = err;
-      console.warn(`[generateResponse] Model ${modelName} failed (${err?.status || err?.message}), tentando próximo modelo imediatamente...`);
+      lastErrorMessage = 'EMPTY_MODEL_RESPONSE';
+    } catch (error: unknown) {
+      lastErrorMessage = error instanceof Error ? error.message : String(error);
+      console.warn(
+        `[generateResponse] Model ${modelName} falhou; tentando o próximo modelo: ${lastErrorMessage.slice(0, 200)}`,
+      );
     }
   }
 
-  console.error('[generateResponse all candidate models failed]', lastErr);
-  return 'Ocorreu uma interrupção na geração da resposta. Vou continuar de onde parei.\n\n' +
-    'Por favor, refaça a seleção da opção no menu abaixo para prosseguir com seu estudo.';
+  console.error('[generateResponse] Todos os modelos falharam:', lastErrorMessage.slice(0, 200));
+  return {
+    text: 'Ocorreu uma interrupção temporária na geração da resposta. Por favor, tente novamente em instantes.',
+    modelRequested: candidateModels[0],
+    modelUsed: null,
+    fallbackUsed: true,
+    fallbackReason: 'ALL_MODELS_FAILED',
+    errorCode: 'MODEL_FAILED',
+    latencyMs: Date.now() - generationStartedAt,
+  };
 }
 
 // ── Histórico e Cache de Estado ───────────────────────────────────────────────
 
-const sessionStateMap = new Map<string, { lastAssistantMsg: string; lastTheme: string }>();
+// ── HANDLER ───────────────────────────────────────────────────────────────────
 
-function updateSessionState(sessionId: string, assistantMsg: string, theme?: string) {
-  const current = sessionStateMap.get(sessionId) || { lastAssistantMsg: '', lastTheme: '' };
-  sessionStateMap.set(sessionId, {
-    lastAssistantMsg: assistantMsg,
-    lastTheme: theme || current.lastTheme || ''
+const EMBEDDING_MODEL = 'gemini-embedding-2';
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const SESSION_ID_PATTERN = /^[A-Za-z0-9._:-]{1,128}$/;
+
+const FAST_RESPONSES: Record<FastResponseKey, string> = {
+  greeting: GREETING_RESPONSE,
+  menu: MENU_RETURN_RESPONSE,
+  farewell: FAREWELL_RESPONSE,
+  resumo_menu: RESUMO_MENU_RESPONSE,
+  quiz_menu: SIMULADO_MENU_RESPONSE,
+  info_menu: INFO_MENU_RESPONSE,
+};
+
+function buildTurnMetadata(params: {
+  requestId: string;
+  mode: TurnMetadata['mode'];
+  stateBefore: TurnMetadata['state_before'];
+  stateAfter: TurnMetadata['state_after'];
+  topic: string;
+  docs: Document[];
+  modelRequested: string | null;
+  modelUsed: string | null;
+  fallbackUsed: boolean;
+  fallbackReason: string | null;
+  embeddingLatency: number;
+  retrievalLatency: number;
+  generationLatency: number;
+  totalLatency: number;
+  errorCode: string | null;
+}): TurnMetadata {
+  return {
+    request_id: params.requestId,
+    flow_version: 'v1',
+    prompt_version: PROMPT_VERSION,
+    mode: params.mode,
+    state_before: params.stateBefore,
+    state_after: params.stateAfter,
+    current_topic: params.topic,
+    model_requested: params.modelRequested,
+    model_used: params.modelUsed,
+    fallback_used: params.fallbackUsed,
+    fallback_reason: params.fallbackReason,
+    embedding_model: params.docs.length > 0 ? EMBEDDING_MODEL : null,
+    has_context: params.docs.length > 0,
+    sources_found: params.docs.length,
+    retrieval: params.docs.map((doc, index) => ({
+      document_id: doc.id || `source:${doc.source}:${index + 1}`,
+      source: doc.source,
+      rank: index + 1,
+      similarity: doc.similarity,
+    })),
+    latency_ms: {
+      embedding: params.embeddingLatency,
+      retrieval: params.retrievalLatency,
+      generation: params.generationLatency,
+      total: params.totalLatency,
+    },
+    error_code: params.errorCode,
+  };
+}
+
+function chatResponse(params: {
+  answer: string;
+  sessionId: string;
+  requestId: string;
+  sourcesFound: number;
+  historyLength: number;
+  processingTimeMs: number;
+}) {
+  return NextResponse.json({
+    answer: params.answer,
+    session_id: params.sessionId,
+    request_id: params.requestId,
+    sources_found: params.sourcesFound,
+    has_context: params.sourcesFound > 0,
+    chat_history_length: params.historyLength,
+    processing_time_ms: params.processingTimeMs,
   });
 }
 
-async function getSessionHistory(sessionId: string): Promise<Array<{ role: string; content: string }>> {
-  try {
-    const { data } = await (getSupabase().from('chat_messages') as any)
-      .select('role, content')
-      .eq('session_id', sessionId)
-      .order('created_at', { ascending: true })
-      .limit(12);
-    return data || [];
-  } catch { return []; }
-}
-
-async function saveMessages(sessionId: string, userMsg: string, assistantMsg: string, theme?: string) {
-  updateSessionState(sessionId, assistantMsg, theme);
-  try {
-    await (getSupabase().from('chat_messages') as any).insert([
-      { session_id: sessionId, role: 'user', content: userMsg },
-      { session_id: sessionId, role: 'assistant', content: assistantMsg },
-    ]);
-  } catch (e) { console.warn('[save]', e); }
-}
-
-// ── HANDLER ───────────────────────────────────────────────────────────────────
-
 export async function POST(req: NextRequest) {
-  const startTime = Date.now();
+  const startedAt = Date.now();
+  let requestId: string = randomUUID();
+
   try {
-    const body: ChatRequest = await req.json();
-    const { session_id, message } = body;
+    const body = await req.json().catch(() => null) as Partial<ChatRequest> | null;
+    const sessionId = body?.session_id?.trim() ?? '';
+    const question = body?.message?.trim() ?? '';
 
-    if (!message?.trim()) {
-      return NextResponse.json({ error: 'Mensagem vazia' }, { status: 400 });
-    }
-
-    const question = message.trim();
-    const intent = detectIntent(question);
-
-    // ── Rota rápida: saudação/menu inicial → zero tokens de LLM ──────────────
-    if (intent === 'greeting') {
-      await saveMessages(session_id, question, GREETING_RESPONSE);
-      return NextResponse.json({
-        answer: GREETING_RESPONSE,
-        sources_found: 0,
-        has_context: false,
-        chat_history_length: 1,
-        processing_time_ms: Date.now() - startTime,
-      });
-    }
-
-    // ── Rota rápida: retorno ao menu → zero tokens de LLM ────────────────────
-    if (intent === 'menu_return') {
-      await saveMessages(session_id, question, MENU_RETURN_RESPONSE);
-      return NextResponse.json({
-        answer: MENU_RETURN_RESPONSE,
-        sources_found: 0,
-        has_context: false,
-        chat_history_length: 1,
-        processing_time_ms: Date.now() - startTime,
-      });
-    }
-
-    // ── Rota rápida: encerrar sessão → zero tokens de LLM ───────────────────
-    if (intent === 'farewell') {
-      await saveMessages(session_id, question, FAREWELL_RESPONSE);
-      return NextResponse.json({
-        answer: FAREWELL_RESPONSE,
-        sources_found: 0,
-        has_context: false,
-        chat_history_length: 1,
-        processing_time_ms: Date.now() - startTime,
-      });
-    }
-
-    // ── Rota rápida: menu de resumo ───────────────────────────────────────────
-    if (intent === 'menu_resumo') {
-      await saveMessages(session_id, question, RESUMO_MENU_RESPONSE); // await: próxima msg depende deste histórico
-      return NextResponse.json({
-        answer: RESUMO_MENU_RESPONSE,
-        sources_found: 0,
-        has_context: false,
-        chat_history_length: 1,
-        processing_time_ms: Date.now() - startTime,
-      });
-    }
-
-    // ── Rota rápida: menu de simulado ─────────────────────────────────────────
-    if (intent === 'menu_simulado') {
-      await saveMessages(session_id, question, SIMULADO_MENU_RESPONSE); // await: próxima msg depende deste histórico
-      return NextResponse.json({
-        answer: SIMULADO_MENU_RESPONSE,
-        sources_found: 0,
-        has_context: false,
-        chat_history_length: 1,
-        processing_time_ms: Date.now() - startTime,
-      });
-    }
-
-    // ── Rota rápida: informações da disciplina ───────────────────────────────
-    if (intent === 'menu_info') {
-      await saveMessages(session_id, question, INFO_MENU_RESPONSE);
-      return NextResponse.json({
-        answer: INFO_MENU_RESPONSE,
-        sources_found: 0,
-        has_context: false,
-        chat_history_length: 1,
-        processing_time_ms: Date.now() - startTime,
-      });
-    }
-
-    // ── Rota de aprofundamento: continua no mesmo tema sem voltar ao menu ────
-    if (intent === 'aprofundar') {
-      let historyForAprofundar: Array<{ role: string; content: string }> = [];
-      let embeddingForAprofundar: number[] | null = null;
-      try {
-        historyForAprofundar = await getSessionHistory(session_id);
-      } catch (e) {
-        console.warn('[aprofundar history]', e);
+    if (body?.request_id) {
+      if (!UUID_PATTERN.test(body.request_id)) {
+        return NextResponse.json(
+          { error: 'Requisição inválida', error_code: 'INVALID_REQUEST', request_id: requestId },
+          { status: 400 },
+        );
       }
+      requestId = body.request_id;
+    }
 
-      // Encontra o último tema estudado pelo usuário (prioriza cache em memória, depois histórico)
-      const stateFromMap = sessionStateMap.get(session_id);
-      let detectedTheme = stateFromMap?.lastTheme || '';
+    if (!SESSION_ID_PATTERN.test(sessionId) || !question || question.length > 8_000) {
+      return NextResponse.json(
+        { error: 'Sessão ou mensagem inválida', error_code: 'INVALID_REQUEST', request_id: requestId },
+        { status: 400 },
+      );
+    }
 
-      if (!detectedTheme) {
-        const reversedHistory = [...historyForAprofundar].reverse();
-        for (const msg of reversedHistory) {
-          if (msg.role === 'user') {
-            const normUserMsg = msg.content.toLowerCase().trim();
-            if (!/^(menu|voltar|inicio|resumo|simulado|informacoes|encerrar|aprofundar|oi|ola|resumo de conteudo|simulado de prova|informacoes da disciplina|encerrar sessao)$/i.test(normUserMsg)) {
-              detectedTheme = msg.content;
-              break;
-            }
-          }
-        }
-      }
+    const supabase = getSupabase();
+    const history = await getSessionHistory(supabase, sessionId);
+    const completedTurn = await findCompletedTurn(supabase, sessionId, requestId);
 
-      if (!detectedTheme) {
-        detectedTheme = 'O cuidado perioperatório em enfermagem cirúrgica';
-      }
-
-      try {
-        embeddingForAprofundar = await embedQuery(detectedTheme);
-      } catch { }
-
-      const docsAprofundar = embeddingForAprofundar ? await retrieveDocs(embeddingForAprofundar, 0.35) : [];
-      const answerAprofundar = await generateResponse(question, docsAprofundar, historyForAprofundar, 'resumo_aprofundar', detectedTheme);
-      await saveMessages(session_id, question, answerAprofundar, detectedTheme);
-      return NextResponse.json({
-        answer: answerAprofundar,
-        sources_found: docsAprofundar.length,
-        has_context: docsAprofundar.length > 0,
-        chat_history_length: historyForAprofundar.length + 2,
-        processing_time_ms: Date.now() - startTime,
+    if (completedTurn) {
+      const metadata = completedTurn.metadata;
+      return chatResponse({
+        answer: completedTurn.content,
+        sessionId,
+        requestId,
+        sourcesFound: Number(metadata.sources_found ?? 0),
+        historyLength: history.length,
+        processingTimeMs: Date.now() - startedAt,
       });
     }
 
-    // ── Rota de conteúdo: RAG completo + Prompt Mestre ──────────────────────
+    let sessionState;
+    try {
+      sessionState = await loadSessionState(supabase, sessionId, history);
+    } catch (error) {
+      console.warn('[chat] Falha ao carregar estado persistente; usando inferência legada.', error);
+      sessionState = inferLegacySessionState(sessionId, history);
+    }
 
-    let history: Array<{ role: string; content: string }> = [];
+    const decision = resolveTurn(sessionState, question);
+
+    if (decision.kind === 'fast' && decision.fastResponse) {
+      const answer = FAST_RESPONSES[decision.fastResponse];
+      const totalLatency = Date.now() - startedAt;
+      const metadata = buildTurnMetadata({
+        requestId,
+        mode: decision.stateAfter.mode,
+        stateBefore: decision.stateBefore.state,
+        stateAfter: decision.stateAfter.state,
+        topic: decision.topic,
+        docs: [],
+        modelRequested: null,
+        modelUsed: null,
+        fallbackUsed: false,
+        fallbackReason: null,
+        embeddingLatency: 0,
+        retrievalLatency: 0,
+        generationLatency: 0,
+        totalLatency,
+        errorCode: null,
+      });
+
+      await saveTurn(supabase, {
+        sessionId,
+        requestId,
+        userMessage: question,
+        assistantMessage: answer,
+        state: decision.stateAfter,
+        metadata,
+      });
+
+      return chatResponse({
+        answer,
+        sessionId,
+        requestId,
+        sourcesFound: 0,
+        historyLength: history.length + 2,
+        processingTimeMs: Date.now() - startedAt,
+      });
+    }
+
     let docs: Document[] = [];
+    let embeddingLatency = 0;
+    let retrievalLatency = 0;
+    let retrievalErrorCode: string | null = null;
+    const searchQuery = decision.topic || question;
 
     try {
-      history = await getSessionHistory(session_id);
-    } catch (e) {
-      console.warn('[history]', e);
+      const embeddingStartedAt = Date.now();
+      const embedding = await embedQuery(searchQuery);
+      embeddingLatency = Date.now() - embeddingStartedAt;
+
+      const retrievalStartedAt = Date.now();
+      const isCourseQuery =
+        decision.generationMode === 'info' ||
+        /prof|hor[aá]r|atend|cron|calend|nota|avali|plano|trabalho|conte[uú]do|carga|disciplin|ementa|frequ[eê]nc|moodle|email|contato|m[eé]dia|prova/i.test(searchQuery);
+      docs = await retrieveDocs(embedding, isCourseQuery ? 0.25 : 0.35);
+      retrievalLatency = Date.now() - retrievalStartedAt;
+
+      if (docs.length === 0) retrievalErrorCode = 'NO_RELEVANT_CONTEXT';
+    } catch (error) {
+      retrievalErrorCode = embeddingLatency === 0 ? 'EMBEDDING_FAILED' : 'RETRIEVAL_FAILED';
+      console.warn(`[chat] ${retrievalErrorCode} para request_id=${requestId}`, error);
     }
 
-    // ── Detecção de contexto de sessão ────────────────────────────────────────
-    // Prioridade: Atalho Inline > Cache em Memória > Histórico do Assistente
-    const stateFromMap = sessionStateMap.get(session_id);
-    const lastAssistantMsg = stateFromMap?.lastAssistantMsg || [...history].reverse().find(h => h.role === 'assistant')?.content || '';
+    let answer: string;
+    let finalState = decision.stateAfter;
+    let modelRequested: string | null = null;
+    let modelUsed: string | null = null;
+    let fallbackUsed = false;
+    let fallbackReason: string | null = null;
+    let generationLatency = 0;
+    let generationErrorCode: string | null = null;
 
-    let sessionMode: SessionMode = 'livre';
-    let inlineTheme = '';
-
-    const questionNorm = question
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .trim();
-
-    // 0. Detecção de Atalho / Tema Inline na mensagem do estudante
-    // A. Simulado / Quiz com tema inline (ex: "Simulado sobre Hemostasia", "queria um quiz sobre dor pos cirurgica", "Quiz sobre Feridas", "2 - Feridas")
-    const simuladoInlineMatch = questionNorm.match(/^(?:quero\s+(?:um\s+)?|queria\s+(?:um\s+)?)?(?:fazer\s+)?(?:simulado(?: de prova)?|quiz(?: da disciplina)?|opcao 2|2)\s*(?:sobre|de|da|do|com|-|:)?\s*(.+)$/i);
-    if (simuladoInlineMatch) {
-      const topicCandidate = simuladoInlineMatch[1].trim();
-      if (topicCandidate.length > 0 && !/^(de prova|prova|da disciplina|disciplina)$/i.test(topicCandidate)) {
-        sessionMode = 'simulado_tema';
-        inlineTheme = question.replace(/^(?:quero\s+(?:um\s+)?|queria\s+(?:um\s+)?)?(?:fazer\s+)?(?:simulado(?: de prova)?|quiz(?: da disciplina)?|opcao 2|2)\s*(?:sobre|de|da|do|com|-|:)?\s*/i, '').trim();
-      }
+    if (docs.length === 0) {
+      answer = FALLBACK_RESPONSE;
+      finalState = decision.stateBefore;
+      fallbackUsed = true;
+      fallbackReason = retrievalErrorCode;
+    } else {
+      const generation = await generateResponse(
+        question,
+        docs,
+        history.slice(-12) as ChatHistoryItem[],
+        decision.generationMode ?? 'livre',
+        decision.topic,
+        decision.quizQuestion,
+      );
+      answer = generation.text;
+      modelRequested = generation.modelRequested;
+      modelUsed = generation.modelUsed;
+      fallbackUsed = generation.fallbackUsed;
+      fallbackReason = generation.fallbackReason;
+      generationLatency = generation.latencyMs;
+      generationErrorCode = generation.errorCode;
+      finalState = generation.errorCode
+        ? decision.stateBefore
+        : finalizeGeneratedTurn(decision, answer);
     }
 
-    // B. Resumo com tema inline (ex: "Resumo sobre Feridas", "queria um resumo sobre hemostasia", "1 - Hemostasia")
-    if (sessionMode === 'livre') {
-      const resumoInlineMatch = questionNorm.match(/^(?:quero\s+(?:um\s+)?|queria\s+(?:um\s+)?)?(?:fazer\s+)?(?:resumo(?: de conteudo)?|opcao 1|1)\s*(?:sobre|de|da|do|com|-|:)?\s*(.+)$/i);
-      if (resumoInlineMatch) {
-        const topicCandidate = resumoInlineMatch[1].trim();
-        if (topicCandidate.length > 0 && !/^(de conteudo|conteudo)$/i.test(topicCandidate)) {
-          sessionMode = 'resumo';
-          inlineTheme = question.replace(/^(?:quero\s+(?:um\s+)?|queria\s+(?:um\s+)?)?(?:fazer\s+)?(?:resumo(?: de conteudo)?|opcao 1|1)\s*(?:sobre|de|da|do|com|-|:)?\s*/i, '').trim();
-        }
-      }
-    }
-
-    // C. Informações com tema/pergunta inline (ex: "Informações sobre avaliações", "3 - professores")
-    if (sessionMode === 'livre') {
-      const infoInlineMatch = questionNorm.match(/^(?:quero\s+(?:saber\s+)?|queria\s+(?:saber\s+)?)?(?:informacoes|informacao|opcao 3|3)\s*(?:sobre|de|da|do|com|-|:)?\s*(.+)$/i);
-      if (infoInlineMatch) {
-        const queryCandidate = infoInlineMatch[1].trim();
-        if (queryCandidate.length > 0 && !/^(da disciplina|disciplina)$/i.test(queryCandidate)) {
-          sessionMode = 'info';
-          inlineTheme = question.replace(/^(?:quero\s+(?:saber\s+)?|queria\s+(?:saber\s+)?)?(?:informacoes|informacao|opcao 3|3)\s*(?:sobre|de|da|do|com|-|:)?\s*/i, '').trim();
-        }
-      }
-    }
-
-    // Se não foi atalho inline, analisa a mensagem anterior do assistente:
-    if (sessionMode === 'livre') {
-      if (
-        lastAssistantMsg.includes('farei três perguntas de múltipla escolha') ||
-        lastAssistantMsg.includes('Qual tema você deseja para o simulado')
-      ) {
-        sessionMode = 'simulado_tema';
-      } else if (
-        /tente novamente|tentar novamente/i.test(lastAssistantMsg) &&
-        /incorret|não está cert/i.test(lastAssistantMsg)
-      ) {
-        sessionMode = 'simulado_segunda_tentativa';
-      } else if (
-        /Questão\s*[12345]:/i.test(lastAssistantMsg) ||
-        (/\*?\*?[A-D]\)/i.test(lastAssistantMsg) && /responda com a letra|qual das alternativas/i.test(lastAssistantMsg)) ||
-        (/Questão/i.test(lastAssistantMsg) && /\*?\*?A\)/i.test(lastAssistantMsg))
-      ) {
-        sessionMode = 'simulado_respondendo';
-      } else if (
-        /deseja aprofundar este tema|deseja aprofundar mais/i.test(lastAssistantMsg)
-      ) {
-        sessionMode = 'resumo_aprofundar';
-      } else if (
-        lastAssistantMsg.includes('Qual tema da disciplina') ||
-        lastAssistantMsg.includes('você deseja estudar')
-      ) {
-        sessionMode = 'resumo';
-      } else if (
-        lastAssistantMsg.includes('Deseja fazer outra pergunta, voltar ao menu') ||
-        lastAssistantMsg.includes('Informações da Disciplina INT 5224')
-      ) {
-        sessionMode = 'info';
-      }
-    }
-
-    // Busca RAG de forma resiliente
-    try {
-      const isCourseQuery = sessionMode === 'info' ||
-        /prof|horar|atend|cron|calend|nota|avali|plano|trabalho|conteudo|carga|disciplin|ementa|frequenc|moodle|email|contato|media|prova/i.test(question);
-      const threshold = isCourseQuery ? 0.25 : 0.35;
-
-      const embedding = await embedQuery(question);
-      docs = await retrieveDocs(embedding, threshold);
-
-      if (isCourseQuery) {
-        docs = [
-          {
-            content: LOCAL_COURSE_INFO,
-            source: 'PLANO ENSINO INT5224 2026-2.pdf',
-            similarity: 0.99
-          } as any,
-          ...docs
-        ];
-      }
-    } catch (e) {
-      console.warn('[rag/embedding warning]', e);
-    }
-
-    const answer = await generateResponse(question, docs, history, sessionMode, inlineTheme);
-    const themeToSave = inlineTheme || (sessionMode === 'simulado_tema' || sessionMode === 'resumo' ? question : '');
-
-    await saveMessages(session_id, question, answer, themeToSave);
-
-    return NextResponse.json({
-      answer,
-      sources_found: docs.length,
-      has_context: docs.length > 0,
-      chat_history_length: history.length + 2,
-      processing_time_ms: Date.now() - startTime,
+    const totalLatency = Date.now() - startedAt;
+    const metadata = buildTurnMetadata({
+      requestId,
+      mode: finalState.mode,
+      stateBefore: decision.stateBefore.state,
+      stateAfter: finalState.state,
+      topic: decision.topic,
+      docs,
+      modelRequested,
+      modelUsed,
+      fallbackUsed,
+      fallbackReason,
+      embeddingLatency,
+      retrievalLatency,
+      generationLatency,
+      totalLatency,
+      errorCode: generationErrorCode ?? retrievalErrorCode,
     });
 
-  } catch (err) {
-    const errMsg = err instanceof Error ? err.message : String(err);
-    console.error('[chat] Erro interno:', errMsg);
-    return NextResponse.json({ error: `Erro interno do servidor: ${errMsg}` }, { status: 500 });
+    await saveTurn(supabase, {
+      sessionId,
+      requestId,
+      userMessage: question,
+      assistantMessage: answer,
+      state: finalState,
+      metadata,
+    });
+
+    return chatResponse({
+      answer,
+      sessionId,
+      requestId,
+      sourcesFound: docs.length,
+      historyLength: history.length + 2,
+      processingTimeMs: Date.now() - startedAt,
+    });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error(`[chat] request_id=${requestId} erro interno:`, message.slice(0, 300));
+    return NextResponse.json(
+      {
+        error: 'Não foi possível processar a mensagem neste momento.',
+        error_code: 'INTERNAL_ERROR',
+        request_id: requestId,
+      },
+      { status: 500 },
+    );
   }
 }

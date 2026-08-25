@@ -5,7 +5,7 @@ import {
   type ChatFlowState,
   type ChatMode,
   type SessionState,
-} from './session-flow';
+} from './session-flow.ts';
 
 export interface ChatHistoryItem {
   role: 'user' | 'assistant';
@@ -15,10 +15,16 @@ export interface ChatHistoryItem {
 export interface TurnMetadata {
   request_id: string;
   flow_version: string;
+  prompt_version: string;
   mode: ChatMode;
   state_before: ChatFlowState;
   state_after: ChatFlowState;
   current_topic: string;
+  model_requested: string | null;
+  model_used: string | null;
+  fallback_used: boolean;
+  fallback_reason: string | null;
+  embedding_model: string | null;
   has_context: boolean;
   sources_found: number;
   retrieval: Array<{
@@ -28,6 +34,9 @@ export interface TurnMetadata {
     similarity: number;
   }>;
   latency_ms: {
+    embedding: number;
+    retrieval: number;
+    generation: number;
     total: number;
   };
   error_code: string | null;
@@ -44,10 +53,27 @@ interface StoredSessionState {
   revision: number;
 }
 
+interface DatabaseErrorLike {
+  code?: string;
+  message?: string;
+}
+
+function isSchemaCompatibilityError(error: DatabaseErrorLike): boolean {
+  return (
+    ['42703', '42P01', 'PGRST204', 'PGRST205'].includes(error.code ?? '') ||
+    /chat_session_state|request_id|metadata|schema cache/i.test(error.message ?? '')
+  );
+}
+
 function lastTopicFromHistory(history: ChatHistoryItem[]): string {
-  const ignored = /^(menu|voltar|in[ií]cio|resumo|simulado|quiz|informa[cç][oõ]es|encerrar|aprofundar|oi|ol[aá])$/i;
+  const ignored = /^(?:[a-d]|menu|voltar|in[ií]cio|resumo|simulado|quiz|informa[cç][oõ]es|encerrar|aprofundar|oi|ol[aá]|seja mais concis[oa]|mais concis[oa]|resuma mais|resuma isso|simplifique|resposta mais curta)$/i;
+  const inlinePrefix = /^(?:(?:quero|queria)\s+(?:um\s+)?|fazer\s+)?(?:resumo(?:\s+de\s+conte[uú]do)?|quiz(?:\s+da\s+disciplina)?|simulado(?:\s+de\s+prova)?|op[cç][aã]o\s+[12]|[12])\s*(?:sobre|de|da|do|com|-|:)?\s*/i;
   for (const message of [...history].reverse()) {
-    if (message.role === 'user' && !ignored.test(message.content.trim())) return message.content.trim();
+    if (message.role !== 'user') continue;
+    const content = message.content.trim();
+    if (ignored.test(content)) continue;
+    const topic = content.replace(inlinePrefix, '').trim();
+    if (topic) return topic;
   }
   return '';
 }
@@ -56,6 +82,11 @@ export function inferLegacySessionState(sessionId: string, history: ChatHistoryI
   const fallback = createDefaultSessionState(sessionId);
   const lastAssistant = [...history].reverse().find((message) => message.role === 'assistant')?.content ?? '';
   const currentTopic = lastTopicFromHistory(history);
+  const lastQuizQuestion = [...history]
+    .reverse()
+    .filter((message) => message.role === 'assistant')
+    .map((message) => Number(message.content.match(/quest[aã]o\s*([123])/i)?.[1] ?? 0))
+    .find((question) => question > 0) ?? 1;
 
   if (/qual tema[\s\S]*(resumo|estudar)|qual tema da disciplina/i.test(lastAssistant)) {
     return { ...fallback, state: 'RESUMO_AGUARDANDO_TEMA', mode: 'resumo' };
@@ -64,13 +95,12 @@ export function inferLegacySessionState(sessionId: string, history: ChatHistoryI
     return { ...fallback, state: 'QUIZ_AGUARDANDO_TEMA', mode: 'quiz' };
   }
   if (/resposta est[aá] incorreta[\s\S]{0,80}tente novamente/i.test(lastAssistant)) {
-    const question = Number(lastAssistant.match(/quest[aã]o\s*([123])/i)?.[1] ?? 1);
     return {
       ...fallback,
       state: 'QUIZ_SEGUNDA_TENTATIVA',
       mode: 'quiz',
       currentTopic,
-      quizQuestion: question,
+      quizQuestion: lastQuizQuestion,
       quizAttempt: 2,
     };
   }
@@ -100,7 +130,7 @@ export async function getSessionHistory(client: SupabaseClient, sessionId: strin
     .select('role, content')
     .eq('session_id', sessionId)
     .order('created_at', { ascending: false })
-    .limit(12);
+    .limit(20);
 
   if (error) throw new Error(`HISTORY_READ_FAILED: ${error.message}`);
 
@@ -123,7 +153,7 @@ export async function loadSessionState(
     .maybeSingle();
 
   if (error) {
-    if (error.code === 'PGRST205' || /chat_session_state/i.test(error.message)) {
+    if (isSchemaCompatibilityError(error)) {
       return inferLegacySessionState(sessionId, history);
     }
     throw new Error(`SESSION_STATE_READ_FAILED: ${error.message}`);
@@ -175,7 +205,7 @@ export async function findCompletedTurn(
     .maybeSingle();
 
   if (error) {
-    if (error.code === '42703' || /request_id|metadata/i.test(error.message)) return null;
+    if (isSchemaCompatibilityError(error)) return null;
     throw new Error(`TURN_LOOKUP_FAILED: ${error.message}`);
   }
   if (!data) return null;
@@ -196,7 +226,11 @@ export async function saveTurn(
     metadata: TurnMetadata;
   },
 ): Promise<void> {
-  await persistSessionState(client, params.state);
+  try {
+    await persistSessionState(client, params.state);
+  } catch (error) {
+    if (!isSchemaCompatibilityError(error as DatabaseErrorLike)) throw error;
+  }
 
   const { error } = await client.from('chat_messages').upsert(
     [
@@ -218,6 +252,17 @@ export async function saveTurn(
     { onConflict: 'session_id,request_id,role', ignoreDuplicates: true },
   );
 
-  if (error) throw new Error(`TURN_WRITE_FAILED: ${error.message}`);
-}
+  if (!error) return;
+  if (!isSchemaCompatibilityError(error)) {
+    throw new Error(`TURN_WRITE_FAILED: ${error.message}`);
+  }
 
+  // Compatibilidade temporária enquanto a migração 004 ainda não foi aplicada.
+  // Depois da migração, o caminho acima fornece estado persistente e idempotência.
+  const { error: legacyError } = await client.from('chat_messages').insert([
+    { session_id: params.sessionId, role: 'user', content: params.userMessage },
+    { session_id: params.sessionId, role: 'assistant', content: params.assistantMessage },
+  ]);
+
+  if (legacyError) throw new Error(`TURN_WRITE_FAILED: ${legacyError.message}`);
+}
