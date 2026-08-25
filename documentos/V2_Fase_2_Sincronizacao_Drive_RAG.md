@@ -17,20 +17,21 @@ A automação foi convertida de uma ingestão simples para uma reconciliação p
 
 A leitura real de validação encontrou 119 documentos: 118 PDFs e 1 Google Doc. Não foram encontrados nomes duplicados.
 
-## Migrações obrigatórias antes de ativar
+## Migrações aplicadas
 
-Aplicar, nesta ordem:
+Aplicadas no projeto Supabase **Tutor Enfermagem** em 25 de agosto de 2026, nesta ordem:
 
 1. `db/migrations/004_add_persistent_chat_state.sql`;
 2. `db/migrations/005_add_drive_sync_manifest.sql`.
 
-Depois, validar:
+Validação realizada no SQL Editor:
 
-```powershell
-python scripts/manage_schema.py --check
-```
+- `chat_session_state`: existe;
+- `drive_sync_manifest`: existe e começa com 0 linhas;
+- `chat_messages.metadata`: existe;
+- `chat_messages.request_id`: existe.
 
-A ativação não deve ser feita antes da migração 005. Sem o manifesto, a rotina é interrompida e não deve alterar documentos.
+A sincronização continua desativada até os Secrets do GitHub estarem configurados e a branch ser incorporada à branch padrão.
 
 ## Segredos do GitHub Actions
 

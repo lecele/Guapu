@@ -37,22 +37,18 @@ O embedding permanece `gemini-embedding-2`, dimensão 768, para ser matematicame
 - Após a escolha do modelo, turnos do quiz ficaram entre aproximadamente 3,5 e 7 segundos.
 - Testes automatizados: 14 aprovados.
 
-## Bloqueio para estado persistente
+## Estado persistente no Supabase
 
-A migração `004_add_persistent_chat_state.sql` está pronta, mas ainda não foi aplicada porque:
+A migração `004_add_persistent_chat_state.sql` foi aplicada no projeto **Tutor Enfermagem** em 25 de agosto de 2026.
 
-- a `SUPABASE_DB_URL` local está com senha inválida/desatualizada;
-- não existe `SUPABASE_ACCESS_TOKEN` no terminal;
-- o painel Supabase não está autenticado no navegador disponível;
-- a Vercel possui somente `SUPABASE_KEY` com papel `anon`.
+Validação executada no banco:
 
-Para concluir:
+- tabela `chat_session_state`: criada;
+- coluna `chat_messages.metadata`: criada;
+- coluna `chat_messages.request_id`: criada;
+- índice de idempotência por sessão, requisição e papel: criado.
 
-1. autenticar no painel Supabase ou fornecer um acesso administrativo válido;
-2. adicionar `SUPABASE_SERVICE_ROLE_KEY` como segredo server-side na Vercel;
-3. aplicar a migração 004;
-4. validar criação de `chat_session_state`, `metadata` e `request_id`;
-5. executar teste de idempotência repetindo o mesmo `request_id`.
+Ainda é necessário adicionar `SUPABASE_SERVICE_ROLE_KEY` como segredo server-side na Vercel antes do deploy da V2 e executar o teste final de idempotência no ambiente publicado.
 
 Nunca expor `SUPABASE_SERVICE_ROLE_KEY` em variável `NEXT_PUBLIC_*`.
 
