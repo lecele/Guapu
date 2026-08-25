@@ -43,7 +43,7 @@ from typing import Optional
 
 import pdfplumber
 import structlog
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.embeddings import Embeddings
 from tenacity import retry, stop_after_attempt, wait_exponential
 

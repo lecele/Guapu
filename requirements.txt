@@ -12,6 +12,7 @@ langchain>=0.2.5
 langchain-core>=0.2.10
 langchain-google-genai>=1.0.7
 google-generativeai>=0.8.3
+langchain-text-splitters>=0.2.2
 langchain-community>=0.2.5   # RecursiveCharacterTextSplitter
 langgraph>=0.1.19
 langgraph-checkpoint>=1.0.2

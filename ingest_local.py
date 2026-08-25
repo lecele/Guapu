@@ -16,7 +16,7 @@ import io
 
 import pdfplumber
 import structlog
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 from services.embeddings_service import Gemini2Embeddings
 from dotenv import load_dotenv
 from supabase import create_client
