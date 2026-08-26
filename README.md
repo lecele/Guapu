@@ -8,6 +8,7 @@ Esta é a base independente da nova versão do Guapu. O aplicativo legado perman
 - Nunca versionar `credentials/service_account.json`.
 - Configurar segredos localmente e nas variáveis protegidas da plataforma de deploy.
 - O arquivo `.env.example` contém apenas nomes e valores de exemplo.
+- Para operar a sincronização de documentos grandes na VPS, siga [deploy/VPS_WORKER.md](deploy/VPS_WORKER.md). O chat e o painel continuam na Vercel.
 
 ## Estado do Guapu
 

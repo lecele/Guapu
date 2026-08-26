@@ -1,0 +1,21 @@
+[Unit]
+Description=Guapu Drive-to-RAG worker
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=guapu
+Group=guapu
+WorkingDirectory=/opt/guapu
+EnvironmentFile=/etc/guapu/worker.env
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/opt/guapu/.venv/bin/python drive_sync_worker.py --poll-seconds 15 --lease-seconds 3600
+Restart=always
+RestartSec=10
+TimeoutStopSec=60
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

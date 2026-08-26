@@ -1,0 +1,15 @@
+[Unit]
+Description=Guapu Drive-to-RAG queue planner
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=guapu
+Group=guapu
+WorkingDirectory=/opt/guapu
+EnvironmentFile=/etc/guapu/worker.env
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/opt/guapu/.venv/bin/python queue_drive_sync.py
+NoNewPrivileges=true
+PrivateTmp=true
