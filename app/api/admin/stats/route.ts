@@ -185,38 +185,28 @@ export async function GET(request: NextRequest) {
       ];
     }
 
-    // 2. Busca documentos RAG da base de conhecimento
-    let ragDocs: Array<{ id: string; source: string; content?: string }> = [];
+    // 2. O manifesto do Drive é a fonte agregada do RAG: uma linha por
+    // documento, já com sua contagem de chunks. Evita transferir dezenas de
+    // milhares de chunks somente para montar esta tabela administrativa.
+    let ragDocs: Array<{ source: string; chunkCount: number }> = [];
     try {
-      const pageSize = 1000;
-      const maxRows = 50_000;
-      for (let start = 0; start < maxRows; start += pageSize) {
-        const { data: page, error } = await supabase.from('documents')
-          .select('id, source')
-          .range(start, start + pageSize - 1);
-        if (error) throw error;
-        const rows = page || [];
-        ragDocs.push(...(rows as Array<{ id: string; source: string; content?: string }>));
-        if (rows.length < pageSize) break;
-      }
+      const { data, error } = await supabase.from('drive_sync_manifest')
+        .select('name, chunks_count')
+        .eq('status', 'active');
+      if (error) throw error;
+      ragDocs = (data || []).map((document) => ({
+        source: String(document.name || 'Fonte não identificada'),
+        chunkCount: Number(document.chunks_count || 0),
+      }));
     } catch (e) {
       console.warn('[admin/stats] docs fetch error:', e);
     }
 
     if (process.env.NODE_ENV !== 'production' && (!ragDocs || ragDocs.length === 0)) {
       ragDocs = [
-        { id: '1', source: 'Brunner & Suddarth — Tratado de Enfermagem Médico-Cirúrgica.pdf', content: '14.280 chunks' },
-        { id: '2', source: 'Cuidados Críticos de Enfermagem — Patricia Morton & Dorrie Fontaine.pdf', content: '11.850 chunks' },
-        { id: '3', source: 'Manual de Enfermagem Perioperatória — SOBECC.pdf', content: '4.320 chunks' },
-        { id: '4', source: 'Diretrizes para Prevenção de Infecção de Sítio Cirúrgico (ANVISA/OMS).pdf', content: '1.840 chunks' },
-        { id: '5', source: 'Protocolo Nacional de Cirurgia Segura (Ministério da Saúde).pdf', content: '960 chunks' },
-        { id: '6', source: 'Cuidados de Enfermagem em Cirurgia Bariátrica e Metabólica.pdf', content: '820 chunks' },
-        { id: '7', source: 'Manejo e Tratamento de Feridas Complexas e Estomas.pdf', content: '640 chunks' },
-        { id: '8', source: 'Manual de Anestesiologia e Cuidados de SRPA.pdf', content: '510 chunks' },
-        { id: '9', source: 'Plano_de_Ensino_INT5224_2026.docx', content: '180 chunks' },
-        { id: '10', source: 'Checklist_Posicionamento_Cirurgico.pdf', content: '112 chunks' },
-        { id: '11', source: 'Guia_Hemostasia_e_Curativos_Especiais.pdf', content: '40 chunks' },
-        { id: '12', source: 'Protocolo_Dor_Pos_Operatoria.pdf', content: '20 chunks' },
+        { source: 'Brunner & Suddarth — Tratado de Enfermagem Médico-Cirúrgica.pdf', chunkCount: 14280 },
+        { source: 'Cuidados Críticos de Enfermagem — Patricia Morton & Dorrie Fontaine.pdf', chunkCount: 11850 },
+        { source: 'Manual de Enfermagem Perioperatória — SOBECC.pdf', chunkCount: 4320 },
       ];
     }
 
@@ -407,10 +397,10 @@ export async function GET(request: NextRequest) {
 
     const ragSummaryList = ragDocs.reduce<Array<{ source: string; chunkCount: number; category: string }>>((items, doc) => {
       const existing = items.find((item) => item.source === doc.source);
-      if (existing) existing.chunkCount += 1;
+      if (existing) existing.chunkCount += doc.chunkCount;
       else items.push({
         source: doc.source || 'Fonte não identificada',
-        chunkCount: 1,
+        chunkCount: doc.chunkCount,
         category: (doc.source || 'Material RAG').split('__')[0].replace(/[_-]/g, ' ') || 'Material RAG',
       });
       return items;
@@ -548,10 +538,10 @@ export async function GET(request: NextRequest) {
         quizAccuracyRate,
         guardRailHits: guardRailCount,
         totalRagDocs: ragSummaryList.length,
-        totalRagChunks: ragDocs.length,
-        bibliotecaChunks: ragDocs.filter((doc) => doc.source.toLowerCase().startsWith('biblioteca')).length,
-        bibliotecaPercent: ragDocs.length > 0
-          ? Number(((ragDocs.filter((doc) => doc.source.toLowerCase().startsWith('biblioteca')).length / ragDocs.length) * 100).toFixed(1))
+        totalRagChunks: ragDocs.reduce((total, document) => total + document.chunkCount, 0),
+        bibliotecaChunks: ragDocs.filter((doc) => doc.source.toLowerCase().startsWith('biblioteca')).reduce((total, document) => total + document.chunkCount, 0),
+        bibliotecaPercent: ragDocs.reduce((total, document) => total + document.chunkCount, 0) > 0
+          ? Number(((ragDocs.filter((doc) => doc.source.toLowerCase().startsWith('biblioteca')).reduce((total, document) => total + document.chunkCount, 0) / ragDocs.reduce((total, document) => total + document.chunkCount, 0)) * 100).toFixed(1))
           : 0,
         avgFeedbackRating: Number(avgRating),
         totalFeedbacks,
