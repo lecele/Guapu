@@ -176,7 +176,6 @@ function DynamicSparkline({
 }
 
 // ── COMPONENTE DE GRÁFICO DE LINHA DINÂMICO INTERATIVO COM TOOLTIP NO HOVER ─────
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function ActivityChart({
   timeline = [],
   timeRange = '7d',
@@ -600,7 +599,6 @@ function DonutChart({
 }
 
 // ── COMPONENTE DE GAUGE RING (ANEL DE PRECISÃO EM SVG) ────────────────────────
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function GaugeRing({ percent = 96 }: { percent?: number }) {
   const r = 44;
   const c = 2 * Math.PI * r;
@@ -632,13 +630,12 @@ function GaugeRing({ percent = 96 }: { percent?: number }) {
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
         <span className="text-2xl font-extrabold text-white">{pct}%</span>
-        <span className="text-[9px] font-bold text-emerald-400 uppercase tracking-wider">Precisão</span>
+        <span className="text-[9px] font-bold text-emerald-400 uppercase tracking-wider">Aderência</span>
       </div>
     </div>
   );
 }
 // ── COMPONENTE QUADRO DE AVALIAÇÕES DE SATISFAÇÃO (LIKERT 1-5 ESTRELAS) ────────
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function FeedbackDashboardWidget({
   avgRating = 0,
   totalFeedbacks = 0,
@@ -724,6 +721,7 @@ export default function AdminDashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [timeRange, setTimeRange] = useState<'7d' | '30d' | '90d'>('7d');
 
   // Filtros da aba de conversas
   const [searchTerm, setSearchTerm] = useState('');
@@ -776,6 +774,14 @@ export default function AdminDashboardPage() {
       })
       .sort((a, b) => new Date(b.lastAt).getTime() - new Date(a.lastAt).getTime());
   }, [stats, searchTerm, modeFilter]);
+
+  const qualityTotal = Math.max(stats?.qualityEvaluation.completed ?? 0, 1);
+  const qualitySegments = [
+    { label: 'Conformes', value: stats?.qualityEvaluation.correct ?? 0, color: '#34d399' },
+    { label: 'Sem evidência', value: stats?.qualityEvaluation.unverifiable ?? 0, color: '#fbbf24' },
+    { label: 'Incompletas', value: stats?.qualityEvaluation.incomplete ?? 0, color: '#fb923c' },
+    { label: 'Incorretas', value: stats?.qualityEvaluation.incorrect ?? 0, color: '#fb7185' },
+  ];
 
   const [isExporting, setIsExporting] = useState(false);
 
@@ -1159,6 +1165,30 @@ export default function AdminDashboardPage() {
                     </div>
                   ))}
                 </div>
+                <div className="mt-5 rounded-xl border border-blue-900/40 bg-[#040e1f] p-4">
+                  <div className="mb-3 flex items-center justify-between text-[11px]">
+                    <span className="font-semibold text-slate-300">Distribuição das avaliações concluídas</span>
+                    <span className="font-bold text-cyan-300">{stats?.qualityEvaluation.completed ?? 0} respostas</span>
+                  </div>
+                  <div className="flex h-3 overflow-hidden rounded-full bg-slate-800">
+                    {qualitySegments.map((segment) => segment.value > 0 && (
+                      <div
+                        key={segment.label}
+                        title={`${segment.label}: ${segment.value}`}
+                        className="h-full first:rounded-l-full last:rounded-r-full transition-all duration-700"
+                        style={{ width: `${(segment.value / qualityTotal) * 100}%`, backgroundColor: segment.color }}
+                      />
+                    ))}
+                  </div>
+                  <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2">
+                    {qualitySegments.map((segment) => (
+                      <span key={segment.label} className="inline-flex items-center gap-1.5 text-[10px] text-slate-400">
+                        <i className="h-2 w-2 rounded-full" style={{ backgroundColor: segment.color }} />
+                        {segment.label}: <b className="text-slate-200">{segment.value}</b>
+                      </span>
+                    ))}
+                  </div>
+                </div>
                 <p className="mt-3 text-[11px] text-slate-500">“Conforme” indica aderência às evidências recuperadas; não substitui validação clínica ou acadêmica formal.</p>
               </section>
 
@@ -1187,6 +1217,66 @@ export default function AdminDashboardPage() {
                   <p className="text-xs font-semibold text-slate-400">Avaliação dos estudantes</p>
                   <p className="mt-1 text-[11px] text-slate-500">{stats?.summary.totalFeedbacks ?? 0} avaliações · {stats?.summary.satisfactionRate ?? 0}% com 4–5 estrelas</p>
                 </div>
+              </section>
+
+              <section className="grid grid-cols-1 gap-6 xl:grid-cols-3">
+                <div className="xl:col-span-2 rounded-2xl border border-blue-900/40 bg-[#0b203c] p-5 shadow-lg">
+                  <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <h2 className="text-sm font-bold text-white">Atividade registrada</h2>
+                      <p className="text-[11px] text-slate-400">Mensagens de sessões válidas por dia.</p>
+                    </div>
+                    <div className="flex w-fit rounded-xl border border-blue-900/50 bg-[#040e1f] p-1">
+                      {(['7d', '30d', '90d'] as const).map((range) => (
+                        <button
+                          key={range}
+                          onClick={() => setTimeRange(range)}
+                          className={`rounded-lg px-3 py-1 text-[11px] font-bold transition ${timeRange === range ? 'bg-[#1573C2] text-white shadow' : 'text-slate-400 hover:text-white'}`}
+                        >
+                          {range}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <ActivityChart timeline={stats?.timeline ?? []} timeRange={timeRange} />
+                </div>
+
+                <div className="rounded-2xl border border-blue-900/40 bg-[#0b203c] p-5 shadow-lg">
+                  <h2 className="text-sm font-bold text-white">Aderência ao RAG</h2>
+                  <p className="mt-1 text-[11px] text-slate-400">Respostas conformes entre as avaliadas automaticamente.</p>
+                  <div className="mt-2 flex justify-center"><GaugeRing percent={stats?.qualityEvaluation.correctRate ?? 0} /></div>
+                  <div className="rounded-xl border border-blue-900/40 bg-[#040e1f] px-3 py-2 text-center text-[11px] text-slate-400">
+                    <b className="text-emerald-300">{stats?.qualityEvaluation.correct ?? 0}</b> conformes · <b className="text-amber-300">{stats?.qualityEvaluation.unverifiable ?? 0}</b> sem evidência suficiente
+                  </div>
+                </div>
+              </section>
+
+              <section className="grid grid-cols-1 gap-6 xl:grid-cols-3">
+                <div className="rounded-2xl border border-blue-900/40 bg-[#0b203c] p-5 shadow-lg xl:col-span-2">
+                  <h2 className="text-sm font-bold text-white">Fluxo monitorado da resposta</h2>
+                  <p className="mt-1 text-[11px] text-slate-400">Cada etapa representa telemetria real; a avaliação ocorre depois de a resposta chegar ao estudante.</p>
+                  <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-4">
+                    {[
+                      ['chat', 'Pergunta', `${stats?.summary.totalMessages ?? 0} mensagens`, 'text-cyan-300'],
+                      ['search', 'Recuperação RAG', `${stats?.telemetry.pipelineTurns ?? 0} consultas`, 'text-emerald-300'],
+                      ['smart_toy', 'Resposta', `${stats?.telemetry.latencySamples ?? 0} tempos medidos`, 'text-purple-300'],
+                      ['verified', 'Avaliação', `${stats?.qualityEvaluation.completed ?? 0} concluídas`, 'text-amber-300'],
+                    ].map(([icon, title, detail, color], index) => (
+                      <div key={title} className="relative rounded-xl border border-blue-900/40 bg-[#040e1f] p-3 text-center">
+                        {index < 3 && <span className="absolute -right-3 top-1/2 z-10 hidden -translate-y-1/2 text-blue-400 sm:block">→</span>}
+                        <span className={`material-symbols-outlined text-2xl ${color}`}>{icon}</span>
+                        <p className="mt-2 text-xs font-bold text-white">{title}</p>
+                        <p className="mt-1 text-[10px] text-slate-400">{detail}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <FeedbackDashboardWidget
+                  avgRating={stats?.summary.avgFeedbackRating || 0}
+                  totalFeedbacks={stats?.summary.totalFeedbacks || 0}
+                  satisfactionRate={stats?.summary.satisfactionRate || 0}
+                  ratingCounts={stats?.feedbackStats?.ratingCounts || { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 }}
+                />
               </section>
 
               <section className="grid grid-cols-1 gap-6 xl:grid-cols-2">
