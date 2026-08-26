@@ -67,6 +67,7 @@ export function MessageBubble({ message, index, sessionId }: MessageBubbleProps)
             content={message.content}
             sessionId={sessionId}
             requestId={message.request_id}
+            responseKind={message.response_kind}
           />
         )}
 
@@ -92,10 +93,11 @@ function UserBubble({ content }: { content: string }) {
 // Qualquer outro item de lista (conteúdo, referências, exemplos) renderiza como <li> normal
 const MENU_BUTTON_RE = /^(resumo de conteúdo|resumo|quiz da disciplina|quiz|simulado de prova|simulado|informações da disciplina|informações|encerrar sessão|encerrar|aprofundar|aprofundar este tema|aprofundar mais|escolher outro tema|outro tema|voltar ao menu principal|voltar ao menu|menu principal|continuar o simulado|continuar simulado|continuar o quiz|continuar quiz|fazer outra pergunta|outra pergunta|repetir a pergunta)$/i;
 
-function AgentBubble({ content, sessionId, requestId }: {
+function AgentBubble({ content, sessionId, requestId, responseKind }: {
   content: string;
   sessionId?: string;
   requestId?: string;
+  responseKind?: Message['response_kind'];
 }) {
   // Garante que opções A), B), C), D) e Referências fiquem em linhas separadas
   const formattedContent = useMemo(() => {
@@ -129,7 +131,9 @@ function AgentBubble({ content, sessionId, requestId }: {
       if (!label) return <li {...props}>{children}</li>;
 
       // Renderiza como botão APENAS se for uma opção de menu conhecida
-      if (!MENU_BUTTON_RE.test(label)) {
+      // O fechamento de um resumo nunca deve criar chips, ainda que um modelo
+      // ignore o formato em frase corrida. A regra vem do backend, não do texto.
+      if (responseKind === 'summary' || !MENU_BUTTON_RE.test(label)) {
         return (
           <li className="guapu-list-item" {...props}>
             {children}
@@ -176,52 +180,12 @@ function AgentBubble({ content, sessionId, requestId }: {
     ul: ({ children, ...props }: any) => {
       return <ul className="guapu-list" {...props}>{children}</ul>;
     },
-  }), []);
+  }), [responseKind]);
 
-  // Condição para exibição do Feedback Likert (Estrelas):
-  // Exibir APENAS no resultado do resumo, final do simulado e final das informações da disciplina
-  const shouldShowFeedback = useMemo(() => {
-    if (!content) return false;
-    const lower = content.toLowerCase();
-
-    // Bloqueia em erros, interrupções ou menus intermediários
-    if (
-      lower.includes('ocorreu uma interrupção') ||
-      lower.includes('erro') ||
-      lower.includes('qual tema você deseja') ||
-      lower.includes('qual tema da disciplina você deseja') ||
-      lower.includes('tente novamente! qual das alternativas') ||
-      lower.includes('ola! sou o assistente de inteligência artificial educacional') ||
-      lower.includes('este espaço foi pensado para facilitar')
-    ) {
-      return false;
-    }
-
-    // 1. Resumo de Conteúdo / Aprofundamento
-    const isResumo =
-      lower.includes('**explicação:**') ||
-      lower.includes('**explicação aprofundada:**') ||
-      lower.includes('**exemplo clínico:**') ||
-      lower.includes('deseja aprofundar este tema') ||
-      lower.includes('deseja aprofundar mais');
-
-    // 2. Final do Simulado / Quiz (resolução da questão ou encerramento)
-    const isSimuladoFinal =
-      lower.includes('parabéns, você acertou') ||
-      lower.includes('você acertou') ||
-      lower.includes('a alternativa correta é a') ||
-      lower.includes('deseja continuar o simulado') ||
-      lower.includes('deseja fazer outro simulado');
-
-    // 3. Informações da Disciplina (resposta final informativa)
-    const isInfo =
-      lower.includes('informações da disciplina') ||
-      lower.includes('plano de ensino') ||
-      lower.includes('deseja fazer outra pergunta sobre a disciplina') ||
-      lower.includes('informações sobre o cronograma');
-
-    return isResumo || isSimuladoFinal || isInfo;
-  }, [content]);
+  // Política v1.1.0: estrelas somente para resposta livre, pergunta do quiz e
+  // resultado de resumo. Navegação, encerramento, entradas inválidas e correções
+  // não são avaliados. A decisão vem do servidor e não do texto gerado.
+  const shouldShowFeedback = responseKind === 'free' || responseKind === 'quiz_question' || responseKind === 'summary';
 
   return (
     <div className="guapu-agent-bubble">

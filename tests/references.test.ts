@@ -25,3 +25,14 @@ test('não adiciona referências durante o quiz', () => {
   const answer = finalizeReferences('**Questão 1:**\n\n**A)** Uma', [{ source: 'aula.pdf' }], 'simulado_tema');
   assert.doesNotMatch(answer, /Referências/);
 });
+
+test('usa título de capítulo do conteúdo antes do fallback', () => {
+  const answer = finalizeReferences(
+    'Resumo do conteúdo.',
+    [{ source: 'arquivo-que-nao-deve-aparecer.pdf', content: 'Capítulo 6 — Cuidados de Enfermagem no Pós-Operatório Imediato. A vigilância deve ser contínua.' }],
+    'resumo',
+  );
+
+  assert.match(answer, /- Cuidados de Enfermagem no Pós-Operatório Imediato \(Cap\. 6\)\./);
+  assert.doesNotMatch(answer, /arquivo-que-nao-deve-aparecer/i);
+});

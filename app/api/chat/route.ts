@@ -112,6 +112,8 @@ type MatchDocumentsRpc = (
   },
 ) => Promise<{ data: MatchDocumentRow[] | null; error: { message: string } | null }>;
 
+type ResponseKind = 'navigation' | 'summary' | 'quiz_question' | 'quiz_feedback' | 'info' | 'free' | 'fallback';
+
 // ── Roteamento por intenção (sem LLM) ────────────────────────────────────────
 
 // ── Helpers de formatação RAG ─────────────────────────────────────────────────
@@ -388,6 +390,7 @@ function chatResponse(params: {
   sourcesFound: number;
   historyLength: number;
   processingTimeMs: number;
+  responseKind: ResponseKind;
 }) {
   return NextResponse.json({
     answer: params.answer,
@@ -397,7 +400,18 @@ function chatResponse(params: {
     has_context: params.sourcesFound > 0,
     chat_history_length: params.historyLength,
     processing_time_ms: params.processingTimeMs,
+    response_kind: params.responseKind,
   });
+}
+
+function generatedResponseKind(mode: GenerationMode, answer: string): ResponseKind {
+  if (mode === 'resumo' || mode === 'resumo_aprofundar' || mode === 'resumo_reformular') return 'summary';
+  if (mode === 'info') return 'info';
+  if (mode === 'simulado_tema') return 'quiz_question';
+  if (mode === 'simulado_respondendo' || mode === 'simulado_segunda_tentativa') {
+    return /quest[aã]o\s*\d+\s*:/i.test(answer) ? 'quiz_question' : 'quiz_feedback';
+  }
+  return 'free';
 }
 
 async function enqueueQualityEvaluation(
@@ -451,6 +465,7 @@ export async function POST(req: NextRequest) {
         sourcesFound: Number(metadata.sources_found ?? 0),
         historyLength: history.length,
         processingTimeMs: Date.now() - startedAt,
+        responseKind: 'navigation',
       });
     }
 
@@ -503,6 +518,7 @@ export async function POST(req: NextRequest) {
         sourcesFound: 0,
         historyLength: history.length + 2,
         processingTimeMs: Date.now() - startedAt,
+        responseKind: 'navigation',
       });
     }
 
@@ -642,6 +658,9 @@ export async function POST(req: NextRequest) {
       sourcesFound: docs.length,
       historyLength: history.length + 2,
       processingTimeMs: Date.now() - startedAt,
+      responseKind: generationErrorCode || docs.length === 0
+        ? 'fallback'
+        : generatedResponseKind(decision.generationMode ?? 'livre', answer),
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);

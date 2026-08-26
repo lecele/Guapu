@@ -12,6 +12,8 @@ export interface Message {
   has_context?: boolean;
   /** Tempo de processamento em ms */
   processing_time_ms?: number;
+  /** Categoria estruturada decidida pelo backend para controles de interface. */
+  response_kind?: 'navigation' | 'summary' | 'quiz_question' | 'quiz_feedback' | 'info' | 'free' | 'fallback';
   timestamp: Date;
 }
 
@@ -29,6 +31,7 @@ export interface ChatResponse {
   has_context: boolean;
   chat_history_length: number;
   processing_time_ms: number;
+  response_kind: NonNullable<Message['response_kind']>;
 }
 
 export interface ChatSession {

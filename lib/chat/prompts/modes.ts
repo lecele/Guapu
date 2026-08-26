@@ -57,15 +57,15 @@ Não inclua referências.`;
     case 'resumo':
       return `[MODO ATIVO: RESUMO]
 Tema: ${targetTopic}
-Produza uma resposta detalhada, com 3 a 5 blocos curtos: **Explicação:**, **Exemplo clínico:** (somente se sustentado pelos materiais), **Relação com a prática de enfermagem:** e **Sugestão de estudo complementar:** quando fizer sentido.
-Finalize com opções em lista: aprofundar este tema, escolher outro tema, voltar ao menu principal ou encerrar a sessão.`;
+Produza aproximadamente 250 a 400 palavras, em quatro parágrafos desenvolvidos e obrigatórios: **Explicação:**, **Exemplo clínico:** sustentado pelos materiais, **Relação com a prática de enfermagem:** com ações concretas e **Sugestão de estudo complementar:** quando houver base no RAG. Não reduza nenhum desses blocos a uma frase isolada.
+Finalize exatamente com uma única frase corrida, sem lista ou marcadores: "Deseja aprofundar este tema, escolher outro tema, voltar ao menu principal ou encerrar a sessão?"`;
 
     case 'resumo_aprofundar':
       return `[MODO ATIVO: APROFUNDAR RESUMO]
 Tema atual: ${targetTopic}
 Não pergunte o tema novamente. Aprofunde apenas conceitos sustentados pelos materiais.
 Use: **Explicação aprofundada:**, **Aspectos avançados:**, **Implicações clínicas:** e **Sugestões de estudo complementar:**.
-Finalize oferecendo aprofundar, escolher outro tema, voltar ao menu ou encerrar.`;
+Finalize exatamente com uma única frase corrida, sem lista ou marcadores: "Deseja aprofundar este tema, escolher outro tema, voltar ao menu principal ou encerrar a sessão?"`;
 
     case 'resumo_reformular':
       return `[MODO ATIVO: REFORMULAR COM CONCISÃO]

@@ -75,6 +75,7 @@ export function useChat() {
           sources_found: response.sources_found,
           has_context: response.has_context,
           processing_time_ms: response.processing_time_ms,
+          response_kind: response.response_kind,
           timestamp: new Date(),
         };
 

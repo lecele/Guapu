@@ -18,6 +18,7 @@ function referenceFromContent(content?: string): string {
 
   const bibliographic = text.match(/\b([A-ZÀ-Ý][A-Za-zÀ-ÿ'’.-]+(?:\s+(?:[A-ZÀ-Ý][A-Za-zÀ-ÿ'’.-]+|de|da|do|dos|das)){0,5})\s*\(?((?:19|20)\d{2})\)?\.\s*([^.!?]{12,160})(?:\.|$)/);
   const page = text.match(/\b(?:p\.?|p[aá]gina(?:s)?)\s*(\d+(?:\s*(?:-|–|a)\s*\d+)?)/i);
+  const chapter = text.match(/\b(?:cap[ií]tulo|cap\.)\s*(\d+)?\s*[-—–:.]?\s*([^.!?]{8,140})/i);
 
   const parts = [
     bibliographic?.[1]?.trim(),
@@ -26,9 +27,18 @@ function referenceFromContent(content?: string): string {
     page?.[1] ? `p. ${page[1]}.` : undefined,
   ].filter(Boolean);
 
-  return parts.length >= 2
-    ? parts.join(' ').replace(/\s+\./g, '.')
-    : 'Informação não disponível no artigo, consultar o Plano de Ensino ou docentes.';
+  if (parts.length >= 2) {
+    return parts.join(' ').replace(/\s+\./g, '.');
+  }
+
+  // Camada 2: uma seção ou capítulo identificado no próprio trecho ainda é
+  // uma referência útil. Nunca recorremos ao nome do arquivo.
+  if (chapter?.[2]) {
+    const number = chapter[1] ? ` (Cap. ${chapter[1]})` : '';
+    return `${chapter[2].trim().replace(/[.:;]+$/, '')}${number}.`;
+  }
+
+  return 'Informação não disponível no artigo, consultar o Plano de Ensino ou docentes.';
 }
 
 function removeModelReferences(text: string): string {
