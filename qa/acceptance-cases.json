@@ -1,0 +1,50 @@
+[
+  {
+    "id": "FLOW-001",
+    "description": "Escolher resumo sem tema",
+    "messages": ["Resumo de Conteúdo"],
+    "expect": { "includes": ["Qual tema"], "sourcesMin": 0, "maxLatencyMs": 5000 }
+  },
+  {
+    "id": "FLOW-002",
+    "description": "Resumo com tema informado no mesmo comando",
+    "messages": ["Resumo de conteúdo sobre cuidados pós-operatórios"],
+    "expect": { "includes": ["Explicação", "Relação com a prática", "Referências", "pós-operatório imediato", "24 horas"], "excludes": ["Qual tema da disciplina"], "sourcesMin": 1, "maxLatencyMs": 45000 }
+  },
+  {
+    "id": "FLOW-003",
+    "description": "Aprofundar mantém o tema atual",
+    "messages": ["Resumo de conteúdo sobre cuidados pré-operatórios", "Aprofundar"],
+    "expect": { "includes": ["aprofund"], "excludes": ["Qual tema da disciplina"], "sourcesMin": 1, "maxLatencyMs": 45000 }
+  },
+  {
+    "id": "FLOW-005",
+    "description": "Escolher outro tema limpa o tema atual",
+    "messages": ["Resumo de conteúdo sobre estomas", "Outro tema"],
+    "expect": { "includes": ["Qual tema"], "sourcesMin": 0, "maxLatencyMs": 5000 }
+  },
+  {
+    "id": "FLOW-006",
+    "description": "Quiz com tema na mesma mensagem",
+    "messages": ["Quiz da Disciplina sobre fios de sutura"],
+    "expect": { "includes": ["Questão 1", "A)", "B)", "C)", "D)"], "excludes": ["Referências"], "sourcesMin": 1, "maxLatencyMs": 45000 }
+  },
+  {
+    "id": "FLOW-009",
+    "description": "Informações da disciplina consultam o plano",
+    "messages": ["Informações da Disciplina: qual é a fórmula da média final?"],
+    "expect": { "includes": ["Referências", "plano de ensino", "administrativo plano ensino"], "excludes": ["cardiologia"], "sourcesMin": 1, "maxLatencyMs": 45000 }
+  },
+  {
+    "id": "FLOW-011",
+    "description": "Encerrar sessão usa o texto aprovado",
+    "messages": ["Encerrar Sessão"],
+    "expect": { "includes": ["Sessão encerrada", "Bons estudos"], "sourcesMin": 0, "maxLatencyMs": 5000 }
+  },
+  {
+    "id": "RAG-001",
+    "description": "Pergunta clínica conhecida recupera contexto",
+    "messages": ["Quais são os principais cuidados de enfermagem no pós-operatório imediato?"],
+    "expect": { "includes": ["Referências", "sinais vitais", "dor", "respirat"], "sourcesMin": 1, "maxLatencyMs": 45000 }
+  }
+]

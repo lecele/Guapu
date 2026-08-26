@@ -103,8 +103,13 @@ interface MatchDocumentRow {
 }
 
 type MatchDocumentsRpc = (
-  functionName: 'match_documents',
-  args: { query_embedding: number[]; match_threshold: number; match_count: number },
+  functionName: 'match_documents' | 'match_documents_filtered',
+  args: {
+    query_embedding: number[];
+    match_threshold: number;
+    match_count: number;
+    source_pattern?: string;
+  },
 ) => Promise<{ data: MatchDocumentRow[] | null; error: { message: string } | null }>;
 
 // ── Roteamento por intenção (sem LLM) ────────────────────────────────────────
@@ -164,14 +169,22 @@ async function embedQuery(text: string): Promise<number[]> {
 
 // ── Retrieval ─────────────────────────────────────────────────────────────────
 
-async function retrieveDocs(embedding: number[], threshold = 0.35): Promise<Document[]> {
+async function retrieveDocs(
+  embedding: number[],
+  threshold = 0.35,
+  sourcePattern?: string,
+): Promise<Document[]> {
   const supabase = getSupabase();
   const matchDocuments = supabase.rpc.bind(supabase) as unknown as MatchDocumentsRpc;
-  const { data, error } = await matchDocuments('match_documents', {
+  const { data, error } = await matchDocuments(
+    sourcePattern ? 'match_documents_filtered' : 'match_documents',
+    {
     query_embedding: embedding,
     match_threshold: threshold,
     match_count: parseInt(process.env.RAG_MATCH_COUNT || '5'),
-  });
+      ...(sourcePattern ? { source_pattern: sourcePattern } : {}),
+    },
+  );
   if (error) throw new Error(`RETRIEVAL_FAILED: ${error.message}`);
   return (data || []).map((row) => ({
     id: String(row.id ?? ''),
@@ -500,7 +513,11 @@ export async function POST(req: NextRequest) {
       const isCourseQuery =
         decision.generationMode === 'info' ||
         /prof|hor[aá]r|atend|cron|calend|nota|avali|plano|trabalho|conte[uú]do|carga|disciplin|ementa|frequ[eê]nc|moodle|email|contato|m[eé]dia|prova/i.test(searchQuery);
-      docs = await retrieveDocs(embedding, isCourseQuery ? 0.25 : 0.35);
+      docs = await retrieveDocs(
+        embedding,
+        isCourseQuery ? 0.25 : 0.35,
+        decision.generationMode === 'info' ? 'administrativo__plano_ensino%' : undefined,
+      );
       retrievalLatency = Date.now() - retrievalStartedAt;
 
       if (docs.length === 0) retrievalErrorCode = 'NO_RELEVANT_CONTEXT';
