@@ -4,6 +4,26 @@
 
 Estabilizar o funcionamento do chatbot e comprovar a qualidade do RAG antes de realizar a mudança visual da interface.
 
+## Arquitetura-alvo de produção
+
+O Guapu será operado em uma arquitetura híbrida. O objetivo é preservar a resposta rápida ao estudante e retirar da camada web os processos longos, que podem falhar ou exceder limites de execução.
+
+```text
+Domínios Guapu / Agentes na Saúde
+          ↓
+Vercel: interface do chat, painel e API de atendimento
+          ↓
+Supabase: usuários, conversas, telemetria, manifesto e pgvector
+          ↓
+VPS: worker persistente, fila, OCR e sincronização Google Drive → RAG
+```
+
+- A Vercel continua atendendo o chat e o painel; não haverá proxy da VPS para cada mensagem.
+- O Supabase continua sendo a fonte de verdade para documentos, vetores, estado e auditoria.
+- A VPS processará tarefas assíncronas e retomáveis: documentos grandes, OCR, geração de embeddings, exclusões e reconciliação do Drive.
+- O domínio oficial deverá apontar diretamente para a Vercel: `guapu.agentesnasaude.com.br` e `painel.guapu.agentesnasaude.com.br` (ou equivalentes definidos pela Agentes na Saúde). Os endereços `*.vercel.app` permanecem técnicos.
+- Antes da configuração na VPS, será criado um usuário de serviço sem privilégios de administrador, com segredos fora do repositório, health check, reinício automático e logs centralizados.
+
 A implementação será dividida em duas grandes etapas:
 
 1. **Estabilização funcional:** fluxo, estado da conversa, recuperação no RAG, qualidade das respostas, sincronização do Google Drive, tratamento de erros e telemetria.
@@ -20,6 +40,9 @@ Não devemos misturar as duas etapas. Uma interface nova pode esconder problemas
 - Exportar as conversas reais dos 31 testes do cliente.
 - Classificar cada teste como: erro de fluxo, erro de RAG, erro de geração, erro de sincronização ou erro de interface.
 - Definir um conjunto fixo de testes de regressão.
+- Confirmar o endpoint único de chat publicado e congelar a configuração atual de modelo, embedding, chunking e threshold.
+- Proteger o painel administrativo por autenticação e registrar uma política de retenção para conversas e documentos.
+- Fazer backup verificável do Supabase antes de qualquer reindexação ou limpeza de vetores.
 
 ### Fase 1 — Fluxo e estado da conversa
 
@@ -51,6 +74,9 @@ Não devemos misturar as duas etapas. Uma interface nova pode esconder problemas
 - Garantir que a remoção no Drive remova também os vetores correspondentes.
 - Renovar os canais de webhook antes da expiração.
 - Criar um relatório de sincronização: arquivos encontrados, adicionados, atualizados, removidos e falhos.
+- Transferir a execução pesada para um worker persistente na VPS, mantendo GitHub Actions apenas como gatilho agendado até a migração estar homologada.
+- Criar fila de trabalhos com idempotência, checkpoint por arquivo/lote, tentativas com limite e uma fila de falhas revisável no painel.
+- Tratar PDF digitalizado como estado explícito: executar OCR quando autorizado ou marcar o arquivo como não indexável com instrução clara para o cliente.
 
 ### Fase 5 — Teste de aceitação
 
@@ -58,6 +84,13 @@ Não devemos misturar as duas etapas. Uma interface nova pode esconder problemas
 - Criar testes adicionais para perguntas curtas, mudança de assunto, aprofundamento, quiz, informação, encerramento e ausência de contexto.
 - Comparar taxa de erro, qualidade, latência, fontes e modelo.
 - Só iniciar a mudança visual depois de o fluxo funcional estar aprovado.
+
+### Fase 5.1 — Operação e domínios de produção
+
+- Configurar domínios da Agentes na Saúde apontando diretamente para a Vercel, com TLS e redirecionamentos definidos.
+- Implantar o worker na VPS com serviço supervisionado, health check e reinício automático.
+- Criar alertas para falha de sincronização, acúmulo de fila, indisponibilidade de modelo, quota, aumento de latência e falha de backup.
+- Executar teste de carga com volume e concorrência compatíveis com o uso pelos especialistas.
 
 ### Fase 6 — Interface
 

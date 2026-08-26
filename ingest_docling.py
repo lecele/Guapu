@@ -7,7 +7,7 @@ Estratégia de performance:
 - Chunking por seção/heading para melhor contexto no RAG
 - Embeddings em batch via gemini-embedding-2 (768 dims)
 - Deduplicação por hash de conteúdo
-- Workers paralelos para embeddings
+- Lotes de embeddings íntegros, com falha explícita quando a API não retorna o lote completo
 
 Uso:
     python ingest_docling.py
@@ -43,7 +43,7 @@ try:
 except ImportError:
     pass
 
-import google.generativeai as genai
+from services.embeddings_service import Gemini2Embeddings
 
 # ── Config ─────────────────────────────────────────────────────────────────────
 SUPABASE_URL  = os.getenv("SUPABASE_URL", "https://ymolbcxabnhseofngluq.supabase.co")
@@ -134,28 +134,9 @@ def chunk_docling_doc(doc, source_name: str) -> list[dict]:
 
 
 # ── Embeddings em batch ────────────────────────────────────────────────────────
-def embed_batch(texts: list[str], model_name="models/gemini-embedding-2", dim=768) -> list[list[float]]:
-    """Gera embeddings em batch. Retorna lista de vetores."""
-    try:
-        res = genai.embed_content(
-            model=model_name,
-            content=texts,
-            output_dimensionality=dim,
-        )
-        embeddings = res.get("embedding") or res.get("embeddings") or []
-        if isinstance(embeddings, list) and isinstance(embeddings[0], float):
-            # single embedding retornado como lista plana
-            return [embeddings]
-        return embeddings
-    except Exception as e:
-        # fallback: um por vez
-        print(f"  [WARN] Batch falhou ({e}), tentando um por vez...", flush=True)
-        results = []
-        for text in texts:
-            r = genai.embed_content(model=model_name, content=text, output_dimensionality=dim)
-            emb = r.get("embedding") or r.get("embeddings")
-            results.append(emb)
-        return results
+def embed_batch(texts: list[str], embeddings_model: Gemini2Embeddings) -> list[list[float]]:
+    """Gera embeddings em um único lote consistente."""
+    return embeddings_model.embed_documents(texts)
 
 
 # ── Inserção no Supabase ───────────────────────────────────────────────────────
@@ -253,7 +234,7 @@ def chunk_pypdf_fallback(filepath: Path) -> list[dict]:
 
 
 # ── Processa um arquivo ────────────────────────────────────────────────────────
-def process_file(filepath: Path, converter, client) -> dict:
+def process_file(filepath: Path, converter, client, embeddings_model: Gemini2Embeddings) -> dict:
     source_name = filepath.name
     result = {"file": source_name, "chunks": 0, "inserted": 0, "skipped": 0, "error": None}
     chunks = []
@@ -301,7 +282,7 @@ def process_file(filepath: Path, converter, client) -> dict:
         texts = [c["content"] for c in batch]
 
         try:
-            embeddings = embed_batch(texts)
+            embeddings = embed_batch(texts, embeddings_model)
         except Exception as e:
             print(f"  [WARN] Embedding batch {i//BATCH_SIZE+1} falhou: {e}", flush=True)
             result["skipped"] += len(batch)
@@ -348,16 +329,20 @@ def main():
     print(f"{'='*60}\n")
 
     # Inicializa clientes
-    genai.configure(api_key=GOOGLE_KEY)
     client = create_client(SUPABASE_URL, SUPABASE_KEY)
     converter = build_converter()
+    embeddings_model = Gemini2Embeddings(
+        model="gemini-embedding-2",
+        output_dimensionality=768,
+        google_api_key=GOOGLE_KEY,
+    )
 
     results = []
     for i, filepath in enumerate(files, 1):
         rel = filepath.relative_to(pasta)
         print(f"\n[{i}/{len(files)}] {rel}", flush=True)
         t_start = time.time()
-        result = process_file(filepath, converter, client)
+        result = process_file(filepath, converter, client, embeddings_model)
         elapsed = time.time() - t_start
         status = "OK" if not result["error"] else "ERRO"
         print(f"  [{status}] {result['inserted']} inseridos, {result['skipped']} pulados | {elapsed:.1f}s total", flush=True)
