@@ -458,6 +458,31 @@ export async function GET(request: NextRequest) {
     ).length;
     const modelFailures = pipelineTurns.filter((message) => message.metadata?.error_code === 'MODEL_FAILED').length;
 
+    const syncHealth = {
+      queued: 0,
+      running: 0,
+      succeeded: 0,
+      failed: 0,
+      lastError: null as string | null,
+    };
+    try {
+      const { data, error } = await supabase.from('drive_sync_jobs')
+        .select('status, last_error, updated_at')
+        .order('updated_at', { ascending: false });
+      if (error) throw error;
+      for (const job of (data || []) as Array<{ status?: string; last_error?: string | null }>) {
+        if (job.status === 'queued') syncHealth.queued++;
+        else if (job.status === 'running') syncHealth.running++;
+        else if (job.status === 'succeeded') syncHealth.succeeded++;
+        else if (job.status === 'failed') {
+          syncHealth.failed++;
+          if (!syncHealth.lastError && job.last_error) syncHealth.lastError = job.last_error.slice(0, 180);
+        }
+      }
+    } catch (error) {
+      console.warn('[admin/stats] drive sync health fetch error:', error);
+    }
+
     /* const ragSummaryList = [
       { source: 'Cuidados Críticos em Enfermagem (Patricia Morton & Dorrie Fontaine)', chunkCount: 11883, category: 'Biblioteca / Livro Texto' },
       { source: 'Tratado de Enfermagem Médico-Cirúrgica (Brunner & Suddarth)', chunkCount: 10552, category: 'Biblioteca / Livro Texto' },
@@ -525,6 +550,7 @@ export async function GET(request: NextRequest) {
           ? Math.round((qualityReview.correct / qualityReview.reviewedResponses) * 100)
           : 0,
       },
+      syncHealth,
       feedbackStats: {
         avgRating: Number(avgRating),
         totalFeedbacks,

@@ -69,6 +69,13 @@ interface StatsData {
     incorrect: number;
     correctRate: number;
   };
+  syncHealth: {
+    queued: number;
+    running: number;
+    succeeded: number;
+    failed: number;
+    lastError: string | null;
+  };
   feedbackStats?: {
     avgRating: number;
     totalFeedbacks: number;
@@ -1607,7 +1614,22 @@ export default function AdminDashboardPage() {
                       {stats ? `${(stats.telemetry.p50ResponseTimeMs / 1000).toFixed(2)}s / ${(stats.telemetry.p95ResponseTimeMs / 1000).toFixed(2)}s` : 'Sem amostra'}
                     </span>
                   </div>
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-[#040e1f] border border-blue-900/40">
+                    <span className="font-semibold text-slate-200">Sincronização Google Drive</span>
+                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
+                      (stats?.syncHealth.failed ?? 0) > 0
+                        ? 'bg-red-500/20 text-red-300 border-red-500/30'
+                        : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+                    }`}>
+                      {stats ? `${stats.syncHealth.running} processando · ${stats.syncHealth.queued} na fila · ${stats.syncHealth.failed} falhas` : 'Aguardando leitura'}
+                    </span>
+                  </div>
                 </div>
+                {stats?.syncHealth.lastError && (
+                  <p className="rounded-lg border border-red-500/30 bg-red-500/10 p-2 text-[10px] text-red-200">
+                    Última falha de sincronização: {stats.syncHealth.lastError}
+                  </p>
+                )}
                 <p className="text-[10px] text-slate-500">
                   Disponibilidade e uptime exigem monitor externo; este painel mostra apenas o que foi observado nas respostas registradas.
                 </p>
