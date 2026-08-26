@@ -1,8 +1,8 @@
 name: Sincronizar Google Drive com RAG
 
 on:
-  schedule:
-    - cron: "17 * * * *"
+  # O processamento pesado foi movido para o worker persistente da VPS.
+  # Este acionamento manual permanece somente como contingência controlada.
   workflow_dispatch:
 
 concurrency:
