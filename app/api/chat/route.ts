@@ -32,7 +32,7 @@ export const maxDuration = 120;
 // ── Respostas fixas (zero tokens de LLM para navegação rápida) ───────────────
 
 const GREETING_RESPONSE =
-  'Olá! Que bom ter você aqui no Assistente de Estudos da INT 5224 – O cuidado no processo de viver humano II: a condição cirúrgica\n\n' +
+  'Olá! Que bom ter você aqui no Assistente de Inteligência Artificial da INT 5224 – O cuidado no processo de viver humano II: a condição cirúrgica\n\n' +
   'Este espaço foi pensado para facilitar sua jornada de aprendizagem sobre o cuidado no processo de viver humano em condição cirúrgica. Aqui você revisa conteúdos, pratica com simulados e acessa informações essenciais da disciplina.\n\n' +
   'Nota de transparência: Este assistente utiliza inteligência artificial para apoiar seu estudo. Ele não substitui o raciocínio clínico, a leitura das aulas ou a orientação docente. Todas as respostas seguem o plano de ensino e os limites éticos da disciplina.\n\n' +
   'Como usar: Fale comigo como se estivesse conversando com um tutor. Peça explicações, tire dúvidas ou escolha uma das opções abaixo.\n\n' +
