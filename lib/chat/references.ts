@@ -2,6 +2,7 @@ import type { GenerationMode } from './session-flow';
 
 export interface RetrievedSource {
   source: string;
+  content?: string;
 }
 
 const REFERENCE_HEADING = /(?:^|\n)\s*(?:\*\*)?refer[êe]ncias:?\*{0,2}\s*/i;
@@ -11,13 +12,23 @@ function needsReferences(mode: GenerationMode): boolean {
   return ['resumo', 'resumo_aprofundar', 'resumo_reformular', 'info', 'livre'].includes(mode);
 }
 
-function sourceLabel(source: string): string {
-  const decoded = decodeURIComponent(source)
-    .replace(/\.(?:pdf|docx?|txt)$/i, '')
-    .replace(/[_-]+/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-  return decoded || 'Documento recuperado da base de conhecimento';
+function referenceFromContent(content?: string): string {
+  const text = (content || '').replace(/\s+/g, ' ').trim();
+  if (!text) return 'Informação não disponível no artigo, consultar o Plano de Ensino ou docentes.';
+
+  const bibliographic = text.match(/\b([A-ZÀ-Ý][A-Za-zÀ-ÿ'’.-]+(?:\s+(?:[A-ZÀ-Ý][A-Za-zÀ-ÿ'’.-]+|de|da|do|dos|das)){0,5})\s*\(?((?:19|20)\d{2})\)?\.\s*([^.!?]{12,160})(?:\.|$)/);
+  const page = text.match(/\b(?:p\.?|p[aá]gina(?:s)?)\s*(\d+(?:\s*(?:-|–|a)\s*\d+)?)/i);
+
+  const parts = [
+    bibliographic?.[1]?.trim(),
+    bibliographic?.[2] ? `(${bibliographic[2]})` : undefined,
+    bibliographic?.[3] ? `${bibliographic[3].replace(/^(?:cap[ií]tulo|t[ií]tulo)\s*[:.-]?\s*/i, '').trim()}.` : undefined,
+    page?.[1] ? `p. ${page[1]}.` : undefined,
+  ].filter(Boolean);
+
+  return parts.length >= 2
+    ? parts.join(' ').replace(/\s+\./g, '.')
+    : 'Informação não disponível no artigo, consultar o Plano de Ensino ou docentes.';
 }
 
 function removeModelReferences(text: string): string {
@@ -43,10 +54,10 @@ export function finalizeReferences(
   const withoutModelReferences = removeModelReferences(text);
   if (!needsReferences(mode)) return withoutModelReferences;
 
-  const sources = [...new Set(docs.map((doc) => sourceLabel(doc.source)))].slice(0, 5);
+  const sources = [...new Set(docs.map((doc) => referenceFromContent(doc.content)))].slice(0, 5);
   const lines = sources.length > 0
-    ? sources.map((source) => `- Referência: ${source}`)
-    : ['- Referência: Informação não disponível no artigo, consultar o Plano de Ensino ou docentes.'];
+    ? sources.map((source) => `- ${source}`)
+    : ['- Informação não disponível no artigo, consultar o Plano de Ensino ou docentes.'];
 
   return `${withoutModelReferences}\n\n**Referências:**\n${lines.join('\n')}`.trim();
 }

@@ -23,7 +23,7 @@ import {
   type TurnMetadata,
 } from '@/lib/chat/session-store';
 import { buildCorePrompt, PROMPT_VERSION } from '@/lib/chat/prompts/core';
-import { FLOW_PROMPT } from '@/lib/chat/prompts/flow';
+import { buildFlowPrompt } from '@/lib/chat/prompts/flow';
 import { buildModePrompt } from '@/lib/chat/prompts/modes';
 import { finalizeReferences } from '@/lib/chat/references';
 
@@ -60,7 +60,7 @@ const RESUMO_MENU_RESPONSE =
   '*(Exemplos: Controle de infecção no perioperatório, Feridas, Nomenclatura Cirúrgica, Suturas, Dor pós-operatória, Cuidados pré-operatórios, Avaliação Nutricional, entre outros)*';
 
 const SIMULADO_MENU_RESPONSE =
-  'Qual tema você deseja para o simulado? Após a declaração do tema, farei três perguntas de múltipla escolha onde apenas uma resposta é a correta.\n\n' +
+  'Qual tema você deseja para o Quiz da Disciplina? Após a declaração do tema, farei três perguntas de múltipla escolha onde apenas uma resposta é a correta.\n\n' +
   '*(Exemplos: Hemostasia, Cirurgia Bariátrica, Estomas, Capacitação Hospitalar, Teleconsulta, Cuidados pós-operatórios, entre outros)*';
 
 const QUIZ_INVALID_RESPONSE =
@@ -120,7 +120,7 @@ function formatContext(docs: Document[]): string {
   if (!docs.length) return 'Nenhum material disponível.';
   return docs
     .map((d, i) =>
-      `[${i + 1}] Arquivo/Pasta RAG: ${d.source} (similaridade: ${d.similarity.toFixed(2)})\n${d.content}`
+      `[${i + 1}] Trecho RAG ${i + 1} (similaridade: ${d.similarity.toFixed(2)})\n${d.content}`
     )
     .join('\n\n---\n\n');
 }
@@ -215,13 +215,15 @@ async function generateResponse(
   sessionMode: GenerationMode = 'livre',
   inlineTheme?: string,
   quizQuestion = 0,
+  sessionState = 'LIVRE',
+  activeMode = 'livre',
   completionRequirement?: string,
 ): Promise<GenerationResult> {
   const generationStartedAt = Date.now();
   const systemPrompt = `${buildCorePrompt({
     context: formatContext(docs),
     history: formatHistory(history),
-  })}\n\n${FLOW_PROMPT}`;
+  })}\n\n${buildFlowPrompt({ state: sessionState, mode: activeMode, topic: inlineTheme || '', quizQuestion })}`;
 
   const requestedModel = process.env.GEMINI_CHAT_MODEL ?? 'gemini-3.5-flash';
   const candidateModels = [...new Set([
@@ -554,6 +556,8 @@ export async function POST(req: NextRequest) {
         decision.generationMode ?? 'livre',
         decision.topic,
         decision.quizQuestion,
+        decision.stateBefore.state,
+        decision.stateBefore.mode,
       );
       answer = generation.text;
       modelRequested = generation.modelRequested;
@@ -571,6 +575,8 @@ export async function POST(req: NextRequest) {
           decision.generationMode ?? 'livre',
           decision.topic,
           decision.quizQuestion,
+          decision.stateBefore.state,
+          decision.stateBefore.mode,
           `Sua resposta deve obrigatoriamente corrigir a Questão ${expectedQuestion - 1} e, em seguida, incluir a linha **Questão ${expectedQuestion}:** com quatro alternativas A, B, C e D. Não termine a resposta antes dessa nova questão.`,
         );
         if (!repair.errorCode && !requiresNextQuizQuestion(decision, repair.text)) {

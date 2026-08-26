@@ -3,15 +3,20 @@ import assert from 'node:assert/strict';
 
 import { finalizeReferences } from '../lib/chat/references.ts';
 
-test('substitui referências geradas pelo modelo por fontes do RAG em linhas separadas', () => {
+test('substitui referências geradas pelo modelo por dados presentes no trecho RAG', () => {
   const answer = finalizeReferences(
     'Explicação breve.\n\nReferências: fonte inventada • Referência: outra fonte\n\nDeseja aprofundar este tema?',
-    [{ source: 'aula__cuidados_pos_operatorios_v1.pdf' }, { source: 'aula__cuidados_pos_operatorios_v1.pdf' }, { source: 'plano_de_ensino.docx' }],
+    [
+      { source: 'aula__cuidados_pos_operatorios_v1.pdf', content: 'Silva (2022). Cuidados perioperatórios em cirurgia geral. Capítulo 4, p. 45-52.' },
+      { source: 'aula__cuidados_pos_operatorios_v1.pdf', content: 'Silva (2022). Cuidados perioperatórios em cirurgia geral. Capítulo 4, p. 45-52.' },
+      { source: 'plano_de_ensino.docx', content: 'Plano de ensino sem metadados bibliográficos no trecho recuperado.' },
+    ],
     'resumo',
   );
 
-  assert.match(answer, /- Referência: aula cuidados pos operatorios v1/);
-  assert.match(answer, /- Referência: plano de ensino/);
+  assert.match(answer, /- Silva \(2022\) Cuidados perioperatórios em cirurgia geral\. p\. 45-52\./);
+  assert.match(answer, /- Informação não disponível no artigo/);
+  assert.doesNotMatch(answer, /aula cuidados pos operatorios|plano de ensino\.docx/i);
   assert.doesNotMatch(answer, /fonte inventada/);
   assert.match(answer, /Deseja aprofundar este tema\?/);
 });

@@ -57,8 +57,8 @@ Não inclua referências.`;
     case 'resumo':
       return `[MODO ATIVO: RESUMO]
 Tema: ${targetTopic}
-Responda com: **Explicação:**, **Exemplo clínico:**, **Relação com a prática:** e **Sugestões de estudo complementar:**.
-Finalize oferecendo aprofundar, escolher outro tema, voltar ao menu ou encerrar.`;
+Produza uma resposta detalhada, com 3 a 5 blocos curtos: **Explicação:**, **Exemplo clínico:** (somente se sustentado pelos materiais), **Relação com a prática de enfermagem:** e **Sugestão de estudo complementar:** quando fizer sentido.
+Finalize com opções em lista: aprofundar este tema, escolher outro tema, voltar ao menu principal ou encerrar a sessão.`;
 
     case 'resumo_aprofundar':
       return `[MODO ATIVO: APROFUNDAR RESUMO]
@@ -70,8 +70,7 @@ Finalize oferecendo aprofundar, escolher outro tema, voltar ao menu ou encerrar.
     case 'resumo_reformular':
       return `[MODO ATIVO: REFORMULAR COM CONCISÃO]
 Tema atual: ${targetTopic}
-Reescreva a resposta anterior de forma mais curta. Não aprofunde nem troque o tema.
-Mantenha conceitos essenciais e relação com a prática.`;
+Reescreva somente a resposta atual em um parágrafo de 2 a 4 frases. Não aprofunde nem troque o tema. Mantenha os conceitos essenciais e a relação com a prática quando couber.`;
 
     case 'info':
       return `[MODO ATIVO: INFORMAÇÕES DA DISCIPLINA]
@@ -85,6 +84,6 @@ Ofereça outra pergunta, menu ou encerramento.`;
     default:
       return `[MODO ATIVO: PERGUNTA LIVRE]
 Pergunta do estudante: ${question}
-Responda apenas ao que estiver sustentado pelos materiais RAG, de forma concisa.`;
+Responda apenas ao que estiver sustentado pelos materiais RAG. Sem pedido explícito de concisão, responda de forma detalhada e objetiva, com explicação, exemplo contextualizado quando houver base e relação com a prática de enfermagem.`;
   }
 }
