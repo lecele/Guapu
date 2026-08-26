@@ -72,3 +72,16 @@ A conta Vercel autenticada ainda não possui domínios personalizados cadastrado
 - `guapu-painel.vercel.app` para o painel administrativo.
 
 A disponibilidade exata dos dois nomes será confirmada na etapa de deploy.
+
+## Evolução para worker na VPS
+
+A partir da migração `006_add_drive_sync_job_queue.sql`, a sincronização poderá
+ser executada na VPS sem colocar processos longos no caminho do chat:
+
+1. `python queue_drive_sync.py` lista o Drive e cria um trabalho por arquivo novo, alterado ou removido.
+2. `python drive_sync_worker.py` assume um trabalho com lease de 30 minutos, processa-o e registra sucesso ou erro.
+3. Se o worker cair, o lease expira e outro worker pode assumir o mesmo trabalho.
+
+O workflow GitHub atual permanece como está até a migração ser aplicada e o
+serviço da VPS ser configurado e testado. Nenhum dos novos scripts é chamado
+pelo chatbot nem altera a latência da resposta ao estudante.
