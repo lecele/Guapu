@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, type ComponentType } from 'react';
+import Image from 'next/image';
 import {
   BookOpen,
   Check,
@@ -155,7 +156,19 @@ export default function HomePage() {
             onNewSession={startNewSession}
             isLoading={isLoading}
           />
-          <p className="guapu-caption">Guapu · Universidade Federal de Santa Catarina</p>
+          <div className="guapu-footer-meta">
+            <p className="guapu-caption">Guapu · Universidade Federal de Santa Catarina</p>
+            <a
+              className="guapu-brand-watermark"
+              href="https://www.agentesnasaude.com.br/"
+              target="_blank"
+              rel="noreferrer"
+              aria-label="Conheça a Agentes na Saúde (abre em uma nova aba)"
+              title="Desenvolvido por Agentes na Saúde"
+            >
+              <Image src="/agentes-na-saude.png" alt="Agentes na Saúde" width={130} height={45} />
+            </a>
+          </div>
         </footer>
       </main>
     </div>
