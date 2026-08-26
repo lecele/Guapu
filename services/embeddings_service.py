@@ -34,7 +34,13 @@ class Gemini2Embeddings(Embeddings):
 
         response = self.client.models.embed_content(
             model=self.model,
-            contents=texts,
+            # Strings são interpretadas pelo SDK como um único Content em
+            # algumas versões. Content explícito preserva um embedding por
+            # trecho e evita associar o vetor de um chunk ao texto errado.
+            contents=[
+                types.Content(parts=[types.Part.from_text(text=text)])
+                for text in texts
+            ],
             config=types.EmbedContentConfig(
                 taskType=task_type,
                 outputDimensionality=self.output_dimensionality,

@@ -32,7 +32,10 @@ class Gemini2EmbeddingsTests(unittest.TestCase):
 
         self.assertEqual(result, [[0.1, 0.2], [0.3, 0.4]])
         self.assertEqual(len(models.calls), 1)
-        self.assertEqual(models.calls[0]["contents"], ["primeiro", "segundo"])
+        sent_contents = models.calls[0]["contents"]
+        self.assertEqual(len(sent_contents), 2)
+        self.assertEqual(sent_contents[0].parts[0].text, "primeiro")
+        self.assertEqual(sent_contents[1].parts[0].text, "segundo")
         self.assertEqual(models.calls[0]["config"].task_type, "RETRIEVAL_DOCUMENT")
 
     def test_query_uses_query_task(self):
