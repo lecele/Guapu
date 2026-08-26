@@ -780,11 +780,13 @@ export default function AdminDashboardPage() {
 
   const qualityTotal = Math.max(stats?.qualityEvaluation.completed ?? 0, 1);
   const qualitySegments = [
-    { label: 'Conformes', value: stats?.qualityEvaluation.correct ?? 0, color: '#34d399' },
-    { label: 'Sem evidência', value: stats?.qualityEvaluation.unverifiable ?? 0, color: '#fbbf24' },
-    { label: 'Incompletas', value: stats?.qualityEvaluation.incomplete ?? 0, color: '#fb923c' },
-    { label: 'Incorretas', value: stats?.qualityEvaluation.incorrect ?? 0, color: '#fb7185' },
+    { label: 'Conformes às evidências', value: stats?.qualityEvaluation.correct ?? 0, color: '#34d399', track: 'bg-emerald-400', text: 'text-emerald-300' },
+    { label: 'Sem evidência suficiente', value: stats?.qualityEvaluation.unverifiable ?? 0, color: '#fbbf24', track: 'bg-amber-400', text: 'text-amber-300' },
+    { label: 'Incompletas', value: stats?.qualityEvaluation.incomplete ?? 0, color: '#fb923c', track: 'bg-orange-400', text: 'text-orange-300' },
+    { label: 'Incorretas', value: stats?.qualityEvaluation.incorrect ?? 0, color: '#fb7185', track: 'bg-rose-400', text: 'text-rose-300' },
   ];
+  const qualityRate = stats?.qualityEvaluation.correctRate ?? 0;
+  const technicalFailures = (stats?.telemetry.retrievalFailures ?? 0) + (stats?.telemetry.modelFailures ?? 0);
 
   const [isExporting, setIsExporting] = useState(false);
 
@@ -1177,72 +1179,69 @@ export default function AdminDashboardPage() {
                   </span>
                 </div>
 
-                <div className="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-5">
-                  {[
-                    ['task_alt', `${stats?.qualityEvaluation.correct ?? 0}`, 'Conformes às evidências', 'text-emerald-300'],
-                    ['help', `${stats?.qualityEvaluation.unverifiable ?? 0}`, 'Sem evidência suficiente', 'text-amber-300'],
-                    ['pending', `${stats?.qualityEvaluation.incomplete ?? 0}`, 'Incompletas', 'text-amber-300'],
-                    ['error', `${stats?.qualityEvaluation.incorrect ?? 0}`, 'Incorretas', 'text-red-300'],
-                    ['sync', `${(stats?.qualityEvaluation.queued ?? 0) + (stats?.qualityEvaluation.running ?? 0)}`, 'Em avaliação', 'text-slate-300'],
-                  ].map(([icon, value, label, color]) => (
-                    <div key={label} className="rounded-xl border border-blue-900/40 bg-[#040e1f] p-3">
-                      <span className={`material-symbols-outlined text-lg ${color}`}>{icon}</span>
-                      <p className={`mt-1 text-2xl font-black ${color}`}>{isLoading ? '…' : value}</p>
-                      <p className="text-[11px] font-medium text-slate-400">{label}</p>
+                <div className="mt-5 grid gap-5 lg:grid-cols-[230px_minmax(0,1fr)]">
+                  <div className="rounded-2xl border border-emerald-500/20 bg-[#040e1f] p-5">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500">Aderência às evidências</p>
+                    <div className="mt-4 flex items-end gap-2">
+                      <p className="text-5xl font-black tracking-tight text-white">{isLoading ? '…' : `${qualityRate}%`}</p>
+                      <span className="mb-1 rounded-full bg-emerald-500/10 px-2 py-1 text-[10px] font-bold text-emerald-300">conforme</span>
                     </div>
-                  ))}
-                </div>
-                <div className="mt-5 rounded-xl border border-blue-900/40 bg-[#040e1f] p-4">
-                  <div className="mb-3 flex items-center justify-between text-[11px]">
-                    <span className="font-semibold text-slate-300">Distribuição das avaliações concluídas</span>
-                    <span className="font-bold text-cyan-300">{stats?.qualityEvaluation.completed ?? 0} respostas</span>
+                    <div className="mt-5 h-2 overflow-hidden rounded-full bg-slate-800">
+                      <div className="h-full rounded-full bg-emerald-400 transition-all duration-700" style={{ width: `${qualityRate}%` }} />
+                    </div>
+                    <p className="mt-3 text-[11px] leading-relaxed text-slate-400">{stats?.qualityEvaluation.correct ?? 0} de {stats?.qualityEvaluation.completed ?? 0} respostas avaliadas aderem aos trechos recuperados.</p>
                   </div>
-                  <div className="flex h-3 overflow-hidden rounded-full bg-slate-800">
-                    {qualitySegments.map((segment) => segment.value > 0 && (
-                      <div
-                        key={segment.label}
-                        title={`${segment.label}: ${segment.value}`}
-                        className="h-full first:rounded-l-full last:rounded-r-full transition-all duration-700"
-                        style={{ width: `${(segment.value / qualityTotal) * 100}%`, backgroundColor: segment.color }}
-                      />
-                    ))}
-                  </div>
-                  <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2">
-                    {qualitySegments.map((segment) => (
-                      <span key={segment.label} className="inline-flex items-center gap-1.5 text-[10px] text-slate-400">
-                        <i className="h-2 w-2 rounded-full" style={{ backgroundColor: segment.color }} />
-                        {segment.label}: <b className="text-slate-200">{segment.value}</b>
-                      </span>
-                    ))}
+
+                  <div className="rounded-2xl border border-blue-900/40 bg-[#040e1f] p-5">
+                    <div className="mb-4 flex items-center justify-between">
+                      <p className="text-xs font-semibold text-slate-200">Distribuição das avaliações</p>
+                      <span className="text-[11px] text-slate-500">base: {stats?.qualityEvaluation.completed ?? 0} respostas</span>
+                    </div>
+                    <div className="space-y-4">
+                      {qualitySegments.map((segment) => {
+                        const percent = Math.round((segment.value / qualityTotal) * 100);
+                        return (
+                          <div key={segment.label}>
+                            <div className="mb-1.5 flex items-center justify-between gap-4">
+                              <span className="text-[12px] text-slate-300">{segment.label}</span>
+                              <span className={`text-sm font-black tabular-nums ${segment.text}`}>{isLoading ? '…' : segment.value}<small className="ml-1 text-[10px] font-semibold text-slate-500">{percent}%</small></span>
+                            </div>
+                            <div className="h-1.5 overflow-hidden rounded-full bg-slate-800">
+                              <div className={`h-full rounded-full ${segment.track} transition-all duration-700`} style={{ width: `${percent}%` }} />
+                            </div>
+                          </div>
+                        );
+                      })}
+                      <div className="flex items-center justify-between border-t border-blue-900/40 pt-3 text-[11px]">
+                        <span className="text-slate-400">Em avaliação</span>
+                        <span className="font-bold text-slate-200">{(stats?.qualityEvaluation.queued ?? 0) + (stats?.qualityEvaluation.running ?? 0)}</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
                 <p className="mt-3 text-[11px] text-slate-500">“Conforme” indica aderência às evidências recuperadas; não substitui validação clínica ou acadêmica formal.</p>
               </section>
 
               <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-                <div className="rounded-2xl border border-blue-900/40 bg-[#0b203c] p-5">
-                  <span className="material-symbols-outlined text-purple-300">timer</span>
-                  <p className="mt-3 text-2xl font-black text-white">{isLoading ? '…' : `${((stats?.telemetry.p50ResponseTimeMs ?? 0) / 1000).toFixed(1)}s`}</p>
-                  <p className="text-xs font-semibold text-slate-400">Tempo RAG P50</p>
-                  <p className="mt-1 text-[11px] text-slate-500">P95: {((stats?.telemetry.p95ResponseTimeMs ?? 0) / 1000).toFixed(1)}s · {stats?.telemetry.latencySamples ?? 0} amostras</p>
+                <div className="relative flex min-h-44 flex-col justify-between overflow-hidden rounded-2xl border border-violet-500/25 bg-gradient-to-br from-[#10264a] to-[#0b203c] p-5 shadow-lg transition hover:border-violet-400/60">
+                  <div className="flex items-center justify-between"><span className="flex h-10 w-10 items-center justify-center rounded-xl border border-violet-400/30 bg-violet-500/10 text-violet-200"><span className="material-symbols-outlined text-[22px]">timer</span></span><span className="rounded-full border border-violet-400/20 bg-violet-500/10 px-2 py-1 text-[10px] font-bold text-violet-200">P50</span></div>
+                  <div><p className="text-3xl font-black tracking-tight text-white">{isLoading ? '…' : `${((stats?.telemetry.p50ResponseTimeMs ?? 0) / 1000).toFixed(1)}s`}</p><p className="text-xs font-semibold text-slate-300">Tempo de resposta RAG</p><p className="mt-1 text-[11px] text-slate-400">P95: {((stats?.telemetry.p95ResponseTimeMs ?? 0) / 1000).toFixed(1)}s · {stats?.telemetry.latencySamples ?? 0} amostras</p></div>
+                  <div className="absolute inset-x-0 bottom-0 h-1 bg-violet-400/70" />
                 </div>
-                <div className="rounded-2xl border border-blue-900/40 bg-[#0b203c] p-5">
-                  <span className="material-symbols-outlined text-emerald-300">database</span>
-                  <p className="mt-3 text-2xl font-black text-white">{isLoading ? '…' : `${stats?.telemetry.pipelineTurns ?? 0}`}</p>
-                  <p className="text-xs font-semibold text-slate-400">Consultas RAG instrumentadas</p>
-                  <p className="mt-1 text-[11px] text-slate-500">{stats?.summary.ragAccuracyRate ?? 0}% receberam contexto recuperado</p>
+                <div className="relative flex min-h-44 flex-col justify-between overflow-hidden rounded-2xl border border-emerald-500/25 bg-gradient-to-br from-[#0b2c37] to-[#0b203c] p-5 shadow-lg transition hover:border-emerald-400/60">
+                  <div className="flex items-center justify-between"><span className="flex h-10 w-10 items-center justify-center rounded-xl border border-emerald-400/30 bg-emerald-500/10 text-emerald-200"><span className="material-symbols-outlined text-[22px]">database</span></span><span className="rounded-full border border-emerald-400/20 bg-emerald-500/10 px-2 py-1 text-[10px] font-bold text-emerald-200">cobertura</span></div>
+                  <div><p className="text-3xl font-black tracking-tight text-white">{isLoading ? '…' : `${stats?.summary.ragAccuracyRate ?? 0}%`}</p><p className="text-xs font-semibold text-slate-300">Contexto recuperado</p><p className="mt-1 text-[11px] text-slate-400">{stats?.telemetry.pipelineTurns ?? 0} consultas instrumentadas</p></div>
+                  <div className="absolute inset-x-0 bottom-0 h-1 bg-emerald-400/70" />
                 </div>
-                <div className="rounded-2xl border border-blue-900/40 bg-[#0b203c] p-5">
-                  <span className="material-symbols-outlined text-red-300">report</span>
-                  <p className="mt-3 text-2xl font-black text-white">{isLoading ? '…' : (stats?.telemetry.retrievalFailures ?? 0) + (stats?.telemetry.modelFailures ?? 0)}</p>
-                  <p className="text-xs font-semibold text-slate-400">Falhas técnicas</p>
-                  <p className="mt-1 text-[11px] text-slate-500">Busca: {stats?.telemetry.retrievalFailures ?? 0} · Modelo: {stats?.telemetry.modelFailures ?? 0} · Sem contexto: {stats?.telemetry.noContextTurns ?? 0}</p>
+                <div className="relative flex min-h-44 flex-col justify-between overflow-hidden rounded-2xl border border-rose-500/25 bg-gradient-to-br from-[#2e203a] to-[#0b203c] p-5 shadow-lg transition hover:border-rose-400/60">
+                  <div className="flex items-center justify-between"><span className={`flex h-10 w-10 items-center justify-center rounded-xl border ${technicalFailures === 0 ? 'border-emerald-400/30 bg-emerald-500/10 text-emerald-200' : 'border-rose-400/30 bg-rose-500/10 text-rose-200'}`}><span className="material-symbols-outlined text-[22px]">monitor_heart</span></span><span className={`rounded-full border px-2 py-1 text-[10px] font-bold ${technicalFailures === 0 ? 'border-emerald-400/20 bg-emerald-500/10 text-emerald-200' : 'border-rose-400/20 bg-rose-500/10 text-rose-200'}`}>{technicalFailures === 0 ? 'normal' : 'atenção'}</span></div>
+                  <div><p className="text-3xl font-black tracking-tight text-white">{isLoading ? '…' : technicalFailures}</p><p className="text-xs font-semibold text-slate-300">Falhas técnicas</p><p className="mt-1 text-[11px] text-slate-400">Busca: {stats?.telemetry.retrievalFailures ?? 0} · Modelo: {stats?.telemetry.modelFailures ?? 0} · Sem contexto: {stats?.telemetry.noContextTurns ?? 0}</p></div>
+                  <div className={`absolute inset-x-0 bottom-0 h-1 ${technicalFailures === 0 ? 'bg-emerald-400/70' : 'bg-rose-400/70'}`} />
                 </div>
-                <div className="rounded-2xl border border-blue-900/40 bg-[#0b203c] p-5">
-                  <span className="material-symbols-outlined text-amber-300">star</span>
-                  <p className="mt-3 text-2xl font-black text-white">{isLoading ? '…' : `${stats?.summary.avgFeedbackRating ?? 0}/5`}</p>
-                  <p className="text-xs font-semibold text-slate-400">Avaliação dos estudantes</p>
-                  <p className="mt-1 text-[11px] text-slate-500">{stats?.summary.totalFeedbacks ?? 0} avaliações · {stats?.summary.satisfactionRate ?? 0}% com 4–5 estrelas</p>
+                <div className="relative flex min-h-44 flex-col justify-between overflow-hidden rounded-2xl border border-amber-500/25 bg-gradient-to-br from-[#342b1d] to-[#0b203c] p-5 shadow-lg transition hover:border-amber-400/60">
+                  <div className="flex items-center justify-between"><span className="flex h-10 w-10 items-center justify-center rounded-xl border border-amber-400/30 bg-amber-500/10 text-amber-200"><span className="material-symbols-outlined text-[22px]">grade</span></span><span className="rounded-full border border-amber-400/20 bg-amber-500/10 px-2 py-1 text-[10px] font-bold text-amber-200">satisfação</span></div>
+                  <div><p className="text-3xl font-black tracking-tight text-white">{isLoading ? '…' : `${stats?.summary.avgFeedbackRating ?? 0}/5`}</p><p className="text-xs font-semibold text-slate-300">Avaliação dos estudantes</p><p className="mt-1 text-[11px] text-slate-400">{stats?.summary.totalFeedbacks ?? 0} avaliações · {stats?.summary.satisfactionRate ?? 0}% com 4–5 estrelas</p></div>
+                  <div className="absolute inset-x-0 bottom-0 h-1 bg-amber-400/70" />
                 </div>
               </section>
 
