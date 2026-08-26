@@ -108,10 +108,17 @@ export async function GET() {
     // 2. Busca documentos RAG da base de conhecimento
     let ragDocs: Array<{ id: string; source: string; content?: string }> = [];
     try {
-      const { data: docs } = await (supabase.from('documents') as any)
-        .select('id, source, content')
-        .limit(200);
-      ragDocs = docs || [];
+      const pageSize = 1000;
+      const maxRows = 50_000;
+      for (let start = 0; start < maxRows; start += pageSize) {
+        const { data: page, error } = await (supabase.from('documents') as any)
+          .select('id, source')
+          .range(start, start + pageSize - 1);
+        if (error) throw error;
+        const rows = page || [];
+        ragDocs.push(...rows);
+        if (rows.length < pageSize) break;
+      }
     } catch (e) {
       console.warn('[admin/stats] docs fetch error:', e);
     }
