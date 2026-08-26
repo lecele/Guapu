@@ -2,8 +2,9 @@ name: Validar Guapu
 
 on:
   push:
-    branches: [main, "codex/**"]
+    branches: [main]
   pull_request:
+    branches: [main]
 
 permissions:
   contents: read
