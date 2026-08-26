@@ -1,0 +1,21 @@
+[Unit]
+Description=Guapu asynchronous RAG response quality evaluator
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=guapu
+Group=guapu
+WorkingDirectory=/opt/guapu
+EnvironmentFile=/etc/guapu/worker.env
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/opt/guapu/.venv/bin/python response_quality_worker.py --poll-seconds 10 --lease-seconds 900
+Restart=always
+RestartSec=10
+TimeoutStopSec=60
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

@@ -29,6 +29,7 @@ type ChatMessageRecord = ChatMessageWithTelemetry & {
   session_id: string;
   content: string;
   created_at: string;
+  request_id?: string | null;
 };
 
 type SessionSummary = {
@@ -43,7 +44,17 @@ type SessionSummary = {
     role: 'user' | 'assistant';
     content: string;
     created_at: string;
-    review?: { verdict: 'correct' | 'incomplete' | 'incorrect'; notes: string; updated_at: string };
+    evaluation?: {
+      status: 'queued' | 'running' | 'succeeded' | 'failed';
+      score?: number | null;
+      verdict?: 'correct' | 'incomplete' | 'incorrect' | 'unverifiable' | null;
+      grounding_score?: number | null;
+      completeness_score?: number | null;
+      relevance_score?: number | null;
+      rationale?: string | null;
+      source_count?: number | null;
+      updated_at: string;
+    };
   }>;
   avgRating: number | null;
   ratingCount: number;
@@ -107,7 +118,7 @@ export async function GET(request: NextRequest) {
       const maxRows = 50_000;
       for (let start = 0; start < maxRows; start += pageSize) {
         const { data: page, error } = await supabase.from('chat_messages')
-          .select('id, session_id, role, content, created_at, metadata')
+          .select('id, session_id, request_id, role, content, created_at, metadata')
           .order('created_at', { ascending: true })
           .range(start, start + pageSize - 1);
         if (error) throw error;
@@ -416,34 +427,50 @@ export async function GET(request: NextRequest) {
       ? Math.round((pipelineTurns.filter((message) => message.metadata?.has_context).length / pipelineTurns.length) * 100)
       : 0;
 
-    type AdminReview = {
-      message_id: string;
-      verdict: 'correct' | 'incomplete' | 'incorrect';
-      notes: string;
+    type QualityEvaluation = {
+      session_id: string;
+      request_id: string;
+      status: 'queued' | 'running' | 'succeeded' | 'failed';
+      score?: number | null;
+      verdict?: 'correct' | 'incomplete' | 'incorrect' | 'unverifiable' | null;
+      grounding_score?: number | null;
+      completeness_score?: number | null;
+      relevance_score?: number | null;
+      rationale?: string | null;
+      source_count?: number | null;
       updated_at: string;
     };
-    let reviews: AdminReview[] = [];
+    let evaluations: QualityEvaluation[] = [];
     try {
-      const { data, error } = await supabase.from('admin_response_reviews')
-        .select('message_id, verdict, notes, updated_at');
+      const { data, error } = await supabase.from('response_quality_evaluations')
+        .select('session_id, request_id, status, score, verdict, grounding_score, completeness_score, relevance_score, rationale, source_count, updated_at');
       if (error) throw error;
-      reviews = (data || []) as AdminReview[];
+      evaluations = (data || []) as QualityEvaluation[];
     } catch (error) {
-      console.warn('[admin/stats] review fetch error:', error);
+      console.warn('[admin/stats] quality evaluation fetch error:', error);
     }
-    const reviewsByMessageId = new Map(reviews.map((review) => [review.message_id, review]));
+    const evaluationsByTurn = new Map(evaluations.map((evaluation) => [
+      `${evaluation.session_id}:${evaluation.request_id}`,
+      evaluation,
+    ]));
+    const messagesById = new Map(allMessages.flatMap((message) => message.id ? [[message.id, message] as const] : []));
     sessionMap.forEach((session) => {
       session.messages.forEach((message) => {
-        if (!message.id) return;
-        const review = reviewsByMessageId.get(message.id);
-        if (review) message.review = review;
+        const record = message.id ? messagesById.get(message.id) : undefined;
+        if (!record?.request_id) return;
+        const evaluation = evaluationsByTurn.get(`${session.sessionId}:${record.request_id}`);
+        if (evaluation) message.evaluation = evaluation;
       });
     });
-    const qualityReview = {
-      reviewedResponses: reviews.length,
-      correct: reviews.filter((review) => review.verdict === 'correct').length,
-      incomplete: reviews.filter((review) => review.verdict === 'incomplete').length,
-      incorrect: reviews.filter((review) => review.verdict === 'incorrect').length,
+    const qualityEvaluation = {
+      total: evaluations.length,
+      queued: evaluations.filter((evaluation) => evaluation.status === 'queued').length,
+      running: evaluations.filter((evaluation) => evaluation.status === 'running').length,
+      failed: evaluations.filter((evaluation) => evaluation.status === 'failed').length,
+      correct: evaluations.filter((evaluation) => evaluation.verdict === 'correct').length,
+      incomplete: evaluations.filter((evaluation) => evaluation.verdict === 'incomplete').length,
+      incorrect: evaluations.filter((evaluation) => evaluation.verdict === 'incorrect').length,
+      unverifiable: evaluations.filter((evaluation) => evaluation.verdict === 'unverifiable').length,
     };
     const valuesFor = (stage: keyof NonNullable<ChatTelemetry['latency_ms']>) => telemetryMessages
       .map((message) => Number(message.metadata?.latency_ms?.[stage]))
@@ -544,10 +571,11 @@ export async function GET(request: NextRequest) {
         retrievalFailures,
         modelFailures,
       },
-      qualityReview: {
-        ...qualityReview,
-        correctRate: qualityReview.reviewedResponses > 0
-          ? Math.round((qualityReview.correct / qualityReview.reviewedResponses) * 100)
+      qualityEvaluation: {
+        ...qualityEvaluation,
+        completed: evaluations.filter((evaluation) => evaluation.status === 'succeeded').length,
+        correctRate: evaluations.filter((evaluation) => evaluation.status === 'succeeded').length > 0
+          ? Math.round((qualityEvaluation.correct / evaluations.filter((evaluation) => evaluation.status === 'succeeded').length) * 100)
           : 0,
       },
       syncHealth,

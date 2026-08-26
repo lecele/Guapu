@@ -449,6 +449,18 @@ function chatResponse(params: {
   });
 }
 
+async function enqueueQualityEvaluation(
+  supabase: ReturnType<typeof createClient>,
+  sessionId: string,
+  requestId: string,
+): Promise<void> {
+  const { error } = await supabase.rpc('enqueue_response_quality_evaluation' as never, {
+    p_session_id: sessionId,
+    p_request_id: requestId,
+  } as never);
+  if (error) throw new Error(`QUALITY_EVALUATION_ENQUEUE_FAILED: ${error.message}`);
+}
+
 export async function POST(req: NextRequest) {
   const startedAt = Date.now();
   let requestId: string = randomUUID();
@@ -649,6 +661,16 @@ export async function POST(req: NextRequest) {
       state: finalState,
       metadata,
     });
+
+    // A avaliação usa outro worker/modelo e não participa da latência percebida
+    // pelo estudante. Se a fila estiver indisponível, a resposta continua válida.
+    if (docs.length > 0 && !generationErrorCode) {
+      try {
+        await enqueueQualityEvaluation(supabase, sessionId, requestId);
+      } catch (error) {
+        console.warn(`[chat] Falha ao enfileirar avaliação para request_id=${requestId}`, error);
+      }
+    }
 
     return chatResponse({
       answer,
