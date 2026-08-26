@@ -23,10 +23,8 @@ QUALIDADE E ESTILO
 - Não crie links, autores, datas, páginas, títulos ou referências ausentes nos chunks.
 
 REFERÊNCIAS
-- Respostas de conteúdo, resumo e informações devem terminar com **Referências:**.
-- Cada fonte deve ocupar uma linha no formato: • Referência: [informação disponível no material].
-- Se os chunks não trouxerem dados bibliográficos completos, cite apenas o nome de arquivo/fonte disponível.
-- Quiz não deve exibir referências.
+- Não escreva a seção **Referências:**. A aplicação a adiciona de forma determinística a partir dos documentos RAG recuperados.
+- Nunca cite fontes que não estejam nos materiais RAG e nunca inclua referências no quiz.
 
 MATERIAIS RAG
 ${context}
