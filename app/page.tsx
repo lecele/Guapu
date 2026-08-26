@@ -87,21 +87,24 @@ export default function HomePage() {
 
         <header className="guapu-header">
           <div className="guapu-brand">
-            <GuapuMark size={38} />
+            <GuapuMark size={50} />
             <div className="guapu-brand-copy">
               <span className="guapu-wordmark">Guapu</span>
               <span className="guapu-context-pill">Tutor de Enfermagem</span>
             </div>
           </div>
-          <button
-            type="button"
-            className="guapu-icon-button"
-            onClick={toggleTheme}
-            aria-label="Alternar tema claro ou escuro"
-          >
-            <Moon className="guapu-theme-icon is-moon" size={17} strokeWidth={1.8} />
-            <Sun className="guapu-theme-icon is-sun" size={17} strokeWidth={1.8} />
-          </button>
+          <div className="guapu-header-actions">
+            <div className="guapu-header-eyebrow"><span /> Assistente de IA · INT 5224</div>
+            <button
+              type="button"
+              className="guapu-icon-button"
+              onClick={toggleTheme}
+              aria-label="Alternar tema claro ou escuro"
+            >
+              <Moon className="guapu-theme-icon is-moon" size={17} strokeWidth={1.8} />
+              <Sun className="guapu-theme-icon is-sun" size={17} strokeWidth={1.8} />
+            </button>
+          </div>
         </header>
 
         <section
@@ -150,7 +153,6 @@ function WelcomeMenu({ onSelect }: { onSelect: (message: string) => void }) {
   return (
     <div className="guapu-welcome">
       <section className="guapu-hero">
-        <div className="guapu-eyebrow"><span /> Assistente de IA · INT 5224</div>
         <h1>O cuidado no processo de viver humano II: a condição cirúrgica</h1>
         <p className="guapu-lead">
           Este espaço foi pensado para facilitar sua jornada de aprendizagem sobre o cuidado no processo de viver humano em condição cirúrgica. Aqui você revisa conteúdos, pratica com simulados e acessa informações essenciais da disciplina.
