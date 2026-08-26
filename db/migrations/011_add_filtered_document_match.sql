@@ -18,16 +18,19 @@ RETURNS TABLE (
 LANGUAGE SQL STABLE
 SET search_path = public
 AS $$
+    WITH filtered_documents AS MATERIALIZED (
+        SELECT d.id, d.content, d.source, d.metadata, d.embedding
+        FROM documents d
+        WHERE source_pattern IS NULL OR d.source ILIKE source_pattern
+    )
     SELECT
         d.id,
         d.content,
         d.source,
         d.metadata,
         1 - (d.embedding <=> query_embedding) AS similarity
-    FROM documents d
+    FROM filtered_documents d
     WHERE 1 - (d.embedding <=> query_embedding) >= match_threshold
-      AND (source_pattern IS NULL OR d.source ILIKE source_pattern)
     ORDER BY d.embedding <=> query_embedding
     LIMIT match_count;
 $$;
-

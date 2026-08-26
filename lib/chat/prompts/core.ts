@@ -1,4 +1,4 @@
-export const PROMPT_VERSION = 'v2.1.0';
+export const PROMPT_VERSION = 'v2.1.1';
 
 interface CorePromptInput {
   context: string;

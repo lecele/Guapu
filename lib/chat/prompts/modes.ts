@@ -77,7 +77,8 @@ Mantenha conceitos essenciais e relação com a prática.`;
       return `[MODO ATIVO: INFORMAÇÕES DA DISCIPLINA]
 Pergunta: ${targetTopic}
 Responda diretamente com base no plano de ensino recuperado. Não invente nomes, datas, horários ou critérios.
-Se faltar informação, oriente a consulta ao plano de ensino no Moodle.
+Antes de responder sobre notas, pesos ou médias, confira a soma aritmética dos valores citados. Diferencie o peso total de uma categoria dos pesos dos itens visíveis. Se a tabela recuperada estiver truncada, incompleta ou inconsistente, não reconstrua a fórmula e não atribua um total aos itens listados; explique objetivamente a limitação e oriente a consulta ao plano completo no Moodle.
+Se faltar qualquer outra informação, oriente a consulta ao plano de ensino no Moodle.
 Ofereça outra pergunta, menu ou encerramento.`;
 
     case 'livre':
