@@ -387,7 +387,8 @@ export async function GET() {
           : 0,
         // Cobertura de contexto recuperado, não uma avaliação humana de precisão.
         ragAccuracyRate: ragCoverageRate,
-        quizAccuracyRate: Math.min(100, Math.max(60, quizAccuracyRate)),
+        // Não inventar piso estatístico: sem tentativas avaliadas, a taxa é 0.
+        quizAccuracyRate,
         guardRailHits: guardRailCount,
         totalRagDocs: ragSummaryList.length,
         totalRagChunks: ragDocs.length,
