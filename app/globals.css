@@ -872,6 +872,75 @@ button {
   }
 }
 
+/* Em notebooks com altura reduzida, a tela inicial permanece completa sem
+   transformar o conteúdo em uma área de rolagem. A conversa mantém sua
+   própria rolagem normalmente. */
+@media (min-width: 621px) and (max-height: 820px) {
+  .guapu-app {
+    padding-top: var(--space-3);
+    padding-bottom: var(--space-2);
+  }
+
+  .guapu-header {
+    margin-bottom: var(--space-3);
+  }
+
+  .guapu-hero {
+    padding: var(--space-4) var(--space-7);
+  }
+
+  .guapu-hero h1 {
+    margin-bottom: var(--space-2);
+    font-size: 25px;
+    line-height: 1.2;
+  }
+
+  .guapu-lead {
+    margin-bottom: var(--space-3);
+    line-height: 1.5;
+  }
+
+  .guapu-transparency-note {
+    margin-bottom: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+  }
+
+  .guapu-transparency-note p,
+  .guapu-how-to p {
+    line-height: 1.45;
+  }
+
+  .guapu-how-to {
+    gap: var(--space-3) var(--space-5);
+  }
+
+  .guapu-divider {
+    margin: var(--space-3) 0;
+  }
+
+  .guapu-action-grid {
+    gap: var(--space-3);
+  }
+
+  .guapu-action-card {
+    padding: var(--space-3) var(--space-4);
+  }
+
+  .guapu-action-icon {
+    width: 38px;
+    height: 38px;
+    flex-basis: 38px;
+  }
+
+  .guapu-action-card small {
+    line-height: 1.35;
+  }
+
+  .guapu-caption {
+    margin-top: var(--space-1);
+  }
+}
+
 @media (max-width: 620px) {
   .guapu-app {
     padding: var(--space-4) var(--space-4) var(--space-3);
