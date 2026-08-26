@@ -25,6 +25,7 @@ import {
 import { buildCorePrompt, PROMPT_VERSION } from '@/lib/chat/prompts/core';
 import { FLOW_PROMPT } from '@/lib/chat/prompts/flow';
 import { buildModePrompt } from '@/lib/chat/prompts/modes';
+import { finalizeReferences } from '@/lib/chat/references';
 
 export const runtime = 'nodejs';
 export const maxDuration = 120;
@@ -182,75 +183,6 @@ async function retrieveDocs(embedding: number[], threshold = 0.35): Promise<Docu
 
 // ── System Prompt Mestre (Prompt 20Aug2026 — 15 seções) ──────────────────────
 
-function normalizeReferencesFormat(text: string): string {
-  if (!text) return text;
-
-  // Detect Referências heading
-  const refHeadingRegex = /(?:\n|^)(?:\*\*Refer[êe]ncias:?\*\*|###?\s*Refer[êe]ncias:?|Refer[êe]ncias:)/i;
-  const matchHeading = text.match(refHeadingRegex);
-  if (!matchHeading || matchHeading.index === undefined) return text;
-
-  const startIndex = matchHeading.index;
-  const afterHeading = text.substring(startIndex + matchHeading[0].length);
-
-  // Find where the references section ends (e.g. closing questions)
-  const closingRegex = /(?:\n\s*\n|\n)(?=(?:\*\*?Deseja|Deseja|Qual tema|Por favor|\*?\*?Questão))/i;
-  const closingMatch = afterHeading.match(closingRegex);
-
-  let rawRefs = '';
-  let restOfText = '';
-
-  if (closingMatch && closingMatch.index !== undefined) {
-    rawRefs = afterHeading.substring(0, closingMatch.index).trim();
-    restOfText = afterHeading.substring(closingMatch.index);
-  } else {
-    rawRefs = afterHeading.trim();
-  }
-
-  // Clean and split references into distinct lines
-  let lines = rawRefs
-    .split(/\n+/)
-    .map(l => l.trim())
-    .filter(Boolean);
-
-  // If multiple references are bundled on one line (e.g. "Referência: ... Referência: ...")
-  if (lines.some(l => (l.match(/refer[êe]ncia:/gi) || []).length > 1)) {
-    lines = lines.flatMap(l =>
-      l.split(/(?=[•\-\*]\s*Refer[êe]ncia:|\bRefer[êe]ncia:)/gi)
-       .map(item => item.trim())
-       .filter(Boolean)
-    );
-  }
-
-  // Format each reference as a clean bullet item with "• Referência: "
-  const formattedRefLines = lines.map(line => {
-    let clean = line.replace(/^(?:•|-|\*|\d+[\.\)]|○)\s*/, '').trim();
-    if (!clean) return '';
-    // O modelo às vezes inclui o separador ou a pergunta de continuidade na
-    // seção de referências. Esses textos não são fontes e não devem aparecer
-    // como citação para o estudante.
-    if (
-      /^(?:refer[êe]ncia:\s*)?[-–—]+$/i.test(clean) ||
-      /(?:refer[êe]ncia:\s*)?(?:gostaria de|deseja aprofundar|deseja continuar|voltar ao menu|encerrar a sess[aã]o)/i.test(clean)
-    ) {
-      return '';
-    }
-    if (!clean.toLowerCase().startsWith('referência:') && !clean.toLowerCase().startsWith('referencia:')) {
-      clean = `Referência: ${clean}`;
-    }
-    return `• ${clean}`;
-  }).filter(Boolean);
-
-  if (formattedRefLines.length === 0) {
-    formattedRefLines.push('• Referência: Informação não disponível no artigo, consultar o Plano de Ensino ou docentes.');
-  }
-
-  const beforeRefs = text.substring(0, startIndex).trimEnd();
-  const formattedRefSection = `**Referências:**\n${formattedRefLines.join('\n')}`;
-
-  return `${beforeRefs}\n\n${formattedRefSection}${restOfText ? `\n\n${restOfText.trim()}` : ''}`;
-}
-
 // ── Geração de resposta ───────────────────────────────────────────────────────
 
 interface GenerationResult {
@@ -323,7 +255,7 @@ async function generateResponse(
 
       if (text && text.trim().length > 0) {
         return {
-          text: normalizeReferencesFormat(text),
+          text: finalizeReferences(text, docs, sessionMode),
           modelRequested: candidateModels[0],
           modelUsed: modelName,
           fallbackUsed: modelName !== candidateModels[0],
