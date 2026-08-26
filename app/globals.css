@@ -293,10 +293,11 @@ button {
 
 .guapu-transparency-note {
   position: relative;
-  display: flex;
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr) 18px;
   align-items: center;
   justify-content: center;
-  gap: var(--space-3);
+  column-gap: var(--space-3);
   margin-bottom: var(--space-6);
   padding: var(--space-4) 18px;
   border-radius: var(--raio-sm);
@@ -305,9 +306,14 @@ button {
 }
 
 .guapu-transparency-note svg {
-  position: absolute;
-  inset-inline-start: 18px;
-  flex: 0 0 auto;
+  grid-column: 1;
+}
+
+.guapu-transparency-note::after {
+  grid-column: 3;
+  width: 18px;
+  height: 18px;
+  content: '';
 }
 
 .guapu-transparency-note p,
@@ -323,6 +329,7 @@ button {
 }
 
 .guapu-transparency-note p {
+  grid-column: 2;
   color: color-mix(in srgb, var(--dourado-icone) 72%, var(--texto));
   line-height: 1.65;
   text-align: center;
