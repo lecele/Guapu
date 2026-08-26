@@ -463,6 +463,14 @@ export async function GET(request: NextRequest) {
         if (learnerRating) message.learnerRating = learnerRating;
       });
     });
+    const successfulEvaluations = evaluations.filter((evaluation) => evaluation.status === 'succeeded');
+    const eligibleRagTurns = pipelineTurns.filter(
+      (message) => message.metadata?.has_context === true && Boolean(message.request_id),
+    );
+    const eligibleTurnKeys = new Set(eligibleRagTurns.map((message) => `${message.session_id}:${message.request_id}`));
+    const evaluatedEligibleTurns = successfulEvaluations.filter((evaluation) =>
+      eligibleTurnKeys.has(`${evaluation.session_id}:${evaluation.request_id}`),
+    );
     const qualityEvaluation = {
       total: evaluations.length,
       queued: evaluations.filter((evaluation) => evaluation.status === 'queued').length,
@@ -472,6 +480,11 @@ export async function GET(request: NextRequest) {
       incomplete: evaluations.filter((evaluation) => evaluation.verdict === 'incomplete').length,
       incorrect: evaluations.filter((evaluation) => evaluation.verdict === 'incorrect').length,
       unverifiable: evaluations.filter((evaluation) => evaluation.verdict === 'unverifiable').length,
+      eligibleTurns: eligibleRagTurns.length,
+      evaluatedEligibleTurns: evaluatedEligibleTurns.length,
+      coverageRate: eligibleRagTurns.length > 0
+        ? Math.round((evaluatedEligibleTurns.length / eligibleRagTurns.length) * 100)
+        : 0,
     };
     const valuesFor = (stage: keyof NonNullable<ChatTelemetry['latency_ms']>) => telemetryMessages
       .map((message) => Number(message.metadata?.latency_ms?.[stage]))
@@ -492,16 +505,28 @@ export async function GET(request: NextRequest) {
       succeeded: 0,
       failed: 0,
       lastError: null as string | null,
+      lastSuccessAt: null as string | null,
+      oldestRunningAt: null as string | null,
     };
     try {
       const { data, error } = await supabase.from('drive_sync_jobs')
         .select('status, last_error, updated_at')
         .order('updated_at', { ascending: false });
       if (error) throw error;
-      for (const job of (data || []) as Array<{ status?: string; last_error?: string | null }>) {
+      for (const job of (data || []) as Array<{ status?: string; last_error?: string | null; updated_at?: string | null }>) {
         if (job.status === 'queued') syncHealth.queued++;
-        else if (job.status === 'running') syncHealth.running++;
-        else if (job.status === 'succeeded') syncHealth.succeeded++;
+        else if (job.status === 'running') {
+          syncHealth.running++;
+          if (job.updated_at && (!syncHealth.oldestRunningAt || job.updated_at < syncHealth.oldestRunningAt)) {
+            syncHealth.oldestRunningAt = job.updated_at;
+          }
+        }
+        else if (job.status === 'succeeded') {
+          syncHealth.succeeded++;
+          if (job.updated_at && (!syncHealth.lastSuccessAt || job.updated_at > syncHealth.lastSuccessAt)) {
+            syncHealth.lastSuccessAt = job.updated_at;
+          }
+        }
         else if (job.status === 'failed') {
           syncHealth.failed++;
           if (!syncHealth.lastError && job.last_error) syncHealth.lastError = job.last_error.slice(0, 180);
@@ -574,9 +599,9 @@ export async function GET(request: NextRequest) {
       },
       qualityEvaluation: {
         ...qualityEvaluation,
-        completed: evaluations.filter((evaluation) => evaluation.status === 'succeeded').length,
-        correctRate: evaluations.filter((evaluation) => evaluation.status === 'succeeded').length > 0
-          ? Math.round((qualityEvaluation.correct / evaluations.filter((evaluation) => evaluation.status === 'succeeded').length) * 100)
+        completed: successfulEvaluations.length,
+        correctRate: successfulEvaluations.length > 0
+          ? Math.round((qualityEvaluation.correct / successfulEvaluations.length) * 100)
           : 0,
       },
       syncHealth,

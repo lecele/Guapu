@@ -80,6 +80,9 @@ interface StatsData {
     incorrect: number;
     unverifiable: number;
     correctRate: number;
+    eligibleTurns: number;
+    evaluatedEligibleTurns: number;
+    coverageRate: number;
   };
   syncHealth: {
     queued: number;
@@ -87,6 +90,8 @@ interface StatsData {
     succeeded: number;
     failed: number;
     lastError: string | null;
+    lastSuccessAt: string | null;
+    oldestRunningAt: string | null;
   };
   feedbackStats?: {
     avgRating: number;
@@ -113,6 +118,8 @@ interface StatsData {
 }
 
 // ── COMPONENTE DE SPARKLINE DINÂMICO INTERATIVO EM SVG ────────────────────────
+// Mantidos apenas para a futura aba histórica; o painel principal não usa estimativas visuais.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function DynamicSparkline({
   data = [4, 6, 8, 5, 12, 9, 15],
   color = '#38bdf8',
@@ -169,6 +176,7 @@ function DynamicSparkline({
 }
 
 // ── COMPONENTE DE GRÁFICO DE LINHA DINÂMICO INTERATIVO COM TOOLTIP NO HOVER ─────
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function ActivityChart({
   timeline = [],
   timeRange = '7d',
@@ -357,6 +365,7 @@ function ActivityChart({
 }
 
 // ── COMPONENTE DE GRÁFICO DE PICO DE USO POR HORA (24 HORAS INTERATIVO) ───────
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function PeakHourChart({ hourlyData = [] }: { hourlyData: number[] }) {
   const [hoveredHour, setHoveredHour] = useState<number | null>(null);
 
@@ -475,6 +484,7 @@ function PeakHourChart({ hourlyData = [] }: { hourlyData: number[] }) {
 }
 
 // ── COMPONENTE DE GRÁFICO DE DONUT INTERATIVO (ROSCA DE CATEGORIAS EM SVG) ───────
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function DonutChart({
   resumo = 4,
   quiz = 3,
@@ -590,6 +600,7 @@ function DonutChart({
 }
 
 // ── COMPONENTE DE GAUGE RING (ANEL DE PRECISÃO EM SVG) ────────────────────────
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function GaugeRing({ percent = 96 }: { percent?: number }) {
   const r = 44;
   const c = 2 * Math.PI * r;
@@ -627,6 +638,7 @@ function GaugeRing({ percent = 96 }: { percent?: number }) {
   );
 }
 // ── COMPONENTE QUADRO DE AVALIAÇÕES DE SATISFAÇÃO (LIKERT 1-5 ESTRELAS) ────────
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function FeedbackDashboardWidget({
   avgRating = 0,
   totalFeedbacks = 0,
@@ -712,7 +724,6 @@ export default function AdminDashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [timeRange, setTimeRange] = useState<'7d' | '30d' | '90d'>('7d');
 
   // Filtros da aba de conversas
   const [searchTerm, setSearchTerm] = useState('');
@@ -746,46 +757,6 @@ export default function AdminDashboardPage() {
     }, 0);
     return () => window.clearTimeout(timeoutId);
   }, []);
-
-  // Agregação de mensagens por hora do dia (00h a 23h)
-  const hourlyDistribution = useMemo(() => {
-    const hours = new Array(24).fill(0);
-    if (stats?.sessions) {
-      stats.sessions.forEach((s) => {
-        s.messages.forEach((m) => {
-          if (m.created_at) {
-            const h = new Date(m.created_at).getHours();
-            if (h >= 0 && h < 24) hours[h]++;
-          }
-        });
-      });
-    }
-    return hours;
-  }, [stats]);
-
-  // Datasets dinâmicos e únicos para cada mini gráfico Sparkline dos 4 KPIs
-  const sparkConversations = useMemo(() => {
-    if (stats?.timeline && stats.timeline.length >= 2) {
-      return stats.timeline.slice(-7).map(t => t.count);
-    }
-    return new Array(7).fill(0);
-  }, [stats]);
-
-  const sparkUsers = useMemo(() => new Array(7).fill(0), []);
-
-  const sparkLatency = useMemo(() => {
-    return new Array(7).fill(stats?.summary.avgResponseTimeMs || 0);
-  }, [stats?.summary.avgResponseTimeMs]);
-
-  const sparkAccuracy = useMemo(() => {
-    return new Array(7).fill(stats?.summary.ragAccuracyRate || 0);
-  }, [stats?.summary.ragAccuracyRate]);
-
-  const sparkRating = useMemo(() => {
-    const val = stats?.summary.avgFeedbackRating || 0;
-    if (val === 0) return [0, 0, 0, 0, 0, 0, 0];
-    return [val, val, val, val, val, val, val];
-  }, [stats?.summary.avgFeedbackRating]);
 
   // Conversas filtradas (Ordenadas por mais recentes primeiro)
   const filteredSessions = useMemo(() => {
@@ -841,76 +812,29 @@ export default function AdminDashboardPage() {
       summarySheet.getRow(2).height = 20;
 
       // Seção de KPIs Globais
-      summarySheet.getCell('A4').value = '1. INDICADORES GERAIS DE DESEMPENHO E USO';
+      summarySheet.getCell('A4').value = '1. INDICADORES CONFIÁVEIS DE QUALIDADE E OPERAÇÃO';
       summarySheet.getCell('A4').font = { name: 'Calibri', size: 11, bold: true, color: { argb: 'FF1573C2' } };
 
       const kpiData = [
         ['Indicador / Métrica', 'Valor', 'Unidade / Referência'],
         ['Total de Sessões / Conversas', stats.summary.totalConversations, 'Sessões registradas'],
         ['Total de Mensagens Trocadas', stats.summary.totalMessages, 'Interações no chat'],
-        ['Tempo médio de resposta', `${(stats.summary.avgResponseTimeMs / 1000).toFixed(2)}s`, `${stats.telemetry.latencySamples} amostras instrumentadas`],
-        ['P95 de resposta', `${(stats.telemetry.p95ResponseTimeMs / 1000).toFixed(2)}s`, 'Pior 5% das respostas instrumentadas'],
-        ['Cobertura de contexto RAG', `${stats.summary.ragAccuracyRate}%`, `${stats.telemetry.pipelineTurns} turnos RAG; não é medida de precisão`],
-        ['Falhas de recuperação RAG', stats.telemetry.retrievalFailures, 'Embedding, busca ou ausência de contexto'],
+        ['Tempo RAG P50 / P95', `${(stats.telemetry.p50ResponseTimeMs / 1000).toFixed(2)}s / ${(stats.telemetry.p95ResponseTimeMs / 1000).toFixed(2)}s`, `${stats.telemetry.latencySamples} respostas instrumentadas`],
+        ['Contexto RAG recuperado', `${stats.summary.ragAccuracyRate}%`, `${stats.telemetry.pipelineTurns} consultas; não é uma medida de precisão`],
+        ['Falhas técnicas', (stats.telemetry.retrievalFailures + stats.telemetry.modelFailures), `Busca: ${stats.telemetry.retrievalFailures}; modelo: ${stats.telemetry.modelFailures}`],
+        ['Respostas sem contexto', stats.telemetry.noContextTurns, 'Pode representar questão fora da base; investigar no dossiê'],
+        ['Avaliação automática — conformes', `${stats.qualityEvaluation.correct}/${stats.qualityEvaluation.completed}`, `${stats.qualityEvaluation.correctRate}% das respostas avaliadas`],
+        ['Avaliação automática — sem evidência suficiente', stats.qualityEvaluation.unverifiable, 'Não classificada como erro'],
+        ['Cobertura da avaliação automática', `${stats.qualityEvaluation.evaluatedEligibleTurns}/${stats.qualityEvaluation.eligibleTurns}`, `${stats.qualityEvaluation.coverageRate}% das respostas RAG elegíveis`],
         ['Média de Avaliação dos Estudantes', `${(stats.summary.avgFeedbackRating || 0) === 0 ? '0.0' : stats.summary.avgFeedbackRating} / 5.0 ⭐`, `${stats.summary.totalFeedbacks || 0} avaliações coletadas`],
         ['Taxa de Aprovação dos Estudantes', `${stats.summary.satisfactionRate || 0}%`, 'Avaliações 4★ e 5★'],
-        ['Fontes RAG observadas', stats.summary.totalRagDocs, 'Fontes retornadas pela consulta atual'],
-        ['Fragmentos RAG observados', stats.summary.totalRagChunks.toLocaleString('pt-BR'), 'Chunks retornados pela consulta atual'],
-        ['Volume da Pasta Biblioteca (amostra)', `${stats.summary.bibliotecaChunks || 0} chunks (${stats.summary.bibliotecaPercent || 0}%)`, 'Amostra de fontes com prefixo biblioteca']
+        ['Fontes RAG indexadas', stats.summary.totalRagDocs, 'Inventário atual da base vetorial'],
+        ['Trechos RAG vetorizados', stats.summary.totalRagChunks.toLocaleString('pt-BR'), 'Inventário atual da base vetorial'],
+        ['Sincronização Google Drive', `${stats.syncHealth.running} processando · ${stats.syncHealth.failed} falhas`, stats.syncHealth.lastSuccessAt ? `Última concluída: ${new Date(stats.syncHealth.lastSuccessAt).toLocaleString('pt-BR')}` : 'Sem conclusão registrada']
       ];
 
       kpiData.forEach((rowVals, idx) => {
         const row = summarySheet.getRow(5 + idx);
-        row.values = rowVals;
-        row.height = 20;
-        const isHead = idx === 0;
-        row.eachCell((cell, col) => {
-          cell.font = { name: 'Calibri', size: 10, bold: isHead, color: { argb: isHead ? 'FFFFFFFF' : 'FF1E293B' } };
-          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: isHead ? 'FF1573C2' : (idx % 2 === 0 ? 'FFF4F8FC' : 'FFFFFFFF') } };
-          cell.alignment = { horizontal: col === 1 ? 'left' : 'center', vertical: 'middle' };
-          cell.border = { top: { style: 'thin', color: { argb: 'FFE2E8F0' } }, left: { style: 'thin', color: { argb: 'FFE2E8F0' } }, bottom: { style: 'thin', color: { argb: 'FFE2E8F0' } }, right: { style: 'thin', color: { argb: 'FFE2E8F0' } } };
-        });
-      });
-
-      // Seção de Distribuição por Modo
-      const modeStartRow = 5 + kpiData.length + 2;
-      summarySheet.getCell(`A${modeStartRow}`).value = '2. DISTRIBUIÇÃO POR MODO PEDAGÓGICO DE ESTUDO';
-      summarySheet.getCell(`A${modeStartRow}`).font = { name: 'Calibri', size: 11, bold: true, color: { argb: 'FF1573C2' } };
-
-      const modeData = [
-        ['Modo Pedagógico', 'Total de Acessos', 'Percentual'],
-        ['Resumo de Conteúdo (Opção 1)', stats.modeCounts?.resumo || 0, `${Math.round(((stats.modeCounts?.resumo || 0) / (stats.summary.totalConversations || 1)) * 100)}%`],
-        ['Simulado / Quiz da Disciplina (Opção 2)', stats.modeCounts?.quiz || 0, `${Math.round(((stats.modeCounts?.quiz || 0) / (stats.summary.totalConversations || 1)) * 100)}%`],
-        ['Informações da Disciplina (Opção 3)', stats.modeCounts?.info || 0, `${Math.round(((stats.modeCounts?.info || 0) / (stats.summary.totalConversations || 1)) * 100)}%`],
-        ['Dúvidas Livres / Consultas Diretas', stats.modeCounts?.livre || 0, `${Math.round(((stats.modeCounts?.livre || 0) / (stats.summary.totalConversations || 1)) * 100)}%`]
-      ];
-
-      modeData.forEach((rowVals, idx) => {
-        const row = summarySheet.getRow(modeStartRow + 1 + idx);
-        row.values = rowVals;
-        row.height = 20;
-        const isHead = idx === 0;
-        row.eachCell((cell, col) => {
-          cell.font = { name: 'Calibri', size: 10, bold: isHead, color: { argb: isHead ? 'FFFFFFFF' : 'FF1E293B' } };
-          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: isHead ? 'FF0B203C' : (idx % 2 === 0 ? 'FFF4F8FC' : 'FFFFFFFF') } };
-          cell.alignment = { horizontal: col === 1 ? 'left' : 'center', vertical: 'middle' };
-          cell.border = { top: { style: 'thin', color: { argb: 'FFE2E8F0' } }, left: { style: 'thin', color: { argb: 'FFE2E8F0' } }, bottom: { style: 'thin', color: { argb: 'FFE2E8F0' } }, right: { style: 'thin', color: { argb: 'FFE2E8F0' } } };
-        });
-      });
-
-      // Seção de Ranking de Temas
-      const topicStartRow = modeStartRow + 1 + modeData.length + 2;
-      summarySheet.getCell(`A${topicStartRow}`).value = '3. RANKING DE TEMAS MAIS ESTUDADOS';
-      summarySheet.getCell(`A${topicStartRow}`).font = { name: 'Calibri', size: 11, bold: true, color: { argb: 'FF1573C2' } };
-
-      const sortedTopics = Object.entries(stats.topicCounts || {}).sort((a, b) => b[1] - a[1]);
-      const topicTableData = [
-        ['Tema Clínico / Tópico', 'Total de Consultas', 'Demanda Relativa'],
-        ...sortedTopics.map(([top, count]) => [top, count, `${Math.round((count / (stats.summary.totalConversations || 1)) * 100)}%`])
-      ];
-
-      topicTableData.forEach((rowVals, idx) => {
-        const row = summarySheet.getRow(topicStartRow + 1 + idx);
         row.values = rowVals;
         row.height = 20;
         const isHead = idx === 0;
@@ -944,7 +868,7 @@ export default function AdminDashboardPage() {
       // 2. Subtítulo com métricas da exportação
       worksheet.mergeCells('A2:H2');
       const subTitleCell = worksheet.getCell('A2');
-      subTitleCell.value = `Exportado em ${new Date().toLocaleString('pt-BR')}  |  Total Conversas: ${stats.summary.totalConversations}  |  Total Mensagens: ${stats.summary.totalMessages}  |  Cobertura de contexto RAG: ${stats.summary.ragAccuracyRate}%`;
+      subTitleCell.value = `Exportado em ${new Date().toLocaleString('pt-BR')}  |  Sessões: ${stats.summary.totalConversations}  |  Mensagens: ${stats.summary.totalMessages}  |  Contexto RAG recuperado: ${stats.summary.ragAccuracyRate}%`;
       subTitleCell.font = { name: 'Calibri', size: 10, italic: true, color: { argb: 'FF38BDF8' } };
       subTitleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0B203C' } };
       subTitleCell.alignment = { horizontal: 'center', vertical: 'middle' };
@@ -1206,240 +1130,89 @@ export default function AdminDashboardPage() {
             </div>
           )}
 
-          {/* ── TAB 1: DASHBOARD ANALYTICS ────────────────────────────────────── */}
+          {/* ── TAB 1: MONITORAMENTO OPERACIONAL ───────────────────────────── */}
           {activeTab === 'dashboard' && (
             <div className="flex flex-col gap-6">
-              {/* 5 KPI Sparkline Cards */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-                {/* Card 1: Conversas Totais */}
-                <div className="bg-[#0b203c] border border-blue-900/40 p-5 rounded-2xl shadow-lg relative overflow-hidden flex flex-col justify-between h-36 group hover:border-[#1573C2]/60 transition-all">
-                  <div className="flex items-center justify-between">
-                    <div className="w-9 h-9 rounded-xl bg-blue-950 border border-blue-800/50 flex items-center justify-center text-[#1573C2]">
-                      <span className="material-symbols-outlined text-[20px]">chat_bubble</span>
-                    </div>
-                    <span className="text-[11px] font-bold text-emerald-400 bg-emerald-950/60 border border-emerald-500/30 px-2 py-0.5 rounded-full">
-                      +100%
-                    </span>
-                  </div>
+              <section className="rounded-2xl border border-cyan-900/50 bg-[#071a31] p-5 shadow-lg">
+                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                   <div>
-                    <h3 className="text-2xl font-black text-white tracking-tight">
-                      {isLoading ? '...' : stats?.summary.totalConversations || 0}
-                    </h3>
-                    <p className="text-xs font-semibold text-slate-400">Conversas Totais</p>
+                    <h2 className="text-base font-bold text-white">Qualidade das respostas</h2>
+                    <p className="text-xs text-slate-400">Avaliação automática assíncrona, comparando resposta, trechos recuperados e referências do RAG.</p>
                   </div>
-                  <div className="absolute bottom-0 left-0 right-0">
-                    <DynamicSparkline data={sparkConversations} color="#1573C2" id="conversations" />
-                  </div>
+                  <span className="w-fit rounded-full border border-cyan-700/50 bg-cyan-950/60 px-3 py-1 text-[11px] font-bold text-cyan-200">
+                    {stats?.qualityEvaluation.evaluatedEligibleTurns ?? 0}/{stats?.qualityEvaluation.eligibleTurns ?? 0} respostas elegíveis avaliadas
+                  </span>
                 </div>
 
-                {/* Card 2: Usuários Únicos */}
-                <div className="bg-[#0b203c] border border-blue-900/40 p-5 rounded-2xl shadow-lg relative overflow-hidden flex flex-col justify-between h-36 group hover:border-cyan-500/60 transition-all">
-                  <div className="flex items-center justify-between">
-                    <div className="w-9 h-9 rounded-xl bg-cyan-950 border border-cyan-800/50 flex items-center justify-center text-cyan-400">
-                      <span className="material-symbols-outlined text-[20px]">person</span>
+                <div className="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-5">
+                  {[
+                    ['task_alt', `${stats?.qualityEvaluation.correct ?? 0}`, 'Conformes às evidências', 'text-emerald-300'],
+                    ['help', `${stats?.qualityEvaluation.unverifiable ?? 0}`, 'Sem evidência suficiente', 'text-amber-300'],
+                    ['pending', `${stats?.qualityEvaluation.incomplete ?? 0}`, 'Incompletas', 'text-amber-300'],
+                    ['error', `${stats?.qualityEvaluation.incorrect ?? 0}`, 'Incorretas', 'text-red-300'],
+                    ['sync', `${(stats?.qualityEvaluation.queued ?? 0) + (stats?.qualityEvaluation.running ?? 0)}`, 'Em avaliação', 'text-slate-300'],
+                  ].map(([icon, value, label, color]) => (
+                    <div key={label} className="rounded-xl border border-blue-900/40 bg-[#040e1f] p-3">
+                      <span className={`material-symbols-outlined text-lg ${color}`}>{icon}</span>
+                      <p className={`mt-1 text-2xl font-black ${color}`}>{isLoading ? '…' : value}</p>
+                      <p className="text-[11px] font-medium text-slate-400">{label}</p>
                     </div>
-                    <span className="text-[11px] font-bold text-emerald-400 bg-emerald-950/60 border border-emerald-500/30 px-2 py-0.5 rounded-full">
-                      +12%
-                    </span>
+                  ))}
+                </div>
+                <p className="mt-3 text-[11px] text-slate-500">“Conforme” indica aderência às evidências recuperadas; não substitui validação clínica ou acadêmica formal.</p>
+              </section>
+
+              <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+                <div className="rounded-2xl border border-blue-900/40 bg-[#0b203c] p-5">
+                  <span className="material-symbols-outlined text-purple-300">timer</span>
+                  <p className="mt-3 text-2xl font-black text-white">{isLoading ? '…' : `${((stats?.telemetry.p50ResponseTimeMs ?? 0) / 1000).toFixed(1)}s`}</p>
+                  <p className="text-xs font-semibold text-slate-400">Tempo RAG P50</p>
+                  <p className="mt-1 text-[11px] text-slate-500">P95: {((stats?.telemetry.p95ResponseTimeMs ?? 0) / 1000).toFixed(1)}s · {stats?.telemetry.latencySamples ?? 0} amostras</p>
+                </div>
+                <div className="rounded-2xl border border-blue-900/40 bg-[#0b203c] p-5">
+                  <span className="material-symbols-outlined text-emerald-300">database</span>
+                  <p className="mt-3 text-2xl font-black text-white">{isLoading ? '…' : `${stats?.telemetry.pipelineTurns ?? 0}`}</p>
+                  <p className="text-xs font-semibold text-slate-400">Consultas RAG instrumentadas</p>
+                  <p className="mt-1 text-[11px] text-slate-500">{stats?.summary.ragAccuracyRate ?? 0}% receberam contexto recuperado</p>
+                </div>
+                <div className="rounded-2xl border border-blue-900/40 bg-[#0b203c] p-5">
+                  <span className="material-symbols-outlined text-red-300">report</span>
+                  <p className="mt-3 text-2xl font-black text-white">{isLoading ? '…' : (stats?.telemetry.retrievalFailures ?? 0) + (stats?.telemetry.modelFailures ?? 0)}</p>
+                  <p className="text-xs font-semibold text-slate-400">Falhas técnicas</p>
+                  <p className="mt-1 text-[11px] text-slate-500">Busca: {stats?.telemetry.retrievalFailures ?? 0} · Modelo: {stats?.telemetry.modelFailures ?? 0} · Sem contexto: {stats?.telemetry.noContextTurns ?? 0}</p>
+                </div>
+                <div className="rounded-2xl border border-blue-900/40 bg-[#0b203c] p-5">
+                  <span className="material-symbols-outlined text-amber-300">star</span>
+                  <p className="mt-3 text-2xl font-black text-white">{isLoading ? '…' : `${stats?.summary.avgFeedbackRating ?? 0}/5`}</p>
+                  <p className="text-xs font-semibold text-slate-400">Avaliação dos estudantes</p>
+                  <p className="mt-1 text-[11px] text-slate-500">{stats?.summary.totalFeedbacks ?? 0} avaliações · {stats?.summary.satisfactionRate ?? 0}% com 4–5 estrelas</p>
+                </div>
+              </section>
+
+              <section className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+                <div className="rounded-2xl border border-blue-900/40 bg-[#0b203c] p-5">
+                  <h2 className="text-sm font-bold text-white">Saúde do RAG e da sincronização</h2>
+                  <p className="mt-1 text-[11px] text-slate-400">Inventário da base e atualização vinda do Google Drive.</p>
+                  <div className="mt-4 grid grid-cols-2 gap-3">
+                    <div className="rounded-xl bg-[#040e1f] p-3"><p className="text-xl font-black text-white">{(stats?.summary.totalRagDocs ?? 0).toLocaleString('pt-BR')}</p><p className="text-[11px] text-slate-400">fontes indexadas</p></div>
+                    <div className="rounded-xl bg-[#040e1f] p-3"><p className="text-xl font-black text-white">{(stats?.summary.totalRagChunks ?? 0).toLocaleString('pt-BR')}</p><p className="text-[11px] text-slate-400">trechos vetorizados</p></div>
+                    <div className="rounded-xl bg-[#040e1f] p-3"><p className="text-xl font-black text-emerald-300">{stats?.syncHealth.failed ?? 0}</p><p className="text-[11px] text-slate-400">falhas de sincronização</p></div>
+                    <div className="rounded-xl bg-[#040e1f] p-3"><p className="text-xl font-black text-cyan-300">{stats?.syncHealth.running ?? 0}</p><p className="text-[11px] text-slate-400">documentos processando</p></div>
                   </div>
-                  <div>
-                    <h3 className="text-2xl font-black text-white tracking-tight">
-                      {isLoading ? '...' : stats?.summary.uniqueUsers || 0}
-                    </h3>
-                    <p className="text-xs font-semibold text-slate-400">Usuários Únicos</p>
-                  </div>
-                  <div className="absolute bottom-0 left-0 right-0">
-                    <DynamicSparkline data={sparkUsers} color="#38bdf8" id="users" />
-                  </div>
+                  <p className="mt-3 text-[11px] text-slate-500">Última sincronização concluída: {stats?.syncHealth.lastSuccessAt ? new Date(stats.syncHealth.lastSuccessAt).toLocaleString('pt-BR') : 'sem registro'}</p>
                 </div>
 
-                {/* Card 3: Tempo Médio de Resposta */}
-                <div className="bg-[#0b203c] border border-blue-900/40 p-5 rounded-2xl shadow-lg relative overflow-hidden flex flex-col justify-between h-36 group hover:border-purple-500/60 transition-all">
-                  <div className="flex items-center justify-between">
-                    <div className="w-9 h-9 rounded-xl bg-purple-950 border border-purple-800/50 flex items-center justify-center text-purple-400">
-                      <span className="material-symbols-outlined text-[20px]">schedule</span>
-                    </div>
-                    <span className="text-[11px] font-bold text-purple-300 bg-purple-950/60 border border-purple-500/30 px-2 py-0.5 rounded-full">
-                      estável
-                    </span>
+                <div className="rounded-2xl border border-blue-900/40 bg-[#0b203c] p-5">
+                  <h2 className="text-sm font-bold text-white">Uso real do app</h2>
+                  <p className="mt-1 text-[11px] text-slate-400">Sessões e mensagens, excluindo identificadores conhecidos de testes internos.</p>
+                  <div className="mt-4 grid grid-cols-2 gap-3">
+                    <div className="rounded-xl bg-[#040e1f] p-3"><p className="text-xl font-black text-white">{stats?.summary.totalConversations ?? 0}</p><p className="text-[11px] text-slate-400">sessões registradas</p></div>
+                    <div className="rounded-xl bg-[#040e1f] p-3"><p className="text-xl font-black text-white">{stats?.summary.totalMessages ?? 0}</p><p className="text-[11px] text-slate-400">mensagens trocadas</p></div>
                   </div>
-                  <div>
-                    <h3 className="text-2xl font-black text-white tracking-tight">
-                      {isLoading ? '...' : `${((stats?.summary.avgResponseTimeMs || 0) / 1000).toFixed(2)}s`}
-                    </h3>
-                    <p className="text-xs font-semibold text-slate-400">
-                      {stats?.telemetry.latencySamples || 0} respostas instrumentadas
-                    </p>
-                  </div>
-                  <div className="absolute bottom-0 left-0 right-0">
-                    <DynamicSparkline data={sparkLatency} color="#c084fc" id="latency" />
-                  </div>
+                  <p className="mt-4 text-[11px] text-slate-500">Não exibimos “usuários únicos”: o app não autentica estudantes, portanto uma sessão não equivale a uma pessoa.</p>
+                  <button onClick={() => setActiveTab('conversas')} className="mt-4 rounded-lg bg-[#1573C2] px-3 py-2 text-xs font-semibold text-white">Abrir dossiês de conversas</button>
                 </div>
-
-                {/* Card 4: Taxa de Resolução RAG */}
-                <div className="bg-[#0b203c] border border-blue-900/40 p-5 rounded-2xl shadow-lg relative overflow-hidden flex flex-col justify-between h-36 group hover:border-emerald-500/60 transition-all">
-                  <div className="flex items-center justify-between">
-                    <div className="w-9 h-9 rounded-xl bg-emerald-950 border border-emerald-800/50 flex items-center justify-center text-emerald-400">
-                      <span className="material-symbols-outlined text-[20px]">check_circle</span>
-                    </div>
-                    <span className="text-[11px] font-bold text-emerald-400 bg-emerald-950/60 border border-emerald-500/30 px-2 py-0.5 rounded-full">
-                      {stats?.telemetry.pipelineTurns || 0} turnos
-                    </span>
-                  </div>
-                  <div>
-                    <h3 className="text-2xl font-black text-white tracking-tight">
-                      {isLoading ? '...' : `${stats?.summary.ragAccuracyRate ?? 0}%`}
-                    </h3>
-                    <p className="text-xs font-semibold text-slate-400">Cobertura de contexto RAG</p>
-                  </div>
-                  <div className="absolute bottom-0 left-0 right-0">
-                    <DynamicSparkline data={sparkAccuracy} color="#34d399" id="accuracy" />
-                  </div>
-                </div>
-
-                {/* Card 5: Avaliação de Satisfação dos Usuários (Likert 1-5 Estrelas) */}
-                <div className="bg-[#0b203c] border border-blue-900/40 p-5 rounded-2xl shadow-lg relative overflow-hidden flex flex-col justify-between h-36 group hover:border-amber-500/60 transition-all">
-                  <div className="flex items-center justify-between">
-                    <div className="w-9 h-9 rounded-xl bg-amber-950 border border-amber-800/50 flex items-center justify-center text-amber-400">
-                      <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
-                    </div>
-                    <span className="text-[11px] font-bold text-amber-400 bg-amber-950/60 border border-amber-500/30 px-2 py-0.5 rounded-full">
-                      {isLoading ? '...' : (stats?.summary.totalFeedbacks || 0) === 0 ? '0%' : `${stats?.summary.satisfactionRate}%`}
-                    </span>
-                  </div>
-                  <div>
-                    <h3 className="text-2xl font-black text-white tracking-tight flex items-center gap-1">
-                      {isLoading ? '...' : (stats?.summary.totalFeedbacks || 0) === 0 ? '0.0' : `${stats?.summary.avgFeedbackRating}`}
-                      <span className="text-xs text-amber-400 font-normal">/ 5.0 ⭐</span>
-                    </h3>
-                    <p className="text-xs font-semibold text-slate-400">
-                      {(stats?.summary.totalFeedbacks || 0) === 0 ? 'Sem avaliações ainda' : `${stats?.summary.totalFeedbacks} avaliações`}
-                    </p>
-                  </div>
-                  <div className="absolute bottom-0 left-0 right-0">
-                    <DynamicSparkline data={sparkRating} color="#f59e0b" id="rating" />
-                  </div>
-                </div>
-              </div>
-
-              {/* Linha 1: Volume de Atividade (Gráfico Interativo) + Donut de Categorias */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Volume de Atividade */}
-                <div className="lg:col-span-2 bg-[#0b203c] border border-blue-900/40 p-5 rounded-2xl shadow-lg flex flex-col justify-between">
-                  <div className="flex items-center justify-between mb-4">
-                    <div>
-                      <h2 className="text-sm font-bold text-white">Volume de Atividade</h2>
-                      <p className="text-[11px] text-slate-400">Interações por período</p>
-                    </div>
-                    <div className="flex items-center gap-1 bg-[#040e1f] p-1 rounded-xl border border-blue-900/40">
-                      {(['7d', '30d', '90d'] as const).map((r) => (
-                        <button
-                          key={r}
-                          onClick={() => setTimeRange(r)}
-                          className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all ${
-                            timeRange === r
-                              ? 'bg-[#1573C2] text-white shadow-md'
-                              : 'text-slate-400 hover:text-white'
-                          }`}
-                        >
-                          {r}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Componente Interativo do Gráfico com Tooltip no Hover e Eixo Y */}
-                  <ActivityChart timeline={stats?.timeline || []} timeRange={timeRange} />
-                </div>
-
-                {/* Categorias (Donut Chart Interativo) */}
-                <div className="bg-[#0b203c] border border-blue-900/40 p-5 rounded-2xl shadow-lg flex flex-col justify-between">
-                  <div>
-                    <h2 className="text-sm font-bold text-white">Categorias</h2>
-                    <p className="text-[11px] text-slate-400 mb-2">Tipos de consulta</p>
-
-                    <div className="flex justify-center my-2">
-                      <DonutChart
-                        resumo={stats?.modeCounts.resumo || 0}
-                        quiz={stats?.modeCounts.quiz || 0}
-                        info={stats?.modeCounts.info || 0}
-                        livre={stats?.modeCounts.livre || 0}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Linha 2: Assuntos Frequentes + Pico de Horários + Avaliação de Satisfação Likert + Precisão RAG */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {/* Tópicos mais consultados */}
-                <div className="bg-[#0b203c] border border-blue-900/40 p-5 rounded-2xl shadow-lg flex flex-col justify-between">
-                  <div>
-                    <h2 className="text-sm font-bold text-white mb-1">Tópicos Mais Consultados</h2>
-                    <p className="text-[11px] text-slate-400 mb-4">Top 5 assuntos da disciplina</p>
-
-                    <div className="space-y-3">
-                      {stats?.topicCounts &&
-                        Object.entries(stats.topicCounts)
-                          .slice(0, 5)
-                          .map(([topic, count], idx) => {
-                            const maxVal = Math.max(...Object.values(stats.topicCounts), 1);
-                            const pct = Math.max(12, Math.round((count / maxVal) * 100));
-                            return (
-                              <div key={topic} className="space-y-1 group cursor-pointer">
-                                <div className="flex justify-between text-xs">
-                                  <span className="font-semibold text-slate-200 group-hover:text-cyan-300 transition-colors">
-                                    {idx + 1}. {topic}
-                                  </span>
-                                  <span className="font-bold text-blue-400">{count}</span>
-                                </div>
-                                <div className="w-full h-2 rounded-full bg-[#040e1f] overflow-hidden">
-                                  <div
-                                    className="h-full bg-gradient-to-r from-[#1573C2] to-cyan-400 rounded-full transition-all group-hover:brightness-125"
-                                    style={{ width: `${pct}%` }}
-                                  />
-                                </div>
-                              </div>
-                            );
-                          })}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Pico de Uso Interativo (Horário do Dia 24h com Tooltip) */}
-                <div className="bg-[#0b203c] border border-blue-900/40 p-5 rounded-2xl shadow-lg flex flex-col justify-between">
-                  <div>
-                    <h2 className="text-sm font-bold text-white mb-1">Pico de Uso</h2>
-                    <p className="text-[11px] text-slate-400 mb-2">Hora do dia com maior engajamento</p>
-
-                    <PeakHourChart hourlyData={hourlyDistribution} />
-                  </div>
-                </div>
-
-                {/* Quadro Dashboard de Avaliação Likert (1 a 5 Estrelas) */}
-                <FeedbackDashboardWidget
-                  avgRating={stats?.summary.avgFeedbackRating || 0}
-                  totalFeedbacks={stats?.summary.totalFeedbacks || 0}
-                  satisfactionRate={stats?.summary.satisfactionRate || 0}
-                  ratingCounts={stats?.feedbackStats?.ratingCounts || { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 }}
-                />
-
-                {/* Precisão RAG (Gauge Ring) */}
-                <div className="bg-[#0b203c] border border-blue-900/40 p-5 rounded-2xl shadow-lg flex flex-col justify-between">
-                  <div>
-                    <h2 className="text-sm font-bold text-white mb-1">Cobertura RAG</h2>
-                    <p className="text-[11px] text-slate-400 mb-4">Turnos com contexto recuperado</p>
-
-                    <div className="flex justify-center my-1">
-                      <GaugeRing percent={stats?.summary.ragAccuracyRate ?? 0} />
-                    </div>
-                  </div>
-
-                  <p className="text-[10px] text-center text-slate-400 mt-2">
-                    Não substitui avaliação humana de precisão das respostas.
-                  </p>
-                </div>
-              </div>
+              </section>
             </div>
           )}
 
