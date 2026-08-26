@@ -12,6 +12,11 @@ interface SessionMessage {
   role: 'user' | 'assistant';
   content: string;
   created_at: string;
+  review?: {
+    verdict: 'correct' | 'incomplete' | 'incorrect';
+    notes: string;
+    updated_at: string;
+  };
 }
 
 interface SessionData {
@@ -56,6 +61,13 @@ interface StatsData {
     noContextTurns: number;
     retrievalFailures: number;
     modelFailures: number;
+  };
+  qualityReview: {
+    reviewedResponses: number;
+    correct: number;
+    incomplete: number;
+    incorrect: number;
+    correctRate: number;
   };
   feedbackStats?: {
     avgRating: number;
@@ -689,6 +701,8 @@ export default function AdminDashboardPage() {
 
   // Modal de Dossiê da Conversa
   const [selectedSession, setSelectedSession] = useState<SessionData | null>(null);
+  const [reviewDrafts, setReviewDrafts] = useState<Record<string, { verdict: 'correct' | 'incomplete' | 'incorrect'; notes: string }>>({});
+  const [savingReviewId, setSavingReviewId] = useState<string | null>(null);
 
   // Busca dados de métricas do backend
   const fetchStats = async () => {
@@ -705,6 +719,54 @@ export default function AdminDashboardPage() {
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
+    }
+  };
+
+  const reviewDraftFor = (message: SessionMessage) => {
+    if (!message.id) return { verdict: 'correct' as const, notes: '' };
+    return reviewDrafts[message.id] ?? {
+      verdict: message.review?.verdict ?? 'correct',
+      notes: message.review?.notes ?? '',
+    };
+  };
+
+  const saveReview = async (message: SessionMessage) => {
+    if (!message.id || !selectedSession) return;
+    const draft = reviewDraftFor(message);
+    setSavingReviewId(message.id);
+    try {
+      const response = await fetch('/api/admin/reviews', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message_id: message.id,
+          session_id: selectedSession.sessionId,
+          verdict: draft.verdict,
+          notes: draft.notes,
+        }),
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const saved = await response.json() as {
+        verdict: 'correct' | 'incomplete' | 'incorrect';
+        notes: string;
+      };
+      setSelectedSession((current) => current ? {
+        ...current,
+        messages: current.messages.map((item) => item.id === message.id
+          ? { ...item, review: { verdict: saved.verdict, notes: saved.notes, updated_at: new Date().toISOString() } }
+          : item),
+      } : current);
+      setReviewDrafts((current) => {
+        const next = { ...current };
+        delete next[message.id!];
+        return next;
+      });
+      void fetchStats();
+    } catch (error) {
+      console.error('[admin] review save error:', error);
+      setError('Não foi possível salvar a revisão interna. Tente novamente.');
+    } finally {
+      setSavingReviewId(null);
     }
   };
 
@@ -1549,6 +1611,11 @@ export default function AdminDashboardPage() {
                 <p className="text-[10px] text-slate-500">
                   Disponibilidade e uptime exigem monitor externo; este painel mostra apenas o que foi observado nas respostas registradas.
                 </p>
+                <div className="grid grid-cols-3 gap-2 text-center text-[10px]">
+                  <div className="rounded-lg bg-emerald-500/10 p-2 text-emerald-300">{stats?.qualityReview.correct ?? 0}<br />corretas</div>
+                  <div className="rounded-lg bg-amber-500/10 p-2 text-amber-300">{stats?.qualityReview.incomplete ?? 0}<br />incompletas</div>
+                  <div className="rounded-lg bg-red-500/10 p-2 text-red-300">{stats?.qualityReview.incorrect ?? 0}<br />incorretas</div>
+                </div>
               </div>
 
               <div className="bg-[#0b203c] border border-blue-900/40 p-5 rounded-2xl flex flex-col gap-4 md:col-span-2">
@@ -1690,6 +1757,67 @@ export default function AdminDashboardPage() {
                     <span>{m.created_at ? new Date(m.created_at).toLocaleTimeString('pt-BR') : '—'}</span>
                   </div>
                   <p className="whitespace-pre-wrap leading-relaxed">{m.content}</p>
+                  {m.role === 'assistant' && m.id && (
+                    <div className="mt-3 pt-3 border-t border-amber-500/20 space-y-2">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="text-[10px] font-bold uppercase tracking-wide text-amber-300">Revisão interna</span>
+                        {m.review && (
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                            m.review.verdict === 'correct'
+                              ? 'bg-emerald-500/20 text-emerald-300'
+                              : m.review.verdict === 'incomplete'
+                                ? 'bg-amber-500/20 text-amber-300'
+                                : 'bg-red-500/20 text-red-300'
+                          }`}>
+                            {m.review.verdict === 'correct' ? 'Correta' : m.review.verdict === 'incomplete' ? 'Incompleta' : 'Incorreta'}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {([
+                          ['correct', 'Correta'],
+                          ['incomplete', 'Incompleta'],
+                          ['incorrect', 'Incorreta'],
+                        ] as const).map(([verdict, label]) => {
+                          const selected = reviewDraftFor(m).verdict === verdict;
+                          return (
+                            <button
+                              key={verdict}
+                              type="button"
+                              onClick={() => setReviewDrafts((current) => ({
+                                ...current,
+                                [m.id!]: { ...reviewDraftFor(m), verdict },
+                              }))}
+                              className={`px-2.5 py-1 rounded-lg text-[10px] font-bold border transition-colors ${
+                                selected ? 'bg-amber-500/20 border-amber-400 text-amber-200' : 'border-slate-600 text-slate-400 hover:text-white'
+                              }`}
+                            >
+                              {label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <textarea
+                        value={reviewDraftFor(m).notes}
+                        onChange={(event) => setReviewDrafts((current) => ({
+                          ...current,
+                          [m.id!]: { ...reviewDraftFor(m), notes: event.target.value },
+                        }))}
+                        maxLength={4000}
+                        rows={2}
+                        placeholder="Observação interna para correção futura (opcional)"
+                        className="w-full resize-y rounded-lg bg-slate-950/60 border border-slate-700 px-2.5 py-2 text-[11px] text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-amber-400"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => void saveReview(m)}
+                        disabled={savingReviewId === m.id}
+                        className="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 disabled:opacity-50 text-slate-950 text-[10px] font-bold transition-colors"
+                      >
+                        {savingReviewId === m.id ? 'Salvando…' : 'Salvar revisão'}
+                      </button>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

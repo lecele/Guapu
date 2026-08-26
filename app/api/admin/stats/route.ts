@@ -38,7 +38,13 @@ type SessionSummary = {
   userFirstMsg: string;
   messageCount: number;
   detectedTheme: string;
-  messages: Array<{ id?: string; role: 'user' | 'assistant'; content: string; created_at: string }>;
+  messages: Array<{
+    id?: string;
+    role: 'user' | 'assistant';
+    content: string;
+    created_at: string;
+    review?: { verdict: 'correct' | 'incomplete' | 'incorrect'; notes: string; updated_at: string };
+  }>;
   avgRating: number | null;
   ratingCount: number;
 };
@@ -409,6 +415,36 @@ export async function GET(request: NextRequest) {
     const ragCoverageRate = pipelineTurns.length > 0
       ? Math.round((pipelineTurns.filter((message) => message.metadata?.has_context).length / pipelineTurns.length) * 100)
       : 0;
+
+    type AdminReview = {
+      message_id: string;
+      verdict: 'correct' | 'incomplete' | 'incorrect';
+      notes: string;
+      updated_at: string;
+    };
+    let reviews: AdminReview[] = [];
+    try {
+      const { data, error } = await supabase.from('admin_response_reviews')
+        .select('message_id, verdict, notes, updated_at');
+      if (error) throw error;
+      reviews = (data || []) as AdminReview[];
+    } catch (error) {
+      console.warn('[admin/stats] review fetch error:', error);
+    }
+    const reviewsByMessageId = new Map(reviews.map((review) => [review.message_id, review]));
+    sessionMap.forEach((session) => {
+      session.messages.forEach((message) => {
+        if (!message.id) return;
+        const review = reviewsByMessageId.get(message.id);
+        if (review) message.review = review;
+      });
+    });
+    const qualityReview = {
+      reviewedResponses: reviews.length,
+      correct: reviews.filter((review) => review.verdict === 'correct').length,
+      incomplete: reviews.filter((review) => review.verdict === 'incomplete').length,
+      incorrect: reviews.filter((review) => review.verdict === 'incorrect').length,
+    };
     const valuesFor = (stage: keyof NonNullable<ChatTelemetry['latency_ms']>) => telemetryMessages
       .map((message) => Number(message.metadata?.latency_ms?.[stage]))
       .filter((value) => Number.isFinite(value) && value >= 0);
@@ -482,6 +518,12 @@ export async function GET(request: NextRequest) {
         noContextTurns,
         retrievalFailures,
         modelFailures,
+      },
+      qualityReview: {
+        ...qualityReview,
+        correctRate: qualityReview.reviewedResponses > 0
+          ? Math.round((qualityReview.correct / qualityReview.reviewedResponses) * 100)
+          : 0,
       },
       feedbackStats: {
         avgRating: Number(avgRating),
