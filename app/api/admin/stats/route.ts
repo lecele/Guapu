@@ -5,10 +5,25 @@ import { createClient } from '@supabase/supabase-js';
 export const runtime = 'nodejs';
 export const revalidate = 0; // Sempre dados atualizados em tempo real
 
+type ChatTelemetry = {
+  has_context?: boolean;
+  model_requested?: string | null;
+  latency_ms?: { total?: number };
+};
+
+type ChatMessageWithTelemetry = {
+  role: 'user' | 'assistant';
+  metadata?: ChatTelemetry | null;
+};
+
+function assistantMessagesWithMetadata<T extends ChatMessageWithTelemetry>(messages: T[]): T[] {
+  return messages.filter((message) => message.role === 'assistant' && message.metadata != null);
+}
+
 export async function GET() {
   try {
     const supabaseUrl = process.env.SUPABASE_URL;
-    const supabaseKey = process.env.SUPABASE_KEY;
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.SUPABASE_KEY;
 
     if (!supabaseUrl || !supabaseKey) {
       return NextResponse.json({ error: 'Supabase credentials not configured' }, { status: 500 });
@@ -18,7 +33,7 @@ export async function GET() {
 
     // 1. Busca todas as mensagens registradas em chat_messages (ordenadas pelas mais recentes)
     const { data: messages, error: msgError } = await (supabase.from('chat_messages') as any)
-      .select('id, session_id, role, content, created_at')
+      .select('id, session_id, role, content, created_at, metadata')
       .order('created_at', { ascending: false })
       .limit(5000);
 
@@ -32,10 +47,11 @@ export async function GET() {
       role: 'user' | 'assistant';
       content: string;
       created_at: string;
+      metadata?: ChatTelemetry | null;
     }> = messages ? [...messages].reverse() : [];
 
     // Se o banco estiver vazio ou sem conexao, usa dados iniciais de demonstracao
-    if (!allMessages || allMessages.length === 0) {
+    if (process.env.NODE_ENV !== 'production' && (!allMessages || allMessages.length === 0)) {
       const now = new Date();
       allMessages = [
         {
@@ -100,7 +116,7 @@ export async function GET() {
       console.warn('[admin/stats] docs fetch error:', e);
     }
 
-    if (!ragDocs || ragDocs.length === 0) {
+    if (process.env.NODE_ENV !== 'production' && (!ragDocs || ragDocs.length === 0)) {
       ragDocs = [
         { id: '1', source: 'Brunner & Suddarth — Tratado de Enfermagem Médico-Cirúrgica.pdf', content: '14.280 chunks' },
         { id: '2', source: 'Cuidados Críticos de Enfermagem — Patricia Morton & Dorrie Fontaine.pdf', content: '11.850 chunks' },
@@ -308,7 +324,29 @@ export async function GET() {
       ? Math.round(((ratingCounts[5] + ratingCounts[4]) / totalFeedbacks) * 100)
       : 0;
 
-    const ragSummaryList = [
+    const ragSummaryList = ragDocs.reduce<Array<{ source: string; chunkCount: number; category: string }>>((items, doc) => {
+      const existing = items.find((item) => item.source === doc.source);
+      if (existing) existing.chunkCount += 1;
+      else items.push({
+        source: doc.source || 'Fonte não identificada',
+        chunkCount: 1,
+        category: (doc.source || 'Material RAG').split('__')[0].replace(/[_-]/g, ' ') || 'Material RAG',
+      });
+      return items;
+    }, []).sort((a, b) => b.chunkCount - a.chunkCount);
+
+    const telemetryMessages = assistantMessagesWithMetadata(allMessages);
+    const latencies = telemetryMessages
+      .map((message) => Number(message.metadata?.latency_ms?.total))
+      .filter((value) => Number.isFinite(value) && value >= 0);
+    const ragTurns = telemetryMessages.filter(
+      (message) => typeof message.metadata?.has_context === 'boolean' && message.metadata?.model_requested !== null,
+    );
+    const ragCoverageRate = ragTurns.length > 0
+      ? Math.round((ragTurns.filter((message) => message.metadata?.has_context).length / ragTurns.length) * 100)
+      : 0;
+
+    /* const ragSummaryList = [
       { source: 'Cuidados Críticos em Enfermagem (Patricia Morton & Dorrie Fontaine)', chunkCount: 11883, category: 'Biblioteca / Livro Texto' },
       { source: 'Tratado de Enfermagem Médico-Cirúrgica (Brunner & Suddarth)', chunkCount: 10552, category: 'Biblioteca / Livro Texto' },
       { source: 'Cardiologia na Prática Clínica (SOCERJ)', chunkCount: 3068, category: 'Biblioteca / Livro Texto' },
@@ -330,21 +368,26 @@ export async function GET() {
       { source: 'Protocolo de Cuidados à Pessoa com Ferida (SMS Florianópolis)', chunkCount: 123, category: 'Protocolo Municipal' },
       { source: 'Protocolo Assistencial de Anestesia e SRPA (RELAE)', chunkCount: 96, category: 'Artigo / Protocolo' },
       { source: 'Plano de Ensino INT 5224 — O cuidado no processo de viver humano II (UFSC)', chunkCount: 93, category: 'Plano de Ensino / UFSC' }
-    ];
+    ]; */
 
     return NextResponse.json({
       summary: {
         totalConversations,
         totalMessages,
         uniqueUsers: totalConversations,
-        avgResponseTimeMs: 1450,
-        ragAccuracyRate: 96,
+        avgResponseTimeMs: latencies.length > 0
+          ? Math.round(latencies.reduce((sum, value) => sum + value, 0) / latencies.length)
+          : 0,
+        // Cobertura de contexto recuperado, não uma avaliação humana de precisão.
+        ragAccuracyRate: ragCoverageRate,
         quizAccuracyRate: Math.min(100, Math.max(60, quizAccuracyRate)),
         guardRailHits: guardRailCount,
-        totalRagDocs: 122,
-        totalRagChunks: 36004,
-        bibliotecaChunks: 30685,
-        bibliotecaPercent: 85.2,
+        totalRagDocs: ragSummaryList.length,
+        totalRagChunks: ragDocs.length,
+        bibliotecaChunks: ragDocs.filter((doc) => doc.source.toLowerCase().startsWith('biblioteca')).length,
+        bibliotecaPercent: ragDocs.length > 0
+          ? Number(((ragDocs.filter((doc) => doc.source.toLowerCase().startsWith('biblioteca')).length / ragDocs.length) * 100).toFixed(1))
+          : 0,
         avgFeedbackRating: Number(avgRating),
         totalFeedbacks,
         satisfactionRate,

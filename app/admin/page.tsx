@@ -37,6 +37,8 @@ interface StatsData {
     guardRailHits: number;
     totalRagDocs: number;
     totalRagChunks: number;
+    bibliotecaChunks: number;
+    bibliotecaPercent: number;
     avgFeedbackRating?: number;
     totalFeedbacks?: number;
     satisfactionRate?: number;
@@ -804,12 +806,12 @@ export default function AdminDashboardPage() {
         ['Total de Sessões / Conversas', stats.summary.totalConversations, 'Sessões registradas'],
         ['Total de Mensagens Trocadas', stats.summary.totalMessages, 'Interações no chat'],
         ['Tempo Médio de Resposta da IA', `${(stats.summary.avgResponseTimeMs / 1000).toFixed(2)}s`, 'Latência Gemini'],
-        ['Taxa de Resolução / Precisão RAG', `${stats.summary.ragAccuracyRate}%`, 'Fidelidade às fontes oficiais'],
+        ['Cobertura de contexto RAG', `${stats.summary.ragAccuracyRate}%`, 'Turnos com material recuperado; não substitui avaliação humana de precisão'],
         ['Média de Avaliação dos Estudantes', `${(stats.summary.avgFeedbackRating || 0) === 0 ? '0.0' : stats.summary.avgFeedbackRating} / 5.0 ⭐`, `${stats.summary.totalFeedbacks || 0} avaliações coletadas`],
         ['Taxa de Aprovação dos Estudantes', `${stats.summary.satisfactionRate || 0}%`, 'Avaliações 4★ e 5★'],
-        ['Total de Documentos e Livros Indexados', stats.summary.totalRagDocs || 122, 'Manuais e livros de referência'],
-        ['Total de Fragmentos de Texto (Chunks)', (stats.summary.totalRagChunks || 36004).toLocaleString('pt-BR'), 'Chunks vetorizados'],
-        ['Volume da Pasta Biblioteca (Livros)', '30.685 chunks (85.2%)', 'Brunner, Morton, NANDA, etc.']
+        ['Fontes RAG observadas', stats.summary.totalRagDocs, 'Fontes retornadas pela consulta atual'],
+        ['Fragmentos RAG observados', stats.summary.totalRagChunks.toLocaleString('pt-BR'), 'Chunks retornados pela consulta atual'],
+        ['Volume da Pasta Biblioteca (amostra)', `${stats.summary.bibliotecaChunks || 0} chunks (${stats.summary.bibliotecaPercent || 0}%)`, 'Amostra de fontes com prefixo biblioteca']
       ];
 
       kpiData.forEach((rowVals, idx) => {
@@ -1239,9 +1241,9 @@ export default function AdminDashboardPage() {
                   </div>
                   <div>
                     <h3 className="text-2xl font-black text-white tracking-tight">
-                      {isLoading ? '...' : `${stats?.summary.ragAccuracyRate || 96}%`}
+                      {isLoading ? '...' : `${stats?.summary.ragAccuracyRate ?? 0}%`}
                     </h3>
-                    <p className="text-xs font-semibold text-slate-400">Taxa de Resolução</p>
+                    <p className="text-xs font-semibold text-slate-400">Cobertura de contexto RAG</p>
                   </div>
                   <div className="absolute bottom-0 left-0 right-0">
                     <DynamicSparkline data={sparkAccuracy} color="#34d399" id="accuracy" />
@@ -1378,16 +1380,16 @@ export default function AdminDashboardPage() {
                 {/* Precisão RAG (Gauge Ring) */}
                 <div className="bg-[#0b203c] border border-blue-900/40 p-5 rounded-2xl shadow-lg flex flex-col justify-between">
                   <div>
-                    <h2 className="text-sm font-bold text-white mb-1">Precisão RAG</h2>
-                    <p className="text-[11px] text-slate-400 mb-4">Relevância média da base vetorial</p>
+                    <h2 className="text-sm font-bold text-white mb-1">Cobertura RAG</h2>
+                    <p className="text-[11px] text-slate-400 mb-4">Turnos com contexto recuperado</p>
 
                     <div className="flex justify-center my-1">
-                      <GaugeRing percent={stats?.summary.ragAccuracyRate || 96} />
+                      <GaugeRing percent={stats?.summary.ragAccuracyRate ?? 0} />
                     </div>
                   </div>
 
                   <p className="text-[10px] text-center text-slate-400 mt-2">
-                    Baseado nas respostas validadas pelos livros e diretrizes de Enfermagem.
+                    Não substitui avaliação humana de precisão das respostas.
                   </p>
                 </div>
               </div>
@@ -1544,13 +1546,13 @@ export default function AdminDashboardPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="px-2.5 py-1 rounded-xl text-[10px] font-bold bg-blue-950 border border-blue-800 text-blue-300">
-                      📚 {stats?.summary.totalRagDocs || 122} Documentos
+                      📚 {stats?.summary.totalRagDocs ?? 0} Fontes
                     </span>
                     <span className="px-2.5 py-1 rounded-xl text-[10px] font-bold bg-emerald-950 border border-emerald-800 text-emerald-300">
-                      ⚡ {(stats?.summary.totalRagChunks || 36004).toLocaleString('pt-BR')} Chunks
+                      ⚡ {(stats?.summary.totalRagChunks ?? 0).toLocaleString('pt-BR')} Chunks
                     </span>
                     <span className="px-2.5 py-1 rounded-xl text-[10px] font-bold bg-amber-950 border border-amber-800 text-amber-300">
-                      📖 85.2% Pasta Biblioteca
+                      📖 {stats?.summary.bibliotecaPercent ?? 0}% Pasta Biblioteca
                     </span>
                   </div>
                 </div>
@@ -1558,13 +1560,13 @@ export default function AdminDashboardPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs mb-2">
                   <div className="p-3 bg-[#040e1f] rounded-xl border border-blue-900/40">
                     <span className="text-[10px] text-slate-400 font-semibold block">Total de Chunks Indexados</span>
-                    <span className="text-lg font-black text-white">{(stats?.summary.totalRagChunks || 36004).toLocaleString('pt-BR')}</span>
+                    <span className="text-lg font-black text-white">{(stats?.summary.totalRagChunks ?? 0).toLocaleString('pt-BR')}</span>
                     <span className="text-[10px] text-emerald-400 block mt-0.5">Vetorizados com gemini-embedding-2</span>
                   </div>
                   <div className="p-3 bg-[#040e1f] rounded-xl border border-blue-900/40">
                     <span className="text-[10px] text-slate-400 font-semibold block">Volume da Pasta Biblioteca</span>
-                    <span className="text-lg font-black text-amber-400">30.685 chunks</span>
-                    <span className="text-[10px] text-slate-400 block mt-0.5">85.2% de todo o conhecimento</span>
+                    <span className="text-lg font-black text-amber-400">{stats?.summary.bibliotecaChunks ?? 0} chunks</span>
+                    <span className="text-[10px] text-slate-400 block mt-0.5">{stats?.summary.bibliotecaPercent ?? 0}% da amostra consultada</span>
                   </div>
                   <div className="p-3 bg-[#040e1f] rounded-xl border border-blue-900/40">
                     <span className="text-[10px] text-slate-400 font-semibold block">Status de Consulta RAG</span>
