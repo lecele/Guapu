@@ -158,6 +158,16 @@ def extract_text_from_docx_bytes(docx_bytes: bytes) -> list[dict]:
 # 3. CHUNKING
 # ==============================================================================
 
+def sanitize_text_for_storage(value: str) -> str:
+    """Remove caracteres que o PostgreSQL não aceita em campos de texto.
+
+    PDFs e DOCX podem conter o caractere NUL. Ele não tem valor semântico para
+    a busca e faz o lote inteiro falhar no PostgREST, por isso é removido antes
+    do chunking e do embedding.
+    """
+    return value.replace(chr(0), "")
+
+
 def chunk_text(
     pages: list[dict],
     source_name: str,
@@ -188,8 +198,13 @@ def chunk_text(
     chunks = []
     global_chunk_index = 0
 
+    safe_source_name = sanitize_text_for_storage(source_name)
+
     for page in pages:
-        page_chunks = splitter.split_text(page["text"])
+        page_text = sanitize_text_for_storage(str(page["text"]))
+        if not page_text.strip():
+            continue
+        page_chunks = splitter.split_text(page_text)
 
         for chunk_text_content in page_chunks:
             # Hash do conteúdo para deduplicação idempotente
@@ -200,7 +215,7 @@ def chunk_text(
             chunks.append(
                 {
                     "content": chunk_text_content,
-                    "source": source_name,
+                    "source": safe_source_name,
                     "page_number": page["page_number"],
                     "chunk_index": global_chunk_index,
                     "content_hash": content_hash,
