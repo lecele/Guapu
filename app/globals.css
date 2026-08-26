@@ -889,6 +889,10 @@ button {
     padding: var(--space-4) var(--space-7);
   }
 
+  .guapu-main-content.is-welcome {
+    padding-bottom: 0;
+  }
+
   .guapu-hero h1 {
     margin-bottom: var(--space-2);
     font-size: 25px;
@@ -923,7 +927,7 @@ button {
   }
 
   .guapu-action-card {
-    padding: var(--space-3) var(--space-4);
+    padding: var(--space-2) var(--space-4);
   }
 
   .guapu-action-icon {
