@@ -94,7 +94,7 @@ export function VoiceModal({ isListening, interimText, onStop }: VoiceModalProps
                   animate={{ opacity: 1, y: 0 }}
                   className="text-slate-600 dark:text-slate-300 text-sm text-center leading-snug italic"
                 >
-                  "{interimText}"
+                  &quot;{interimText}&quot;
                 </motion.p>
               ) : (
                 <p className="text-slate-400 dark:text-slate-500 text-xs text-center">

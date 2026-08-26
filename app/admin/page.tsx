@@ -43,6 +43,20 @@ interface StatsData {
     totalFeedbacks?: number;
     satisfactionRate?: number;
   };
+  telemetry: {
+    instrumentedResponses: number;
+    pipelineTurns: number;
+    latencySamples: number;
+    p50ResponseTimeMs: number;
+    p95ResponseTimeMs: number;
+    avgEmbeddingTimeMs: number;
+    avgRetrievalTimeMs: number;
+    avgGenerationTimeMs: number;
+    fallbackTurns: number;
+    noContextTurns: number;
+    retrievalFailures: number;
+    modelFailures: number;
+  };
   feedbackStats?: {
     avgRating: number;
     totalFeedbacks: number;
@@ -149,7 +163,7 @@ function ActivityChart({
       const d = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
       const isoDate = d.toISOString().substring(0, 10);
       const dayStr = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
-      const count = map.get(isoDate) ?? (i === 1 ? 4 : i === 2 ? 8 : i === 3 ? 3 : 1);
+      const count = map.get(isoDate) ?? 0;
       result.push({ isoDate, dateLabel: dayStr, count });
     }
 
@@ -319,8 +333,7 @@ function PeakHourChart({ hourlyData = [] }: { hourlyData: number[] }) {
     if (hourlyData && hourlyData.length === 24 && hourlyData.some(v => v > 0)) {
       return hourlyData;
     }
-    // Fallback realista de distribuição por horário do dia
-    return [0, 0, 1, 0, 0, 0, 2, 5, 8, 12, 14, 11, 9, 14, 18, 16, 12, 8, 5, 3, 2, 1, 0, 0];
+    return new Array(24).fill(0);
   }, [hourlyData]);
 
   const maxVal = Math.max(...hours, 15);
@@ -723,19 +736,17 @@ export default function AdminDashboardPage() {
     if (stats?.timeline && stats.timeline.length >= 2) {
       return stats.timeline.slice(-7).map(t => t.count);
     }
-    return [3, 8, 12, 15, 22, 18, stats?.summary.totalConversations || 24];
+    return new Array(7).fill(0);
   }, [stats]);
 
-  const sparkUsers = useMemo(() => {
-    return [1, 2, 3, 5, 4, 6, stats?.summary.uniqueUsers || 8];
-  }, [stats?.summary.uniqueUsers]);
+  const sparkUsers = useMemo(() => new Array(7).fill(0), []);
 
   const sparkLatency = useMemo(() => {
-    return [2.2, 1.9, 1.7, 1.5, 1.4, 1.4, 1.4];
-  }, []);
+    return new Array(7).fill(stats?.summary.avgResponseTimeMs || 0);
+  }, [stats?.summary.avgResponseTimeMs]);
 
   const sparkAccuracy = useMemo(() => {
-    return [88, 90, 93, 92, 95, 96, stats?.summary.ragAccuracyRate || 96];
+    return new Array(7).fill(stats?.summary.ragAccuracyRate || 0);
   }, [stats?.summary.ragAccuracyRate]);
 
   const sparkRating = useMemo(() => {
@@ -805,8 +816,10 @@ export default function AdminDashboardPage() {
         ['Indicador / Métrica', 'Valor', 'Unidade / Referência'],
         ['Total de Sessões / Conversas', stats.summary.totalConversations, 'Sessões registradas'],
         ['Total de Mensagens Trocadas', stats.summary.totalMessages, 'Interações no chat'],
-        ['Tempo Médio de Resposta da IA', `${(stats.summary.avgResponseTimeMs / 1000).toFixed(2)}s`, 'Latência Gemini'],
-        ['Cobertura de contexto RAG', `${stats.summary.ragAccuracyRate}%`, 'Turnos com material recuperado; não substitui avaliação humana de precisão'],
+        ['Tempo médio de resposta', `${(stats.summary.avgResponseTimeMs / 1000).toFixed(2)}s`, `${stats.telemetry.latencySamples} amostras instrumentadas`],
+        ['P95 de resposta', `${(stats.telemetry.p95ResponseTimeMs / 1000).toFixed(2)}s`, 'Pior 5% das respostas instrumentadas'],
+        ['Cobertura de contexto RAG', `${stats.summary.ragAccuracyRate}%`, `${stats.telemetry.pipelineTurns} turnos RAG; não é medida de precisão`],
+        ['Falhas de recuperação RAG', stats.telemetry.retrievalFailures, 'Embedding, busca ou ausência de contexto'],
         ['Média de Avaliação dos Estudantes', `${(stats.summary.avgFeedbackRating || 0) === 0 ? '0.0' : stats.summary.avgFeedbackRating} / 5.0 ⭐`, `${stats.summary.totalFeedbacks || 0} avaliações coletadas`],
         ['Taxa de Aprovação dos Estudantes', `${stats.summary.satisfactionRate || 0}%`, 'Avaliações 4★ e 5★'],
         ['Fontes RAG observadas', stats.summary.totalRagDocs, 'Fontes retornadas pela consulta atual'],
@@ -899,7 +912,7 @@ export default function AdminDashboardPage() {
       // 2. Subtítulo com métricas da exportação
       worksheet.mergeCells('A2:H2');
       const subTitleCell = worksheet.getCell('A2');
-      subTitleCell.value = `Exportado em ${new Date().toLocaleString('pt-BR')}  |  Total Conversas: ${stats.summary.totalConversations}  |  Total Mensagens: ${stats.summary.totalMessages}  |  Precisão RAG: ${stats.summary.ragAccuracyRate}%`;
+      subTitleCell.value = `Exportado em ${new Date().toLocaleString('pt-BR')}  |  Total Conversas: ${stats.summary.totalConversations}  |  Total Mensagens: ${stats.summary.totalMessages}  |  Cobertura de contexto RAG: ${stats.summary.ragAccuracyRate}%`;
       subTitleCell.font = { name: 'Calibri', size: 10, italic: true, color: { argb: 'FF38BDF8' } };
       subTitleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0B203C' } };
       subTitleCell.alignment = { horizontal: 'center', vertical: 'middle' };
@@ -1220,9 +1233,11 @@ export default function AdminDashboardPage() {
                   </div>
                   <div>
                     <h3 className="text-2xl font-black text-white tracking-tight">
-                      {isLoading ? '...' : '1.4s'}
+                      {isLoading ? '...' : `${((stats?.summary.avgResponseTimeMs || 0) / 1000).toFixed(2)}s`}
                     </h3>
-                    <p className="text-xs font-semibold text-slate-400">Tempo médio de resposta</p>
+                    <p className="text-xs font-semibold text-slate-400">
+                      {stats?.telemetry.latencySamples || 0} respostas instrumentadas
+                    </p>
                   </div>
                   <div className="absolute bottom-0 left-0 right-0">
                     <DynamicSparkline data={sparkLatency} color="#c084fc" id="latency" />
@@ -1236,7 +1251,7 @@ export default function AdminDashboardPage() {
                       <span className="material-symbols-outlined text-[20px]">check_circle</span>
                     </div>
                     <span className="text-[11px] font-bold text-emerald-400 bg-emerald-950/60 border border-emerald-500/30 px-2 py-0.5 rounded-full">
-                      +3%
+                      {stats?.telemetry.pipelineTurns || 0} turnos
                     </span>
                   </div>
                   <div>
@@ -1313,10 +1328,10 @@ export default function AdminDashboardPage() {
 
                     <div className="flex justify-center my-2">
                       <DonutChart
-                        resumo={stats?.modeCounts.resumo || 4}
-                        quiz={stats?.modeCounts.quiz || 3}
-                        info={stats?.modeCounts.info || 1}
-                        livre={stats?.modeCounts.livre || 2}
+                        resumo={stats?.modeCounts.resumo || 0}
+                        quiz={stats?.modeCounts.quiz || 0}
+                        info={stats?.modeCounts.info || 0}
+                        livre={stats?.modeCounts.livre || 0}
                       />
                     </div>
                   </div>
@@ -1371,10 +1386,10 @@ export default function AdminDashboardPage() {
 
                 {/* Quadro Dashboard de Avaliação Likert (1 a 5 Estrelas) */}
                 <FeedbackDashboardWidget
-                  avgRating={stats?.summary.avgFeedbackRating || 4.8}
-                  totalFeedbacks={stats?.summary.totalFeedbacks || 48}
-                  satisfactionRate={stats?.summary.satisfactionRate || 94}
-                  ratingCounts={stats?.feedbackStats?.ratingCounts || { 5: 36, 4: 9, 3: 2, 2: 1, 1: 0 }}
+                  avgRating={stats?.summary.avgFeedbackRating || 0}
+                  totalFeedbacks={stats?.summary.totalFeedbacks || 0}
+                  satisfactionRate={stats?.summary.satisfactionRate || 0}
+                  ratingCounts={stats?.feedbackStats?.ratingCounts || { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 }}
                 />
 
                 {/* Precisão RAG (Gauge Ring) */}
@@ -1515,22 +1530,25 @@ export default function AdminDashboardPage() {
                   <div className="flex items-center justify-between p-3 rounded-xl bg-[#040e1f] border border-blue-900/40">
                     <span className="font-semibold text-slate-200">Supabase pgvector Database</span>
                     <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                      🟢 Conectado
+                      {stats ? `🟢 ${stats.summary.totalRagChunks.toLocaleString('pt-BR')} chunks lidos` : 'Aguardando leitura'}
                     </span>
                   </div>
                   <div className="flex items-center justify-between p-3 rounded-xl bg-[#040e1f] border border-blue-900/40">
-                    <span className="font-semibold text-slate-200">Google Gemini LLM API (gemini-3.7-flash)</span>
+                    <span className="font-semibold text-slate-200">Pipeline Gemini / RAG</span>
                     <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                      🟢 Operacional
+                      {stats ? `${stats.telemetry.pipelineTurns} turnos instrumentados` : 'Sem amostra'}
                     </span>
                   </div>
                   <div className="flex items-center justify-between p-3 rounded-xl bg-[#040e1f] border border-blue-900/40">
-                    <span className="font-semibold text-slate-200">Vercel Serverless Edge API Routes</span>
+                    <span className="font-semibold text-slate-200">Tempo de resposta P50 / P95</span>
                     <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                      🟢 99.9% Uptime
+                      {stats ? `${(stats.telemetry.p50ResponseTimeMs / 1000).toFixed(2)}s / ${(stats.telemetry.p95ResponseTimeMs / 1000).toFixed(2)}s` : 'Sem amostra'}
                     </span>
                   </div>
                 </div>
+                <p className="text-[10px] text-slate-500">
+                  Disponibilidade e uptime exigem monitor externo; este painel mostra apenas o que foi observado nas respostas registradas.
+                </p>
               </div>
 
               <div className="bg-[#0b203c] border border-blue-900/40 p-5 rounded-2xl flex flex-col gap-4 md:col-span-2">
@@ -1541,7 +1559,7 @@ export default function AdminDashboardPage() {
                       Inventário da Base RAG & Biblioteca de Livros
                     </h2>
                     <p className="text-[11px] text-slate-400">
-                      100% dos documentos são consultados via busca vetorial semântica (cosseno) a cada resposta do Tutor.
+                      Inventário real da base vetorial. A presença do documento não substitui a validação de relevância em cada consulta.
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
@@ -1570,8 +1588,8 @@ export default function AdminDashboardPage() {
                   </div>
                   <div className="p-3 bg-[#040e1f] rounded-xl border border-blue-900/40">
                     <span className="text-[10px] text-slate-400 font-semibold block">Status de Consulta RAG</span>
-                    <span className="text-lg font-black text-emerald-400">100% Inclusivo</span>
-                    <span className="text-[10px] text-slate-400 block mt-0.5">Sem exclusão de pastas ou filtros</span>
+                    <span className="text-lg font-black text-emerald-400">{stats?.telemetry.retrievalFailures ?? 0} falhas</span>
+                    <span className="text-[10px] text-slate-400 block mt-0.5">em {stats?.telemetry.pipelineTurns ?? 0} consultas instrumentadas</span>
                   </div>
                 </div>
 
@@ -1604,7 +1622,7 @@ export default function AdminDashboardPage() {
                             {doc.chunkCount.toLocaleString('pt-BR')}
                           </td>
                           <td className="py-2 px-3 text-center">
-                            <span className="text-emerald-400 font-bold text-[10px]">🟢 Ativo & Consultável</span>
+                            <span className="text-emerald-400 font-bold text-[10px]">🟢 Indexado</span>
                           </td>
                         </tr>
                       ))}

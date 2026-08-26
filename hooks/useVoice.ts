@@ -4,8 +4,33 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type AnySpeechRecognition = any;
+type SpeechRecognitionResultLike = {
+  isFinal: boolean;
+  [index: number]: { transcript: string };
+};
+
+type SpeechRecognitionEventLike = {
+  resultIndex: number;
+  results: ArrayLike<SpeechRecognitionResultLike>;
+};
+
+type SpeechRecognitionErrorEventLike = { error?: string };
+
+type AnySpeechRecognition = {
+  lang: string;
+  continuous: boolean;
+  interimResults: boolean;
+  maxAlternatives: number;
+  onstart: (() => void) | null;
+  onresult: ((event: SpeechRecognitionEventLike) => void) | null;
+  onerror: ((event: SpeechRecognitionErrorEventLike) => void) | null;
+  onend: (() => void) | null;
+  start: () => void;
+  stop: () => void;
+  abort: () => void;
+};
+
+type SpeechRecognitionConstructor = new () => AnySpeechRecognition;
 
 // ── Limpeza de Markdown para TTS ──────────────────────────────────────────────
 function cleanTextForSpeech(text: string): string {
@@ -37,7 +62,6 @@ export function useVoice(onTranscript: (text: string) => void) {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [interimText, setInterimText] = useState(''); // texto parcial durante gravação
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const recognitionRef = useRef<AnySpeechRecognition>(null);
 
   // Carrega lista de vozes ao montar
@@ -64,7 +88,7 @@ export function useVoice(onTranscript: (text: string) => void) {
       utterance.pitch = 1.0;
 
       const voices = window.speechSynthesis.getVoices();
-      const isPtBR = (v: any) => {
+      const isPtBR = (v: SpeechSynthesisVoice) => {
         const lang = v.lang.replace('_', '-').toLowerCase();
         return lang === 'pt-br' || lang === 'pt-br-br';
       };
@@ -118,7 +142,7 @@ export function useVoice(onTranscript: (text: string) => void) {
   // ── STT: parar ───────────────────────────────────────────────────────────────
   const stopListening = useCallback(() => {
     if (recognitionRef.current) {
-      try { recognitionRef.current.stop(); } catch (_) { /* ignora */ }
+      try { recognitionRef.current.stop(); } catch { /* ignora */ }
       recognitionRef.current = null;
     }
     setIsListening(false);
@@ -131,13 +155,14 @@ export function useVoice(onTranscript: (text: string) => void) {
 
     // CRÍTICO: cancela TTS antes de abrir o microfone
     // (browser não permite TTS + STT simultâneos)
-    try { window.speechSynthesis.cancel(); } catch (_) { /* ignora */ }
+    try { window.speechSynthesis.cancel(); } catch { /* ignora */ }
     setIsSpeaking(false);
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const SpeechRecognitionAPI = (window as any).SpeechRecognition
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      || (window as any).webkitSpeechRecognition;
+    const speechWindow = window as typeof window & {
+      SpeechRecognition?: SpeechRecognitionConstructor;
+      webkitSpeechRecognition?: SpeechRecognitionConstructor;
+    };
+    const SpeechRecognitionAPI = speechWindow.SpeechRecognition || speechWindow.webkitSpeechRecognition;
 
     if (!SpeechRecognitionAPI) {
       alert('Reconhecimento de voz não suportado. Use Chrome ou Safari.');
@@ -146,12 +171,11 @@ export function useVoice(onTranscript: (text: string) => void) {
 
     // Aborta instância anterior
     if (recognitionRef.current) {
-      try { recognitionRef.current.abort(); } catch (_) { /* ignora */ }
+      try { recognitionRef.current.abort(); } catch { /* ignora */ }
       recognitionRef.current = null;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const recognition = new SpeechRecognitionAPI() as any;
+    const recognition = new SpeechRecognitionAPI();
     recognition.lang = 'pt-BR';
     recognition.continuous = false;
     recognition.interimResults = true; // habilita texto parcial em tempo real
@@ -162,8 +186,7 @@ export function useVoice(onTranscript: (text: string) => void) {
       setInterimText('');
     };
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    recognition.onresult = (event: any) => {
+    recognition.onresult = (event) => {
       let interim = '';
       let finalTranscript = '';
 
@@ -186,8 +209,7 @@ export function useVoice(onTranscript: (text: string) => void) {
       }
     };
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    recognition.onerror = (event: any) => {
+    recognition.onerror = (event) => {
       console.warn('[useVoice] Erro STT:', event.error);
       // 'no-speech' é normal — apenas para a escuta sem travar
       setIsListening(false);

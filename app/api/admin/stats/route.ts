@@ -1,5 +1,5 @@
 // app/api/admin/stats/route.ts
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
 export const runtime = 'nodejs';
@@ -8,7 +8,15 @@ export const revalidate = 0; // Sempre dados atualizados em tempo real
 type ChatTelemetry = {
   has_context?: boolean;
   model_requested?: string | null;
-  latency_ms?: { total?: number };
+  fallback_used?: boolean;
+  error_code?: string | null;
+  sources_found?: number;
+  latency_ms?: {
+    embedding?: number;
+    retrieval?: number;
+    generation?: number;
+    total?: number;
+  };
 };
 
 type ChatMessageWithTelemetry = {
@@ -16,12 +24,66 @@ type ChatMessageWithTelemetry = {
   metadata?: ChatTelemetry | null;
 };
 
+type ChatMessageRecord = ChatMessageWithTelemetry & {
+  id?: string;
+  session_id: string;
+  content: string;
+  created_at: string;
+};
+
+type SessionSummary = {
+  sessionId: string;
+  firstAt: string;
+  lastAt: string;
+  userFirstMsg: string;
+  messageCount: number;
+  detectedTheme: string;
+  messages: Array<{ id?: string; role: 'user' | 'assistant'; content: string; created_at: string }>;
+  avgRating: number | null;
+  ratingCount: number;
+};
+
 function assistantMessagesWithMetadata<T extends ChatMessageWithTelemetry>(messages: T[]): T[] {
   return messages.filter((message) => message.role === 'assistant' && message.metadata != null);
 }
 
-export async function GET() {
+function isAuthorized(request: NextRequest): boolean {
+  const expectedUser = process.env.ADMIN_DASHBOARD_USER;
+  const expectedPassword = process.env.ADMIN_DASHBOARD_PASSWORD;
+
+  if (!expectedUser || !expectedPassword) return process.env.NODE_ENV !== 'production';
+
+  const header = request.headers.get('authorization');
+  if (!header?.startsWith('Basic ')) return false;
+
   try {
+    const [user, password] = atob(header.slice(6)).split(':');
+    return user === expectedUser && password === expectedPassword;
+  } catch {
+    return false;
+  }
+}
+
+function percentile(values: number[], percentileValue: number): number {
+  if (!values.length) return 0;
+  const sorted = [...values].sort((a, b) => a - b);
+  const index = Math.min(sorted.length - 1, Math.ceil((percentileValue / 100) * sorted.length) - 1);
+  return Math.round(sorted[index]);
+}
+
+function average(values: number[]): number {
+  return values.length ? Math.round(values.reduce((sum, value) => sum + value, 0) / values.length) : 0;
+}
+
+export async function GET(request: NextRequest) {
+  try {
+    if (!isAuthorized(request)) {
+      return NextResponse.json(
+        { error: 'Acesso administrativo não autorizado' },
+        { status: 401, headers: { 'WWW-Authenticate': 'Basic realm="Guapu Painel"' } },
+      );
+    }
+
     const supabaseUrl = process.env.SUPABASE_URL;
     const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.SUPABASE_KEY;
 
@@ -31,24 +93,25 @@ export async function GET() {
 
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // 1. Busca todas as mensagens registradas em chat_messages (ordenadas pelas mais recentes)
-    const { data: messages, error: msgError } = await (supabase.from('chat_messages') as any)
-      .select('id, session_id, role, content, created_at, metadata')
-      .order('created_at', { ascending: false })
-      .limit(5000);
-
-    if (msgError) {
-      console.error('[admin/stats] error fetching messages:', msgError);
+    // 1. Busca paginada das mensagens. Não truncar o histórico altera diretamente
+    // os totais e os percentis exibidos no painel.
+    let allMessages: ChatMessageRecord[] = [];
+    try {
+      const pageSize = 1000;
+      const maxRows = 50_000;
+      for (let start = 0; start < maxRows; start += pageSize) {
+        const { data: page, error } = await supabase.from('chat_messages')
+          .select('id, session_id, role, content, created_at, metadata')
+          .order('created_at', { ascending: true })
+          .range(start, start + pageSize - 1);
+        if (error) throw error;
+        const rows = page || [];
+        allMessages.push(...(rows as ChatMessageRecord[]));
+        if (rows.length < pageSize) break;
+      }
+    } catch (error) {
+      console.error('[admin/stats] error fetching messages:', error);
     }
-
-    let allMessages: Array<{
-      id?: string;
-      session_id: string;
-      role: 'user' | 'assistant';
-      content: string;
-      created_at: string;
-      metadata?: ChatTelemetry | null;
-    }> = messages ? [...messages].reverse() : [];
 
     // Se o banco estiver vazio ou sem conexao, usa dados iniciais de demonstracao
     if (process.env.NODE_ENV !== 'production' && (!allMessages || allMessages.length === 0)) {
@@ -111,12 +174,12 @@ export async function GET() {
       const pageSize = 1000;
       const maxRows = 50_000;
       for (let start = 0; start < maxRows; start += pageSize) {
-        const { data: page, error } = await (supabase.from('documents') as any)
+        const { data: page, error } = await supabase.from('documents')
           .select('id, source')
           .range(start, start + pageSize - 1);
         if (error) throw error;
         const rows = page || [];
-        ragDocs.push(...rows);
+        ragDocs.push(...(rows as Array<{ id: string; source: string; content?: string }>));
         if (rows.length < pageSize) break;
       }
     } catch (e) {
@@ -143,15 +206,7 @@ export async function GET() {
     // ── AGREGADORES E MÉTRICAS ──────────────────────────────────────────────
 
     // Sessions Map
-    const sessionMap = new Map<string, {
-      sessionId: string;
-      firstAt: string;
-      lastAt: string;
-      userFirstMsg: string;
-      messageCount: number;
-      detectedTheme: string;
-      messages: Array<{ id?: string; role: 'user' | 'assistant'; content: string; created_at: string }>;
-    }>();
+    const sessionMap = new Map<string, SessionSummary>();
 
     let quizCorrectCount = 0;
     let quiz1stAttemptWrong = 0;
@@ -193,6 +248,8 @@ export async function GET() {
           messageCount: 0,
           detectedTheme: 'Geral',
           messages: [],
+          avgRating: null,
+          ratingCount: 0,
         });
       }
 
@@ -280,16 +337,16 @@ export async function GET() {
     const totalMessages = allMessages.length;
     const totalQuizAttempts = quizCorrectCount + quiz1stAttemptWrong + quiz2ndAttemptWrong;
     const quizAccuracyRate = totalQuizAttempts > 0
-      ? Math.round((quizCorrectCount / (quizCorrectCount + quiz2ndAttemptWrong || 1)) * 100)
-      : 92;
+      ? Math.round((quizCorrectCount / totalQuizAttempts) * 100)
+      : 0;
 
     // 3. Busca avaliações por estrelas (feedback_ratings)
     let feedbackRatings: Array<{ session_id?: string; rating: number; created_at: string }> = [];
     try {
-      const { data: fb } = await (supabase.from('feedback_ratings') as any)
+      const { data: fb } = await supabase.from('feedback_ratings')
         .select('session_id, rating, created_at')
         .order('created_at', { ascending: false });
-      feedbackRatings = fb || [];
+      feedbackRatings = (fb || []) as Array<{ session_id?: string; rating: number; created_at: string }>;
     } catch (e) {
       console.warn('[admin/stats] feedback fetch error:', e);
     }
@@ -307,11 +364,11 @@ export async function GET() {
       const ratings = sessionRatingMap.get(id);
       if (ratings && ratings.length > 0) {
         const avg = (ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(1);
-        (sess as any).avgRating = Number(avg);
-        (sess as any).ratingCount = ratings.length;
+        sess.avgRating = Number(avg);
+        sess.ratingCount = ratings.length;
       } else {
-        (sess as any).avgRating = null;
-        (sess as any).ratingCount = 0;
+        sess.avgRating = null;
+        sess.ratingCount = 0;
       }
     });
 
@@ -346,12 +403,24 @@ export async function GET() {
     const latencies = telemetryMessages
       .map((message) => Number(message.metadata?.latency_ms?.total))
       .filter((value) => Number.isFinite(value) && value >= 0);
-    const ragTurns = telemetryMessages.filter(
-      (message) => typeof message.metadata?.has_context === 'boolean' && message.metadata?.model_requested !== null,
+    const pipelineTurns = telemetryMessages.filter(
+      (message) => typeof message.metadata?.has_context === 'boolean',
     );
-    const ragCoverageRate = ragTurns.length > 0
-      ? Math.round((ragTurns.filter((message) => message.metadata?.has_context).length / ragTurns.length) * 100)
+    const ragCoverageRate = pipelineTurns.length > 0
+      ? Math.round((pipelineTurns.filter((message) => message.metadata?.has_context).length / pipelineTurns.length) * 100)
       : 0;
+    const valuesFor = (stage: keyof NonNullable<ChatTelemetry['latency_ms']>) => telemetryMessages
+      .map((message) => Number(message.metadata?.latency_ms?.[stage]))
+      .filter((value) => Number.isFinite(value) && value >= 0);
+    const embeddingLatencies = valuesFor('embedding');
+    const retrievalLatencies = valuesFor('retrieval');
+    const generationLatencies = valuesFor('generation');
+    const fallbackTurns = pipelineTurns.filter((message) => message.metadata?.fallback_used).length;
+    const noContextTurns = pipelineTurns.filter((message) => message.metadata?.has_context === false).length;
+    const retrievalFailures = pipelineTurns.filter((message) =>
+      ['EMBEDDING_FAILED', 'RETRIEVAL_FAILED', 'NO_RELEVANT_CONTEXT'].includes(message.metadata?.error_code ?? ''),
+    ).length;
+    const modelFailures = pipelineTurns.filter((message) => message.metadata?.error_code === 'MODEL_FAILED').length;
 
     /* const ragSummaryList = [
       { source: 'Cuidados Críticos em Enfermagem (Patricia Morton & Dorrie Fontaine)', chunkCount: 11883, category: 'Biblioteca / Livro Texto' },
@@ -383,7 +452,7 @@ export async function GET() {
         totalMessages,
         uniqueUsers: totalConversations,
         avgResponseTimeMs: latencies.length > 0
-          ? Math.round(latencies.reduce((sum, value) => sum + value, 0) / latencies.length)
+          ? average(latencies)
           : 0,
         // Cobertura de contexto recuperado, não uma avaliação humana de precisão.
         ragAccuracyRate: ragCoverageRate,
@@ -399,6 +468,20 @@ export async function GET() {
         avgFeedbackRating: Number(avgRating),
         totalFeedbacks,
         satisfactionRate,
+      },
+      telemetry: {
+        instrumentedResponses: telemetryMessages.length,
+        pipelineTurns: pipelineTurns.length,
+        latencySamples: latencies.length,
+        p50ResponseTimeMs: percentile(latencies, 50),
+        p95ResponseTimeMs: percentile(latencies, 95),
+        avgEmbeddingTimeMs: average(embeddingLatencies),
+        avgRetrievalTimeMs: average(retrievalLatencies),
+        avgGenerationTimeMs: average(generationLatencies),
+        fallbackTurns,
+        noContextTurns,
+        retrievalFailures,
+        modelFailures,
       },
       feedbackStats: {
         avgRating: Number(avgRating),
