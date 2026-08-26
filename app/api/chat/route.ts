@@ -515,7 +515,7 @@ export async function POST(req: NextRequest) {
         /prof|hor[aá]r|atend|cron|calend|nota|avali|plano|trabalho|conte[uú]do|carga|disciplin|ementa|frequ[eê]nc|moodle|email|contato|m[eé]dia|prova/i.test(searchQuery);
       docs = await retrieveDocs(
         embedding,
-        isCourseQuery ? 0.25 : 0.35,
+        decision.generationMode === 'info' ? -1 : isCourseQuery ? 0.25 : 0.35,
         decision.generationMode === 'info' ? 'administrativo__plano_ensino%' : undefined,
       );
       retrievalLatency = Date.now() - retrievalStartedAt;
