@@ -62,6 +62,9 @@ const SIMULADO_MENU_RESPONSE =
   'Qual tema você deseja para o simulado? Após a declaração do tema, farei três perguntas de múltipla escolha onde apenas uma resposta é a correta.\n\n' +
   '*(Exemplos: Hemostasia, Cirurgia Bariátrica, Estomas, Capacitação Hospitalar, Teleconsulta, Cuidados pós-operatórios, entre outros)*';
 
+const QUIZ_INVALID_RESPONSE =
+  'Não entendi sua resposta. Digite apenas a letra da alternativa escolhida: A, B, C ou D.';
+
 const INFO_MENU_RESPONSE =
   'Que informação da disciplina você deseja consultar?\n\n' +
   'Você pode perguntar sobre o plano de ensino, professores, horários, cronograma, avaliações, frequência, trabalhos ou conteúdo programático.';
@@ -363,6 +366,7 @@ const FAST_RESPONSES: Record<FastResponseKey, string> = {
   farewell: FAREWELL_RESPONSE,
   resumo_menu: RESUMO_MENU_RESPONSE,
   quiz_menu: SIMULADO_MENU_RESPONSE,
+  quiz_invalid: QUIZ_INVALID_RESPONSE,
   info_menu: INFO_MENU_RESPONSE,
 };
 

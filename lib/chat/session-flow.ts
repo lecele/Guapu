@@ -42,6 +42,7 @@ export type FastResponseKey =
   | 'farewell'
   | 'resumo_menu'
   | 'quiz_menu'
+  | 'quiz_invalid'
   | 'info_menu';
 
 export interface SessionState {
@@ -308,6 +309,16 @@ export function resolveTurn(state: SessionState, message: string): FlowDecision 
   }
 
   if (state.state === 'QUIZ_EM_ANDAMENTO' || state.state === 'QUIZ_SEGUNDA_TENTATIVA') {
+    const normalizedAnswer = normalizeInput(message).toUpperCase();
+    if (!/^[ABCD]$/.test(normalizedAnswer)) {
+      return {
+        ...base,
+        kind: 'fast',
+        fastResponse: 'quiz_invalid',
+        topic: state.currentTopic,
+        stateAfter: state,
+      };
+    }
     const secondAttempt = state.state === 'QUIZ_SEGUNDA_TENTATIVA' || state.quizAttempt === 2;
     return {
       ...base,
@@ -372,4 +383,3 @@ export function finalizeGeneratedTurn(decision: FlowDecision, assistantText: str
     quizAttempt: 1,
   });
 }
-

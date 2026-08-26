@@ -71,6 +71,14 @@ test('resposta incorreta no quiz mantém a questão e abre segunda tentativa', (
   assert.equal(after.quizAttempt, 2);
 });
 
+test('entrada inválida no quiz não é contabilizada como tentativa', () => {
+  const before = state({ state: 'QUIZ_EM_ANDAMENTO', mode: 'quiz', currentTopic: 'feridas', quizQuestion: 1, quizAttempt: 1 });
+  const decision = resolveTurn(before, 'não sei');
+  assert.equal(decision.kind, 'fast');
+  assert.equal(decision.fastResponse, 'quiz_invalid');
+  assert.equal(decision.stateAfter, before);
+});
+
 test('resposta correta avança para a próxima questão', () => {
   const before = state({ state: 'QUIZ_EM_ANDAMENTO', mode: 'quiz', currentTopic: 'feridas', quizQuestion: 1, quizAttempt: 1 });
   const decision = resolveTurn(before, 'A');
@@ -105,4 +113,3 @@ test('voltar ao menu limpa modalidade, tema e quiz', () => {
   assert.equal(decision.stateAfter.currentTopic, '');
   assert.equal(decision.stateAfter.quizQuestion, 0);
 });
-
