@@ -15,6 +15,10 @@ function nextQuizInstruction(questionNumber: number, topic: string): string {
   return `Gere em seguida a **Questão ${next}:** sobre "${topic}", com alternativas A, B, C e D em linhas separadas.`;
 }
 
+function quizScopeGuard(topic: string): string {
+  return `REGRA CRÍTICA DE ESCOPO: o tema imutável deste quiz é "${topic}". Cada enunciado, alternativa, correção e explicação deve tratar exclusivamente desse tema. Ignore temas de quizzes anteriores presentes no histórico. Não substitua o tema por outro conteúdo cirúrgico relacionado e não invente informações que não estejam sustentadas pelos trechos RAG recuperados.`;
+}
+
 export function buildModePrompt({ mode, question, topic, quizQuestion }: ModePromptInput): string {
   const currentQuestion = Math.min(3, Math.max(1, quizQuestion || 1));
   const targetTopic = topic || question;
@@ -23,6 +27,7 @@ export function buildModePrompt({ mode, question, topic, quizQuestion }: ModePro
     case 'simulado_tema':
       return `[MODO ATIVO: INICIAR QUIZ]
 Tema: ${targetTopic}
+${quizScopeGuard(targetTopic)}
 Crie somente a **Questão ${currentQuestion}:**, clara e baseada nos materiais RAG.
 Use exatamente quatro alternativas, cada uma em linha separada: **A)**, **B)**, **C)** e **D)**.
 Não revele a resposta, não inclua referências e solicite apenas a letra escolhida.`;
@@ -30,6 +35,7 @@ Não revele a resposta, não inclua referências e solicite apenas a letra escol
     case 'simulado_respondendo':
       return `[MODO ATIVO: AVALIAR PRIMEIRA TENTATIVA DO QUIZ]
 Tema: ${targetTopic}
+${quizScopeGuard(targetTopic)}
 Questão atual: ${currentQuestion}
 Resposta do estudante: ${question}
 Avalie usando a última questão visível no histórico.
@@ -40,6 +46,7 @@ Não inclua referências.`;
     case 'simulado_segunda_tentativa':
       return `[MODO ATIVO: AVALIAR SEGUNDA TENTATIVA DO QUIZ]
 Tema: ${targetTopic}
+${quizScopeGuard(targetTopic)}
 Questão atual: ${currentQuestion}
 Segunda resposta do estudante: ${question}
 Se estiver correta, confirme em uma frase.
