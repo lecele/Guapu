@@ -107,7 +107,7 @@ function AgentBubble({ content, sessionId }: {
     if (['A', 'B', 'C', 'D'].every((label) => optionLabels.includes(label))) {
       text = text.replace(
         /(^|\s)(?:\*\*)?([A-D])\)(?:\*\*)?(?=\s)/gm,
-        (_match, prefix: string, label: string) => `${prefix.includes('\n') ? prefix : '\n\n'}**${label})**`,
+        (_match, _prefix: string, label: string) => `\n\n**${label})**`,
       );
     }
 
