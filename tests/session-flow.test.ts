@@ -88,6 +88,14 @@ test('resposta correta avança para a próxima questão', () => {
   assert.equal(after.quizAttempt, 1);
 });
 
+test('quiz não avança semanticamente sem a próxima questão visível', () => {
+  const before = state({ state: 'QUIZ_SEGUNDA_TENTATIVA', mode: 'quiz', currentTopic: 'feridas', quizQuestion: 1, quizAttempt: 2 });
+  const decision = resolveTurn(before, 'A');
+  const after = finalizeGeneratedTurn(decision, 'A alternativa correta é a C.');
+  assert.equal(after.state, 'QUIZ_EM_ANDAMENTO');
+  assert.equal(after.quizQuestion, 2);
+});
+
 test('terceira questão conclui o quiz', () => {
   const before = state({ state: 'QUIZ_EM_ANDAMENTO', mode: 'quiz', currentTopic: 'feridas', quizQuestion: 3, quizAttempt: 1 });
   const decision = resolveTurn(before, 'A');

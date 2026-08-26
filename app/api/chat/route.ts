@@ -270,6 +270,7 @@ async function generateResponse(
   sessionMode: GenerationMode = 'livre',
   inlineTheme?: string,
   quizQuestion = 0,
+  completionRequirement?: string,
 ): Promise<GenerationResult> {
   const generationStartedAt = Date.now();
   const systemPrompt = `${buildCorePrompt({
@@ -287,12 +288,12 @@ async function generateResponse(
     'gemini-3.7-flash',
   ])];
 
-  const prompt = buildModePrompt({
+  const prompt = `${buildModePrompt({
     mode: sessionMode,
     question,
     topic: inlineTheme || question,
     quizQuestion,
-  });
+  })}${completionRequirement ? `\n\n[VALIDAÇÃO OBRIGATÓRIA]\n${completionRequirement}` : ''}`;
 
   let text = '';
   let lastErrorMessage = '';
@@ -350,6 +351,17 @@ async function generateResponse(
     errorCode: 'MODEL_FAILED',
     latencyMs: Date.now() - generationStartedAt,
   };
+}
+
+function requiresNextQuizQuestion(decision: ReturnType<typeof resolveTurn>, answer: string): boolean {
+  if (
+    decision.generationMode !== 'simulado_respondendo' &&
+    decision.generationMode !== 'simulado_segunda_tentativa'
+  ) return false;
+  const currentQuestion = Math.max(1, decision.quizQuestion);
+  if (currentQuestion >= 3) return false;
+  if (/resposta est[aá] incorreta[\s\S]{0,80}tente novamente/i.test(answer)) return false;
+  return !new RegExp(`quest[aã]o\\s*${currentQuestion + 1}\\s*:`, 'i').test(answer);
 }
 
 // ── Histórico e Cache de Estado ───────────────────────────────────────────────
@@ -583,7 +595,29 @@ export async function POST(req: NextRequest) {
       fallbackReason = generation.fallbackReason;
       generationLatency = generation.latencyMs;
       generationErrorCode = generation.errorCode;
-      finalState = generation.errorCode
+      if (!generation.errorCode && requiresNextQuizQuestion(decision, answer)) {
+        const expectedQuestion = Math.max(1, decision.quizQuestion) + 1;
+        const repair = await generateResponse(
+          question,
+          docs,
+          history.slice(-12) as ChatHistoryItem[],
+          decision.generationMode ?? 'livre',
+          decision.topic,
+          decision.quizQuestion,
+          `Sua resposta deve obrigatoriamente corrigir a Questão ${expectedQuestion - 1} e, em seguida, incluir a linha **Questão ${expectedQuestion}:** com quatro alternativas A, B, C e D. Não termine a resposta antes dessa nova questão.`,
+        );
+        if (!repair.errorCode && !requiresNextQuizQuestion(decision, repair.text)) {
+          answer = repair.text;
+          modelUsed = repair.modelUsed;
+          fallbackUsed = fallbackUsed || repair.fallbackUsed;
+          fallbackReason = repair.fallbackReason ?? fallbackReason;
+          generationLatency += repair.latencyMs;
+        } else {
+          answer = 'Não consegui formular a próxima questão com segurança. Escolha outro tema, volte ao menu ou encerre a sessão.';
+          generationErrorCode = 'QUIZ_NEXT_QUESTION_MISSING';
+        }
+      }
+      finalState = generationErrorCode
         ? decision.stateBefore
         : finalizeGeneratedTurn(decision, answer);
     }
