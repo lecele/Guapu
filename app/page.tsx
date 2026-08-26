@@ -102,7 +102,6 @@ export default function HomePage() {
             <GuapuMark size={50} />
             <div className="guapu-brand-copy">
               <span className="guapu-wordmark">Guapu</span>
-              <span className="guapu-context-pill">Tutor de Enfermagem</span>
             </div>
           </div>
           <div className="guapu-header-actions">

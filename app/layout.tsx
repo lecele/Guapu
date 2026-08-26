@@ -19,7 +19,7 @@ const fraunces = Fraunces({
 });
 
 export const metadata: Metadata = {
-  title: 'Guapu · Tutor de Enfermagem',
+  title: 'Guapu',
   description: 'Assistente de estudos da disciplina INT 5224, fundamentado nos materiais acadêmicos da UFSC.',
   keywords: ['enfermagem', 'tutor IA', 'perioperatória', 'RAG', 'educação em saúde'],
   authors: [{ name: 'Agentes na Saúde' }],
