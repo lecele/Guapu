@@ -13,6 +13,15 @@
     },
     "app/api/health/route.ts": {
       "maxDuration": 10
+    },
+    "app/api/monitor/route.ts": {
+      "maxDuration": 20
     }
-  }
+  },
+  "crons": [
+    {
+      "path": "/api/monitor",
+      "schedule": "0 8 * * *"
+    }
+  ]
 }

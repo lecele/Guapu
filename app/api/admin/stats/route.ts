@@ -7,6 +7,12 @@ export const runtime = 'nodejs';
 export const revalidate = 0; // Sempre dados atualizados em tempo real
 
 type ChatTelemetry = {
+  mode?: 'livre' | 'resumo' | 'quiz' | 'info';
+  current_topic?: string | null;
+  state_before?: string | null;
+  state_after?: string | null;
+  quiz_question?: number | null;
+  quiz_attempt?: number | null;
   has_context?: boolean;
   model_requested?: string | null;
   fallback_used?: boolean;
@@ -40,6 +46,7 @@ type SessionSummary = {
   userFirstMsg: string;
   messageCount: number;
   detectedTheme: string;
+  mode: 'livre' | 'resumo' | 'quiz' | 'info' | null;
   messages: Array<{
     id?: string;
     role: 'user' | 'assistant';
@@ -224,18 +231,9 @@ export async function GET(request: NextRequest) {
     let quiz2ndAttemptWrong = 0;
     let guardRailCount = 0;
 
-    const topicCounts: Record<string, number> = {
-      'Hemostasia': 0,
-      'Feridas e Cicatrização': 0,
-      'Cirurgia Bariátrica': 0,
-      'Anestesia': 0,
-      'Estomas e Ostomias': 0,
-      'Cuidados Pré-operatórios': 0,
-      'Cuidados Pós-operatórios': 0,
-      'Posicionamento Cirúrgico': 0,
-      'Infecção de Sítio Cirúrgico': 0,
-      'Outros Temas': 0,
-    };
+    // Novos turnos carregam modo e tema no metadata. Não inferir dados
+    // pedagógicos a partir de palavras soltas, pois isso distorce o painel.
+    const topicCounts: Record<string, number> = {};
 
     const modeCounts = {
       resumo: 0,
@@ -257,7 +255,8 @@ export async function GET(request: NextRequest) {
           lastAt: msg.created_at,
           userFirstMsg: msg.role === 'user' ? msg.content : '',
           messageCount: 0,
-          detectedTheme: 'Geral',
+          detectedTheme: 'Geral Enfermagem',
+          mode: null,
           messages: [],
           avgRating: null,
           ratingCount: 0,
@@ -278,50 +277,36 @@ export async function GET(request: NextRequest) {
         dateTimelineMap.set(dateKey, (dateTimelineMap.get(dateKey) || 0) + 1);
       }
 
-      // Content & Analytics analysis
-      const textLower = msg.content.toLowerCase();
+      const telemetry = msg.metadata;
 
-      // Guard Rails detection
+      // Eventos estruturados: gravados pelo fluxo do chat na mensagem do assistente.
+      if (msg.role === 'assistant' && telemetry?.mode) {
+        modeCounts[telemetry.mode]++;
+        sessionObj.mode = telemetry.mode;
+
+        const structuredTopic = telemetry.current_topic?.trim();
+        if (structuredTopic) {
+          topicCounts[structuredTopic] = (topicCounts[structuredTopic] || 0) + 1;
+          sessionObj.detectedTheme = structuredTopic;
+        }
+
+        if (telemetry.mode === 'quiz') {
+          if (telemetry.state_after === 'QUIZ_SEGUNDA_TENTATIVA') quiz1stAttemptWrong++;
+          if (telemetry.state_before === 'QUIZ_SEGUNDA_TENTATIVA' && telemetry.state_after === 'QUIZ_EM_ANDAMENTO') quiz2ndAttemptWrong++;
+          if (telemetry.state_after === 'QUIZ_CONCLUIDO') quizCorrectCount++;
+        }
+      }
+
+      // Métrica de segurança legada, mantida apenas para auditoria técnica.
+      const textLower = msg.content.toLowerCase();
       if (textLower.includes('não posso responder a essa solicitação') || textLower.includes('fora do escopo da disciplina')) {
         guardRailCount++;
-      }
-
-      // Quiz performance analytics
-      if (msg.role === 'assistant') {
-        if (textLower.includes('parabéns, você acertou') || textLower.includes('resposta correta!')) {
-          quizCorrectCount++;
-        }
-        if (textLower.includes('sua resposta está incorreta. tente novamente')) {
-          quiz1stAttemptWrong++;
-        }
-        if (textLower.includes('a alternativa correta é a')) {
-          quiz2ndAttemptWrong++;
-        }
-      }
-
-      // Topic detection
-      if (msg.role === 'user') {
-        if (textLower.includes('hemostasia')) topicCounts['Hemostasia']++;
-        else if (textLower.includes('ferida') || textLower.includes('cicatriz')) topicCounts['Feridas e Cicatrização']++;
-        else if (textLower.includes('bariatrica') || textLower.includes('bariátrica')) topicCounts['Cirurgia Bariátrica']++;
-        else if (textLower.includes('anestesia') || textLower.includes('anestésico')) topicCounts['Anestesia']++;
-        else if (textLower.includes('estoma') || textLower.includes('ostomia')) topicCounts['Estomas e Ostomias']++;
-        else if (textLower.includes('pre-operatorio') || textLower.includes('pré-operatório')) topicCounts['Cuidados Pré-operatórios']++;
-        else if (textLower.includes('pos-operatorio') || textLower.includes('pós-operatório')) topicCounts['Cuidados Pós-operatórios']++;
-        else if (textLower.includes('posicionamento')) topicCounts['Posicionamento Cirúrgico']++;
-        else if (textLower.includes('infec') || textLower.includes('isc')) topicCounts['Infecção de Sítio Cirúrgico']++;
-        else topicCounts['Outros Temas']++;
-
-        // Mode detection
-        if (textLower.includes('quiz') || textLower.includes('simulado')) modeCounts.quiz++;
-        else if (textLower.includes('resumo') || textLower.includes('aprofundar')) modeCounts.resumo++;
-        else if (textLower.includes('informac')) modeCounts.info++;
-        else modeCounts.livre++;
       }
     });
 
     // Detect primary theme for each session
     sessionMap.forEach((sess) => {
+      if (sess.detectedTheme !== 'Geral Enfermagem') return;
       const fullText = sess.messages.map(m => m.content.toLowerCase()).join(' ');
       if (fullText.includes('hemostasia')) sess.detectedTheme = 'Hemostasia';
       else if (fullText.includes('ferida')) sess.detectedTheme = 'Feridas';
@@ -536,6 +521,42 @@ export async function GET(request: NextRequest) {
       console.warn('[admin/stats] drive sync health fetch error:', error);
     }
 
+    const monitoring = {
+      status: 'unknown' as 'healthy' | 'warning' | 'critical' | 'unknown',
+      lastCheckAt: null as string | null,
+      alerts: [] as Array<{ component: string; status: 'warning' | 'critical'; detail: Record<string, unknown> }>,
+    };
+    try {
+      const { data, error } = await supabase.from('system_health_checks')
+        .select('component, status, detail, checked_at')
+        .order('checked_at', { ascending: false })
+        .limit(30);
+      if (error) throw error;
+      const latestByComponent = new Map<string, { component?: string; status?: string; detail?: Record<string, unknown>; checked_at?: string }>();
+      for (const check of (data || []) as Array<{ component?: string; status?: string; detail?: Record<string, unknown>; checked_at?: string }>) {
+        if (check.component && !latestByComponent.has(check.component)) latestByComponent.set(check.component, check);
+      }
+      const latestChecks = Array.from(latestByComponent.values());
+      monitoring.lastCheckAt = latestChecks.map((check) => check.checked_at).filter(Boolean).sort().at(-1) ?? null;
+      if (latestChecks.length > 0) {
+        monitoring.status = latestChecks.some((check) => check.status === 'critical')
+          ? 'critical'
+          : latestChecks.some((check) => check.status === 'warning')
+            ? 'warning'
+            : 'healthy';
+        monitoring.alerts = latestChecks
+          .filter((check) => check.status === 'warning' || check.status === 'critical')
+          .map((check) => ({
+            component: check.component || 'componente',
+            status: check.status as 'warning' | 'critical',
+            detail: check.detail || {},
+          }));
+      }
+    } catch (error) {
+      // A instalação da migração pode acontecer após a publicação do código.
+      console.warn('[admin/stats] monitoramento ainda não disponível:', error);
+    }
+
     /* const ragSummaryList = [
       { source: 'Cuidados Críticos em Enfermagem (Patricia Morton & Dorrie Fontaine)', chunkCount: 11883, category: 'Biblioteca / Livro Texto' },
       { source: 'Tratado de Enfermagem Médico-Cirúrgica (Brunner & Suddarth)', chunkCount: 10552, category: 'Biblioteca / Livro Texto' },
@@ -605,6 +626,7 @@ export async function GET(request: NextRequest) {
           : 0,
       },
       syncHealth,
+      monitoring,
       feedbackStats: {
         avgRating: Number(avgRating),
         totalFeedbacks,

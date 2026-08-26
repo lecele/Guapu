@@ -20,6 +20,8 @@ export interface TurnMetadata {
   state_before: ChatFlowState;
   state_after: ChatFlowState;
   current_topic: string;
+  quiz_question: number;
+  quiz_attempt: number;
   model_requested: string | null;
   model_used: string | null;
   fallback_used: boolean;

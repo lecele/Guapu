@@ -333,6 +333,8 @@ function buildTurnMetadata(params: {
   stateBefore: TurnMetadata['state_before'];
   stateAfter: TurnMetadata['state_after'];
   topic: string;
+  quizQuestion: number;
+  quizAttempt: number;
   docs: Document[];
   modelRequested: string | null;
   modelUsed: string | null;
@@ -352,6 +354,8 @@ function buildTurnMetadata(params: {
     state_before: params.stateBefore,
     state_after: params.stateAfter,
     current_topic: params.topic,
+    quiz_question: params.quizQuestion,
+    quiz_attempt: params.quizAttempt,
     model_requested: params.modelRequested,
     model_used: params.modelUsed,
     fallback_used: params.fallbackUsed,
@@ -467,6 +471,8 @@ export async function POST(req: NextRequest) {
         stateBefore: decision.stateBefore.state,
         stateAfter: decision.stateAfter.state,
         topic: decision.topic,
+        quizQuestion: decision.stateAfter.quizQuestion,
+        quizAttempt: decision.stateAfter.quizAttempt,
         docs: [],
         modelRequested: null,
         modelUsed: null,
@@ -590,6 +596,8 @@ export async function POST(req: NextRequest) {
       stateBefore: decision.stateBefore.state,
       stateAfter: finalState.state,
       topic: decision.topic,
+      quizQuestion: finalState.quizQuestion,
+      quizAttempt: finalState.quizAttempt,
       docs,
       modelRequested,
       modelUsed,

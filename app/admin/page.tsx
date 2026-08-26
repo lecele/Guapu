@@ -33,6 +33,7 @@ interface SessionData {
   userFirstMsg: string;
   messageCount: number;
   detectedTheme: string;
+  mode: 'livre' | 'resumo' | 'quiz' | 'info' | null;
   messages: SessionMessage[];
   avgRating?: number | null;
   ratingCount?: number;
@@ -92,6 +93,11 @@ interface StatsData {
     lastError: string | null;
     lastSuccessAt: string | null;
     oldestRunningAt: string | null;
+  };
+  monitoring?: {
+    status: 'healthy' | 'warning' | 'critical' | 'unknown';
+    lastCheckAt: string | null;
+    alerts: Array<{ component: string; status: 'warning' | 'critical'; detail: Record<string, unknown> }>;
   };
   feedbackStats?: {
     avgRating: number;
@@ -767,10 +773,7 @@ export default function AdminDashboardPage() {
           s.detectedTheme.toLowerCase().includes(searchTerm.toLowerCase());
 
         if (modeFilter === 'all') return matchSearch;
-        if (modeFilter === 'quiz') return matchSearch && s.messages.some(m => m.content.toLowerCase().includes('quiz') || m.content.toLowerCase().includes('simulado'));
-        if (modeFilter === 'resumo') return matchSearch && s.messages.some(m => m.content.toLowerCase().includes('resumo'));
-        if (modeFilter === 'info') return matchSearch && s.messages.some(m => m.content.toLowerCase().includes('informações'));
-        return matchSearch;
+        return matchSearch && s.mode === modeFilter;
       })
       .sort((a, b) => new Date(b.lastAt).getTime() - new Date(a.lastAt).getTime());
   }, [stats, searchTerm, modeFilter]);
@@ -1139,6 +1142,30 @@ export default function AdminDashboardPage() {
           {/* ── TAB 1: MONITORAMENTO OPERACIONAL ───────────────────────────── */}
           {activeTab === 'dashboard' && (
             <div className="flex flex-col gap-6">
+              <section className={`flex flex-col gap-2 rounded-2xl border p-4 sm:flex-row sm:items-center sm:justify-between ${
+                stats?.monitoring?.status === 'critical'
+                  ? 'border-red-500/40 bg-red-950/30'
+                  : stats?.monitoring?.status === 'warning'
+                    ? 'border-amber-500/40 bg-amber-950/20'
+                    : 'border-emerald-500/30 bg-emerald-950/15'
+              }`}>
+                <div className="flex items-center gap-3">
+                  <span className={`material-symbols-outlined ${stats?.monitoring?.status === 'critical' ? 'text-red-300' : stats?.monitoring?.status === 'warning' ? 'text-amber-300' : 'text-emerald-300'}`}>
+                    {stats?.monitoring?.status === 'critical' ? 'error' : stats?.monitoring?.status === 'warning' ? 'warning' : 'monitor_heart'}
+                  </span>
+                  <div>
+                    <p className="text-xs font-bold text-white">Monitoramento automático</p>
+                    <p className="text-[11px] text-slate-400">
+                      {stats?.monitoring?.status === 'unknown'
+                        ? 'Aguardando a primeira verificação diária.'
+                        : stats?.monitoring?.alerts?.length
+                          ? `${stats.monitoring.alerts.length} alerta(s) técnico(s) requerem atenção.`
+                          : 'Supabase, sincronização do Drive e worker de qualidade sem alertas.'}
+                    </p>
+                  </div>
+                </div>
+                <span className="text-[10px] text-slate-500">{stats?.monitoring?.lastCheckAt ? `Última verificação: ${new Date(stats.monitoring.lastCheckAt).toLocaleString('pt-BR')}` : 'Sem e-mails automáticos'}</span>
+              </section>
               <section className="rounded-2xl border border-cyan-900/50 bg-[#071a31] p-5 shadow-lg">
                 <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                   <div>
