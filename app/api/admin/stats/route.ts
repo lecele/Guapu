@@ -185,18 +185,16 @@ export async function GET(request: NextRequest) {
       ];
     }
 
-    // 2. O manifesto do Drive é a fonte agregada do RAG: uma linha por
-    // documento, já com sua contagem de chunks. Evita transferir dezenas de
-    // milhares de chunks somente para montar esta tabela administrativa.
+    // 2. Agregação executada dentro do PostgreSQL: uma linha por fonte, sem
+    // transferir dezenas de milhares de chunks para o servidor da Vercel.
+    // Inclui também fontes legadas que ainda estão presentes no RAG.
     let ragDocs: Array<{ source: string; chunkCount: number }> = [];
     try {
-      const { data, error } = await supabase.from('drive_sync_manifest')
-        .select('name, chunks_count')
-        .eq('status', 'active');
+      const { data, error } = await supabase.rpc('get_rag_document_summary');
       if (error) throw error;
-      ragDocs = (data || []).map((document) => ({
-        source: String(document.name || 'Fonte não identificada'),
-        chunkCount: Number(document.chunks_count || 0),
+      ragDocs = (data || []).map((document: { source?: string | null; chunk_count?: number | string | null }) => ({
+        source: String(document.source || 'Fonte não identificada'),
+        chunkCount: Number(document.chunk_count || 0),
       }));
     } catch (e) {
       console.warn('[admin/stats] docs fetch error:', e);
