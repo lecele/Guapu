@@ -1749,7 +1749,7 @@ export default function AdminDashboardPage() {
                       {m.evaluation?.status === 'queued' || m.evaluation?.status === 'running' ? (
                         <p className="mt-1 text-amber-300">Avaliação em processamento, sem interferir no atendimento do aluno.</p>
                       ) : m.evaluation?.status === 'failed' ? (
-                        <p className="mt-1 text-red-300">A avaliação automática falhou e será tentada novamente.</p>
+                        <p className="mt-1 text-red-300">A avaliação automática não foi concluída após as tentativas previstas.</p>
                       ) : m.evaluation?.status === 'succeeded' ? (
                         <div className="mt-2 space-y-1 text-slate-300">
                           <p><strong>Nota:</strong> {m.evaluation.score}/100 · <strong>Classificação:</strong> {m.evaluation.verdict === 'correct' ? 'correta' : m.evaluation.verdict === 'incomplete' ? 'incompleta' : m.evaluation.verdict === 'incorrect' ? 'incorreta' : 'não verificável'}</p>
