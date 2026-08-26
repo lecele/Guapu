@@ -29,4 +29,5 @@ env/
 
 # Ignorar credenciais locais
 credentials/
-.env*local
+.env
+.env.*
