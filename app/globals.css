@@ -273,7 +273,7 @@ button {
 
 .guapu-hero h1 {
   max-width: 650px;
-  margin: 0 0 var(--space-4);
+  margin: 0 auto var(--space-4);
   color: var(--azul);
   font-family: var(--font-display), serif;
   font-size: var(--text-display-lg);
@@ -284,7 +284,7 @@ button {
 
 .guapu-lead {
   max-width: 650px;
-  margin: 0 0 var(--space-5);
+  margin: 0 auto var(--space-5);
   color: var(--texto-suave);
   font-size: var(--text-body-lg);
   line-height: 1.7;
@@ -886,7 +886,8 @@ button {
   }
 
   .guapu-hero {
-    padding: var(--space-4) var(--space-7);
+    /* Compacta o início sem esconder conteúdo nem criar rolagem residual. */
+    padding: 10px var(--space-7);
   }
 
   .guapu-main-content.is-welcome {
