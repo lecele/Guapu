@@ -9,7 +9,6 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Message } from '@/types/chat';
 import { GuapuMark } from '@/components/icons/GuapuMark';
-import { SourceBadges } from './SourceBadges';
 
 interface MessageBubbleProps {
   message: Message;
@@ -66,8 +65,6 @@ export function MessageBubble({ message, index, sessionId }: MessageBubbleProps)
         {isUser ? <UserBubble content={message.content} /> : (
           <AgentBubble
             content={message.content}
-            sourcesFound={message.sources_found}
-            hasContext={message.has_context}
             sessionId={sessionId}
           />
         )}
@@ -94,18 +91,25 @@ function UserBubble({ content }: { content: string }) {
 // Qualquer outro item de lista (conteúdo, referências, exemplos) renderiza como <li> normal
 const MENU_BUTTON_RE = /^(resumo de conteúdo|resumo|quiz da disciplina|quiz|simulado de prova|simulado|informações da disciplina|informações|encerrar sessão|encerrar|aprofundar|aprofundar este tema|aprofundar mais|escolher outro tema|outro tema|voltar ao menu principal|voltar ao menu|menu principal|continuar o simulado|continuar simulado|continuar o quiz|continuar quiz|fazer outra pergunta|outra pergunta|repetir a pergunta)$/i;
 
-function AgentBubble({ content, sourcesFound, hasContext, sessionId }: {
+function AgentBubble({ content, sessionId }: {
   content: string;
-  sourcesFound?: number;
-  hasContext?: boolean;
   sessionId?: string;
 }) {
   // Garante que opções A), B), C), D) e Referências fiquem em linhas separadas
   const formattedContent = useMemo(() => {
     let text = content;
-    text = text.replace(/(\*\*?[A-D]\)\*\*?.*?)\s+(\*\*?[B-D]\)\*\*?)/g, '$1\n\n$2');
-    text = text.replace(/(\*\*?[A-D]\)\*\*?.*?)\s+(\*\*?[B-D]\)\*\*?)/g, '$1\n\n$2');
-    text = text.replace(/(\*\*?[A-D]\)\*\*?.*?)\s+(\*\*?[B-D]\)\*\*?)/g, '$1\n\n$2');
+
+    // Alguns modelos ocasionalmente devolvem as quatro alternativas na mesma
+    // linha. Quando o conjunto A-D está presente, normalizamos a apresentação
+    // no cliente para que cada alternativa fique legível em sua própria linha.
+    const optionLabels = [...text.matchAll(/(?:^|\s)(?:\*\*)?([A-D])\)(?:\*\*)?(?=\s)/gm)]
+      .map((match) => match[1]);
+    if (['A', 'B', 'C', 'D'].every((label) => optionLabels.includes(label))) {
+      text = text.replace(
+        /(^|\s)(?:\*\*)?([A-D])\)(?:\*\*)?(?=\s)/gm,
+        (_match, prefix: string, label: string) => `${prefix.includes('\n') ? prefix : '\n\n'}**${label})**`,
+      );
+    }
 
     if (/refer[êe]ncias:/i.test(text)) {
       text = text.replace(/(?:\*\*Refer[êe]ncias:?\*\*|Refer[êe]ncias:?)\s*(?:•|-|\*)?\s*/i, '**Referências:**\n\n- ');
@@ -224,10 +228,6 @@ function AgentBubble({ content, sourcesFound, hasContext, sessionId }: {
           {formattedContent}
         </ReactMarkdown>
       </div>
-
-      {sourcesFound !== undefined && hasContext !== undefined && (
-        <SourceBadges sourcesFound={sourcesFound} hasContext={hasContext} />
-      )}
 
       {/* Componente de Avaliação Likert (1 a 5 Estrelas) — Exibido apenas em Resumos, Final de Quiz e Informações */}
       {shouldShowFeedback && <StarFeedbackRating sessionId={sessionId} />}
