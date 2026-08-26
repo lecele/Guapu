@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, type ComponentType } from 'react';
+import { useEffect, useRef, type ComponentType } from 'react';
 import {
   BookOpen,
   Check,
@@ -79,6 +79,18 @@ export default function HomePage() {
   };
 
   const isEmpty = messages.length === 0;
+  const mainContentRef = useRef<HTMLElement>(null);
+
+  // Em navegadores móveis, a restauração automática de rolagem pode manter a
+  // tela inicial no meio do conteúdo depois de voltar ou recarregar a página.
+  // Sempre que não houver conversa, a apresentação começa pelo título.
+  useEffect(() => {
+    if (!isEmpty) return;
+    const frame = window.requestAnimationFrame(() => {
+      mainContentRef.current?.scrollTo({ top: 0, behavior: 'auto' });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [isEmpty]);
 
   return (
     <div className="guapu-page">
@@ -108,6 +120,7 @@ export default function HomePage() {
         </header>
 
         <section
+          ref={mainContentRef}
           className={`guapu-main-content ${isEmpty ? 'is-welcome' : 'is-conversation'}`}
           aria-label={isEmpty ? 'Início do assistente' : 'Histórico da conversa'}
         >
