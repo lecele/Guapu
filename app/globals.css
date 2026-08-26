@@ -932,7 +932,7 @@ button {
   }
 
   .guapu-divider {
-    margin: var(--space-2) 0;
+    margin: 6px 0;
   }
 
   .guapu-action-grid {
