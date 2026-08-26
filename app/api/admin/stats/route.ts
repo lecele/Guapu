@@ -55,6 +55,7 @@ type SessionSummary = {
       source_count?: number | null;
       updated_at: string;
     };
+    learnerRating?: number;
   }>;
   avgRating: number | null;
   ratingCount: number;
@@ -346,12 +347,12 @@ export async function GET(request: NextRequest) {
       : 0;
 
     // 3. Busca avaliações por estrelas (feedback_ratings)
-    let feedbackRatings: Array<{ session_id?: string; rating: number; created_at: string }> = [];
+    let feedbackRatings: Array<{ session_id?: string; request_id?: string | null; rating: number; created_at: string }> = [];
     try {
       const { data: fb } = await supabase.from('feedback_ratings')
-        .select('session_id, rating, created_at')
+        .select('session_id, request_id, rating, created_at')
         .order('created_at', { ascending: false });
-      feedbackRatings = (fb || []) as Array<{ session_id?: string; rating: number; created_at: string }>;
+      feedbackRatings = (fb || []) as Array<{ session_id?: string; request_id?: string | null; rating: number; created_at: string }>;
     } catch (e) {
       console.warn('[admin/stats] feedback fetch error:', e);
     }
@@ -441,6 +442,9 @@ export async function GET(request: NextRequest) {
       `${evaluation.session_id}:${evaluation.request_id}`,
       evaluation,
     ]));
+    const feedbackByTurn = new Map(feedbackRatings
+      .filter((rating) => rating.session_id && rating.request_id)
+      .map((rating) => [`${rating.session_id}:${rating.request_id}`, rating.rating]));
     const messagesById = new Map(allMessages.flatMap((message) => message.id ? [[message.id, message] as const] : []));
     sessionMap.forEach((session) => {
       session.messages.forEach((message) => {
@@ -448,6 +452,8 @@ export async function GET(request: NextRequest) {
         if (!record?.request_id) return;
         const evaluation = evaluationsByTurn.get(`${session.sessionId}:${record.request_id}`);
         if (evaluation) message.evaluation = evaluation;
+        const learnerRating = feedbackByTurn.get(`${session.sessionId}:${record.request_id}`);
+        if (learnerRating) message.learnerRating = learnerRating;
       });
     });
     const qualityEvaluation = {

@@ -23,6 +23,7 @@ interface SessionMessage {
     source_count?: number | null;
     updated_at: string;
   };
+  learnerRating?: number;
 }
 
 interface SessionData {
@@ -1757,6 +1758,9 @@ export default function AdminDashboardPage() {
                           {m.evaluation.rationale && <p className="text-slate-400">{m.evaluation.rationale}</p>}
                         </div>
                       ) : null}
+                      {m.learnerRating && (
+                        <p className="mt-2 text-amber-300"><strong>Avaliação do estudante:</strong> {m.learnerRating}/5 ★</p>
+                      )}
                     </div>
                   )}
                 </div>
