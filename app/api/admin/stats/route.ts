@@ -1,6 +1,7 @@
 // app/api/admin/stats/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { isSyntheticSession } from '@/lib/admin/session-scope';
 
 export const runtime = 'nodejs';
 export const revalidate = 0; // Sempre dados atualizados em tempo real
@@ -130,6 +131,10 @@ export async function GET(request: NextRequest) {
     } catch (error) {
       console.error('[admin/stats] error fetching messages:', error);
     }
+
+    // Conversas de regressão permanecem no banco para auditoria, mas não
+    // representam uso de alunos e não podem inflar indicadores operacionais.
+    allMessages = allMessages.filter((message) => !isSyntheticSession(message.session_id));
 
     // Se o banco estiver vazio ou sem conexao, usa dados iniciais de demonstracao
     if (process.env.NODE_ENV !== 'production' && (!allMessages || allMessages.length === 0)) {
@@ -352,7 +357,8 @@ export async function GET(request: NextRequest) {
       const { data: fb } = await supabase.from('feedback_ratings')
         .select('session_id, request_id, rating, created_at')
         .order('created_at', { ascending: false });
-      feedbackRatings = (fb || []) as Array<{ session_id?: string; request_id?: string | null; rating: number; created_at: string }>;
+      feedbackRatings = ((fb || []) as Array<{ session_id?: string; request_id?: string | null; rating: number; created_at: string }>)
+        .filter((rating) => !isSyntheticSession(rating.session_id));
     } catch (e) {
       console.warn('[admin/stats] feedback fetch error:', e);
     }
@@ -434,7 +440,8 @@ export async function GET(request: NextRequest) {
       const { data, error } = await supabase.from('response_quality_evaluations')
         .select('session_id, request_id, status, score, verdict, grounding_score, completeness_score, relevance_score, rationale, source_count, updated_at');
       if (error) throw error;
-      evaluations = (data || []) as QualityEvaluation[];
+      evaluations = ((data || []) as QualityEvaluation[])
+        .filter((evaluation) => !isSyntheticSession(evaluation.session_id));
     } catch (error) {
       console.warn('[admin/stats] quality evaluation fetch error:', error);
     }
