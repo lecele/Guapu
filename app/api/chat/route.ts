@@ -93,6 +93,7 @@ interface Document {
   content: string;
   source: string;
   similarity: number;
+  metadata: Record<string, unknown>;
 }
 
 interface MatchDocumentRow {
@@ -100,6 +101,7 @@ interface MatchDocumentRow {
   content: string;
   source?: string;
   similarity?: number;
+  metadata?: Record<string, unknown>;
 }
 
 type MatchDocumentsRpc = (
@@ -193,6 +195,7 @@ async function retrieveDocs(
     content: row.content,
     source: row.source || 'desconhecido',
     similarity: row.similarity || 0,
+    metadata: row.metadata || {},
   }));
 }
 

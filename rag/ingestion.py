@@ -34,6 +34,7 @@ except Exception:
     pass
 
 import hashlib
+import re
 import io
 import zipfile
 import xml.etree.ElementTree as ET
@@ -168,6 +169,35 @@ def sanitize_text_for_storage(value: str) -> str:
     return value.replace(chr(0), "")
 
 
+def extract_reference_metadata(pages: list[dict]) -> dict[str, str]:
+    """Extrai somente pistas bibliográficas presentes no texto do documento.
+
+    Nunca usa o nome do arquivo como citação. Os campos são copiados para cada
+    chunk para que uma busca semântica não perca a folha de rosto ou o heading.
+    """
+    text = "\n".join(str(page.get("text", "")) for page in pages[:3])
+    text = sanitize_text_for_storage(text)
+    metadata: dict[str, str] = {}
+
+    citation = re.search(
+        r"(?m)^\s*([A-ZÀ-Ý][A-Za-zÀ-ÿ'’.-]+(?:\s+(?:[A-ZÀ-Ý][A-Za-zÀ-ÿ'’.-]+|de|da|do|dos|das)){0,5})\s*\(?((?:19|20)\d{2})\)?[.,]\s*(.{12,180})$",
+        text,
+    )
+    if citation:
+        metadata["reference_author"] = citation.group(1).strip()
+        metadata["reference_year"] = citation.group(2)
+        metadata["reference_title"] = citation.group(3).strip().rstrip(". ")
+        return metadata
+
+    # Títulos/seções são válidos como referência parcial (camada 2 do prompt).
+    chapter = re.search(r"(?im)^\s*(?:cap[ií]tulo|cap\.)\s*(\d+)?\s*[-—–:.]\s*(.{8,180})$", text)
+    if chapter:
+        metadata["reference_title"] = chapter.group(2).strip().rstrip(". ")
+        if chapter.group(1):
+            metadata["reference_section"] = f"Cap. {chapter.group(1)}"
+    return metadata
+
+
 def chunk_text(
     pages: list[dict],
     source_name: str,
@@ -199,6 +229,7 @@ def chunk_text(
     global_chunk_index = 0
 
     safe_source_name = sanitize_text_for_storage(source_name)
+    reference_metadata = extract_reference_metadata(pages)
 
     for page in pages:
         page_text = sanitize_text_for_storage(str(page["text"]))
@@ -219,6 +250,7 @@ def chunk_text(
                     "page_number": page["page_number"],
                     "chunk_index": global_chunk_index,
                     "content_hash": content_hash,
+                    "reference_metadata": reference_metadata,
                 }
             )
             global_chunk_index += 1
@@ -323,6 +355,7 @@ def upsert_chunks_to_supabase(
                     "drive_file_id": file_id,
                     "drive_modified_time": modified_time,
                     "drive_path": drive_path,
+                    **chunk.get("reference_metadata", {}),
                 },
             }
             for chunk, vector in zip(batch, vectors)

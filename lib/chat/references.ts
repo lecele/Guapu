@@ -3,6 +3,7 @@ import type { GenerationMode } from './session-flow';
 export interface RetrievedSource {
   source: string;
   content?: string;
+  metadata?: Record<string, unknown>;
 }
 
 const REFERENCE_HEADING = /(?:^|\n)\s*(?:\*\*)?refer[êe]ncias:?\*{0,2}\s*/i;
@@ -12,7 +13,15 @@ function needsReferences(mode: GenerationMode): boolean {
   return ['resumo', 'resumo_aprofundar', 'resumo_reformular', 'info', 'livre'].includes(mode);
 }
 
-function referenceFromContent(content?: string): string {
+function referenceFromContent(content?: string, metadata?: Record<string, unknown>): string {
+  const storedTitle = typeof metadata?.reference_title === 'string' ? metadata.reference_title.trim() : '';
+  const storedAuthor = typeof metadata?.reference_author === 'string' ? metadata.reference_author.trim() : '';
+  const storedYear = typeof metadata?.reference_year === 'string' ? metadata.reference_year.trim() : '';
+  const storedSection = typeof metadata?.reference_section === 'string' ? metadata.reference_section.trim() : '';
+  if (storedTitle) {
+    return [storedAuthor, storedYear ? `(${storedYear})` : '', `${storedTitle}${storedSection ? ` (${storedSection})` : ''}.`]
+      .filter(Boolean).join(' ');
+  }
   const text = (content || '').replace(/\s+/g, ' ').trim();
   if (!text) return 'Informação não disponível no artigo, consultar o Plano de Ensino ou docentes.';
 
@@ -64,7 +73,7 @@ export function finalizeReferences(
   const withoutModelReferences = removeModelReferences(text);
   if (!needsReferences(mode)) return withoutModelReferences;
 
-  const sources = [...new Set(docs.map((doc) => referenceFromContent(doc.content)))].slice(0, 5);
+  const sources = [...new Set(docs.map((doc) => referenceFromContent(doc.content, doc.metadata)))].slice(0, 5);
   const lines = sources.length > 0
     ? sources.map((source) => `- ${source}`)
     : ['- Informação não disponível no artigo, consultar o Plano de Ensino ou docentes.'];
