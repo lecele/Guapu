@@ -69,6 +69,7 @@ export function useChat() {
 
         const aiMessage: Message = {
           id: generateSessionId(),
+          request_id: response.request_id,
           role: 'assistant',
           content: response.answer,
           sources_found: response.sources_found,

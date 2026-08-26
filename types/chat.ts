@@ -2,6 +2,8 @@
 
 export interface Message {
   id: string;
+  /** Identificador persistente do turno no backend (somente respostas). */
+  request_id?: string;
   role: 'user' | 'assistant';
   content: string;
   /** Número de chunks relevantes usados na resposta (apenas role='assistant') */

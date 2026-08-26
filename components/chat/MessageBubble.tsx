@@ -66,6 +66,7 @@ export function MessageBubble({ message, index, sessionId }: MessageBubbleProps)
           <AgentBubble
             content={message.content}
             sessionId={sessionId}
+            requestId={message.request_id}
           />
         )}
 
@@ -91,9 +92,10 @@ function UserBubble({ content }: { content: string }) {
 // Qualquer outro item de lista (conteúdo, referências, exemplos) renderiza como <li> normal
 const MENU_BUTTON_RE = /^(resumo de conteúdo|resumo|quiz da disciplina|quiz|simulado de prova|simulado|informações da disciplina|informações|encerrar sessão|encerrar|aprofundar|aprofundar este tema|aprofundar mais|escolher outro tema|outro tema|voltar ao menu principal|voltar ao menu|menu principal|continuar o simulado|continuar simulado|continuar o quiz|continuar quiz|fazer outra pergunta|outra pergunta|repetir a pergunta)$/i;
 
-function AgentBubble({ content, sessionId }: {
+function AgentBubble({ content, sessionId, requestId }: {
   content: string;
   sessionId?: string;
+  requestId?: string;
 }) {
   // Garante que opções A), B), C), D) e Referências fiquem em linhas separadas
   const formattedContent = useMemo(() => {
@@ -230,13 +232,13 @@ function AgentBubble({ content, sessionId }: {
       </div>
 
       {/* Componente de Avaliação Likert (1 a 5 Estrelas) — Exibido apenas em Resumos, Final de Quiz e Informações */}
-      {shouldShowFeedback && <StarFeedbackRating sessionId={sessionId} />}
+      {shouldShowFeedback && <StarFeedbackRating sessionId={sessionId} requestId={requestId} />}
     </div>
   );
 }
 
 // ── Avaliação por Estrelas (Likert 1-5) ──────────────────────────────────────
-function StarFeedbackRating({ sessionId }: { sessionId?: string }) {
+function StarFeedbackRating({ sessionId, requestId }: { sessionId?: string; requestId?: string }) {
   const [rating, setRating] = useState<number | null>(null);
   const [hoverRating, setHoverRating] = useState<number | null>(null);
   const [submitted, setSubmitted] = useState(false);
@@ -250,6 +252,7 @@ function StarFeedbackRating({ sessionId }: { sessionId?: string }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           session_id: sessionId || 'anonymous',
+          request_id: requestId,
           rating: stars,
         }),
       });
