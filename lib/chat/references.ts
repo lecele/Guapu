@@ -47,6 +47,19 @@ function referenceFromContent(content?: string, metadata?: Record<string, unknow
     return `${chapter[2].trim().replace(/[.:;]+$/, '')}${number}.`;
   }
 
+  // Alguns PDFs extraem título e autores em linhas separadas. Quando a linha
+  // seguinte parece uma autoria, a linha anterior é uma pista bibliográfica
+  // válida de camada 2 — sem consultar ou exibir o nome do arquivo.
+  const lines = (content || '').split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+  for (let index = 0; index < lines.length - 1; index += 1) {
+    const candidate = lines[index].replace(/^\[P[aá]g\.\s*\d+\]\s*/i, '').trim();
+    const authorLine = lines[index + 1];
+    const looksLikeAuthor = /^[A-ZÀ-Ý][A-Za-zÀ-ÿ'’.-]+(?:\s+[A-ZÀ-Ý]{1,4}[A-Za-zÀ-ÿ'’.-]*)*(?:\s*,\s*|\s+e\s+|\s+[A-ZÀ-Ý][A-Za-zÀ-ÿ'’.-]+){1,}/.test(authorLine);
+    if (candidate.length >= 12 && candidate.length <= 180 && looksLikeAuthor) {
+      return `${candidate.replace(/[.:;]+$/, '')}.`;
+    }
+  }
+
   return 'Informação não disponível no artigo, consultar o Plano de Ensino ou docentes.';
 }
 

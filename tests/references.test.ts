@@ -36,3 +36,12 @@ test('usa título de capítulo do conteúdo antes do fallback', () => {
   assert.match(answer, /- Cuidados de Enfermagem no Pós-Operatório Imediato \(Cap\. 6\)\./);
   assert.doesNotMatch(answer, /arquivo-que-nao-deve-aparecer/i);
 });
+
+test('reconhece título quando autores estão na linha seguinte do trecho', () => {
+  const answer = finalizeReferences(
+    'Resumo.',
+    [{ source: 'nao-usar.pdf', content: 'Intervenções fundamentais em cirurgia: diérese, hemostasia e síntese\nMedeiros AC, Dantas-Filho AM\nTexto do artigo.' }],
+    'resumo',
+  );
+  assert.match(answer, /- Intervenções fundamentais em cirurgia: diérese, hemostasia e síntese\./);
+});
