@@ -292,7 +292,10 @@ button {
 }
 
 .guapu-transparency-note {
+  position: relative;
   display: flex;
+  align-items: center;
+  justify-content: center;
   gap: var(--space-3);
   margin-bottom: var(--space-6);
   padding: var(--space-4) 18px;
@@ -302,8 +305,9 @@ button {
 }
 
 .guapu-transparency-note svg {
+  position: absolute;
+  inset-inline-start: 18px;
   flex: 0 0 auto;
-  margin-top: 2px;
 }
 
 .guapu-transparency-note p,
@@ -321,6 +325,7 @@ button {
 .guapu-transparency-note p {
   color: color-mix(in srgb, var(--dourado-icone) 72%, var(--texto));
   line-height: 1.65;
+  text-align: center;
 }
 
 .guapu-transparency-note strong {
