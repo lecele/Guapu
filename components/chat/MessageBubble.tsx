@@ -58,10 +58,6 @@ export function MessageBubble({ message, index, sessionId }: MessageBubbleProps)
 
       {/* Conteúdo */}
       <div className="guapu-bubble-stack">
-        <span className="guapu-message-author">
-          {isUser ? 'Você' : 'Guapu'}
-        </span>
-
         {isUser ? <UserBubble content={message.content} /> : (
           <AgentBubble
             content={message.content}
