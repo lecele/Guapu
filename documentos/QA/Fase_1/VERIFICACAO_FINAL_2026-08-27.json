@@ -1,0 +1,69 @@
+{
+  "phase": 1,
+  "passed": false,
+  "state_source": "postgres",
+  "inventory_drive_files": 119,
+  "active_managed_file_ids": 113,
+  "active_managed_chunks": 37461,
+  "staging_chunks": 0,
+  "checks": {
+    "drive_files_without_active_vectors": [
+      "1IEpBXcCPCvgrivRH57lEmK_0i_7Jr-Tf",
+      "1QIm6St6nnOIf7JXFwoXCy6-InqKhF2WI",
+      "1YUfjf2WG5FonQaOImCsAY6aHSuyK7XNL",
+      "1gu0sH0qoUa1kVbqtv0-Zz33OC4vvSEYD",
+      "1hPPWPIJJ6zc-C0Tnihf6fpVwlE13HaoL",
+      "1rsAmg3UK8m_2fP4STqoiB_Zhyktnlw-W"
+    ],
+    "active_vectors_without_live_drive_file": [],
+    "drive_files_without_active_manifest": [
+      "1IEpBXcCPCvgrivRH57lEmK_0i_7Jr-Tf",
+      "1QIm6St6nnOIf7JXFwoXCy6-InqKhF2WI",
+      "1YUfjf2WG5FonQaOImCsAY6aHSuyK7XNL",
+      "1gu0sH0qoUa1kVbqtv0-Zz33OC4vvSEYD",
+      "1hPPWPIJJ6zc-C0Tnihf6fpVwlE13HaoL",
+      "1rsAmg3UK8m_2fP4STqoiB_Zhyktnlw-W"
+    ],
+    "staging_drive_file_ids": [],
+    "pending_jobs": [
+      {
+        "drive_file_id": "1YUfjf2WG5FonQaOImCsAY6aHSuyK7XNL",
+        "status": "queued",
+        "attempts": 0,
+        "max_attempts": 3
+      },
+      {
+        "drive_file_id": "1IEpBXcCPCvgrivRH57lEmK_0i_7Jr-Tf",
+        "status": "queued",
+        "attempts": 0,
+        "max_attempts": 3
+      },
+      {
+        "drive_file_id": "1gu0sH0qoUa1kVbqtv0-Zz33OC4vvSEYD",
+        "status": "queued",
+        "attempts": 0,
+        "max_attempts": 3
+      },
+      {
+        "drive_file_id": "1rsAmg3UK8m_2fP4STqoiB_Zhyktnlw-W",
+        "status": "queued",
+        "attempts": 0,
+        "max_attempts": 3
+      },
+      {
+        "drive_file_id": "1QIm6St6nnOIf7JXFwoXCy6-InqKhF2WI",
+        "status": "queued",
+        "attempts": 0,
+        "max_attempts": 3
+      },
+      {
+        "drive_file_id": "1hPPWPIJJ6zc-C0Tnihf6fpVwlE13HaoL",
+        "status": "queued",
+        "attempts": 0,
+        "max_attempts": 3
+      }
+    ],
+    "failed_jobs": [],
+    "active_unmanaged_chunks": 0
+  }
+}
