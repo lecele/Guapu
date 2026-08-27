@@ -37,9 +37,13 @@ Os containers principal e painel estão rodando apenas em loopback para homologa
 
 O build inicial revelou e corrigiu uma inconsistência real do `package-lock.json`: o `npm ci` do Node 22 exigia `@emnapi/core` e `@emnapi/runtime` na raiz do lockfile. A correção foi aplicada e o build passou.
 
-O workflow web também foi alinhado ao runtime validado: Node 22 LTS e `npm ci`, evitando que o CI instale versões diferentes das registradas no lockfile. Essa alteração ainda precisa ser publicada no repositório para que os próximos pushes usem a correção.
+O workflow web também foi alinhado ao runtime validado: Node 22 LTS e `npm ci`, evitando que o CI instale versões diferentes das registradas no lockfile. A alteração foi registrada no commit `937c195` e publicada no branch `codex/client-interface`; ainda depende de publicação no branch de produção para alterar o pipeline principal.
 
 Durante a continuação da Fase 1 foi observado um `statement timeout` no job do livro grande, já na segunda tentativa. Foi preparada a migração `db/migrations/019_index_drive_file_id.sql` para criar o índice de localização por `drive_file_id` de forma concorrente. Ela não foi aplicada durante o processamento, para não aumentar a carga no Supabase no meio da ingestão.
+
+Na mesma execução, sete jobs falharam instantaneamente com `extrator PDF terminou com código 1`. A causa raiz foi confirmada reproduzindo o subprocesso na VPS: o pacote `rag` não conseguia importar `reference_metadata.py`, que não havia sido entregue em `/opt/guapu`. O módulo foi instalado com permissões do usuário `guapu`, a importação foi validada, o worker foi reiniciado sem aumento de `NRestarts` e os sete jobs foram reencaminhados. O primeiro reprocessamento já passou a gravar lotes de chunks normalmente; a conclusão desses jobs ainda está pendente.
+
+Após a correção, a verificação do runtime mostrou `guapu-app.service`, worker e timer ativos, containers `healthy`, `/api/health` em HTTP 200 e `/admin` sem credenciais em HTTP 401. Os hashes SHA-256 de `reference_metadata.py` e `rag/ingestion.py` foram conferidos entre o workspace e a VPS e estão iguais.
 
 ## Próxima validação
 
