@@ -11,9 +11,11 @@ import argparse
 import json
 import os
 from pathlib import Path
+from typing import Any
 
 import psycopg
 from psycopg.rows import dict_row
+from supabase import Client, create_client
 
 
 def load_drive_ids(path: Path) -> set[str]:
@@ -24,21 +26,7 @@ def load_drive_ids(path: Path) -> set[str]:
     return {str(item["id"]) for item in files if isinstance(item, dict) and item.get("id")}
 
 
-def main() -> None:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--drive-json", type=Path, required=True)
-    parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument(
-        "--allow-pending",
-        action="store_true",
-        help="Gera diagnóstico sem falhar o processo enquanto a fila ainda trabalha.",
-    )
-    args = parser.parse_args()
-    database_url = os.getenv("SUPABASE_DB_URL", "").strip()
-    if not database_url:
-        raise SystemExit("SUPABASE_DB_URL não configurada")
-
-    drive_ids = load_drive_ids(args.drive_json)
+def load_state_from_database(database_url: str) -> tuple[list[dict[str, Any]], dict[str, str], list[dict[str, Any]], int]:
     with psycopg.connect(database_url, row_factory=dict_row) as connection:
         with connection.cursor() as cursor:
             cursor.execute(
@@ -65,6 +53,66 @@ def main() -> None:
                 """
             )
             active_unmanaged = int(cursor.fetchone()["count"])
+    return states, manifests, jobs, active_unmanaged
+
+
+def load_state_from_supabase() -> tuple[list[dict[str, Any]], dict[str, str], list[dict[str, Any]], int]:
+    """Consulta o mesmo estado via PostgREST quando o PostgreSQL direto não tem rota."""
+    supabase_url = os.getenv("SUPABASE_URL", "").strip()
+    supabase_key = (
+        os.getenv("SUPABASE_SERVICE_ROLE_KEY", "").strip()
+        or os.getenv("SUPABASE_KEY", "").strip()
+    )
+    if not supabase_url or not supabase_key:
+        raise SystemExit("SUPABASE_URL e uma chave Supabase são necessárias para o fallback REST")
+
+    client: Client = create_client(supabase_url, supabase_key)
+    states = [dict(row) for row in client.rpc("get_rag_drive_file_states", {}).execute().data]
+    manifests = {
+        str(row["drive_file_id"]): str(row["status"])
+        for row in client.table("drive_sync_manifest").select("drive_file_id,status").execute().data
+    }
+    jobs = [
+        dict(row)
+        for row in client.table("drive_sync_jobs")
+        .select("drive_file_id,status,attempts,max_attempts")
+        .execute()
+        .data
+    ]
+    # Sem drive_file_id, somente o status explicitamente ativo é pesquisável.
+    unmanaged_response = (
+        client.table("documents")
+        .select("id", count="exact", head=True)
+        .eq("metadata->>rag_status", "active")
+        .is_("metadata->>drive_file_id", "null")
+        .execute()
+    )
+    active_unmanaged = int(unmanaged_response.count or 0)
+    return states, manifests, jobs, active_unmanaged
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--drive-json", type=Path, required=True)
+    parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument(
+        "--allow-pending",
+        action="store_true",
+        help="Gera diagnóstico sem falhar o processo enquanto a fila ainda trabalha.",
+    )
+    args = parser.parse_args()
+    drive_ids = load_drive_ids(args.drive_json)
+    database_url = os.getenv("SUPABASE_DB_URL", "").strip()
+    state_source = "postgres"
+    if database_url:
+        try:
+            states, manifests, jobs, active_unmanaged = load_state_from_database(database_url)
+        except psycopg.OperationalError:
+            states, manifests, jobs, active_unmanaged = load_state_from_supabase()
+            state_source = "supabase_rest_fallback"
+    else:
+        states, manifests, jobs, active_unmanaged = load_state_from_supabase()
+        state_source = "supabase_rest"
 
     active_by_id = {str(row["drive_file_id"]): int(row["active_chunks"]) for row in states}
     staging_by_id = {str(row["drive_file_id"]): int(row["staging_chunks"]) for row in states}
@@ -88,6 +136,7 @@ def main() -> None:
     report = {
         "phase": 1,
         "passed": passed,
+        "state_source": state_source,
         "inventory_drive_files": len(drive_ids),
         "active_managed_file_ids": len(active_ids),
         "active_managed_chunks": sum(active_by_id.values()),
