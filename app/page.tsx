@@ -3,7 +3,6 @@
 import { useEffect, useRef, type ComponentType } from 'react';
 import {
   BookOpen,
-  Check,
   CircleHelp,
   Info,
   LogOut,
@@ -21,6 +20,7 @@ type ActionTone = 'verde' | 'azul' | 'dourado' | 'neutro';
 
 interface WelcomeAction {
   label: string;
+  message: string;
   description: string;
   tone: ActionTone;
   icon: ComponentType<LucideProps>;
@@ -28,25 +28,29 @@ interface WelcomeAction {
 
 const WELCOME_ACTIONS: WelcomeAction[] = [
   {
-    label: 'Resumo de Conteúdo',
+    label: 'Resumo de conteúdo',
+    message: 'Resumo de Conteúdo',
     description: 'Revise os temas da disciplina com explicações e exemplos clínicos',
     tone: 'verde',
     icon: BookOpen,
   },
   {
-    label: 'Quiz da Disciplina',
+    label: 'Quiz da disciplina',
+    message: 'Quiz da Disciplina',
     description: 'Pratique com questões de múltipla escolha e feedback imediato',
     tone: 'azul',
     icon: CircleHelp,
   },
   {
-    label: 'Informações da Disciplina',
+    label: 'Informações da disciplina',
+    message: 'Informações da Disciplina',
     description: 'Consulte o conteúdo programático, calendário e critérios de avaliação',
     tone: 'dourado',
     icon: Info,
   },
   {
-    label: 'Encerrar Sessão',
+    label: 'Encerrar sessão',
+    message: 'Encerrar Sessão',
     description: 'Encerre a sessão atual',
     tone: 'neutro',
     icon: LogOut,
@@ -99,9 +103,10 @@ export default function HomePage() {
 
         <header className="guapu-header">
           <div className="guapu-brand">
-            <GuapuMark size={60} />
+            <GuapuMark size={38} />
             <div className="guapu-brand-copy">
               <span className="guapu-wordmark">Guapu</span>
+              <span className="guapu-context-pill">Tutor de Enfermagem</span>
             </div>
           </div>
           <div className="guapu-header-actions">
@@ -116,8 +121,6 @@ export default function HomePage() {
             </button>
           </div>
         </header>
-
-        <div className="guapu-header-eyebrow guapu-course-label"><span /> Assistente de IA · INT 5224</div>
 
         <section
           ref={mainContentRef}
@@ -183,27 +186,17 @@ function WelcomeMenu({ onSelect }: { onSelect: (message: string) => void }) {
   return (
     <div className="guapu-welcome">
       <section className="guapu-hero">
+        <div className="guapu-header-eyebrow"><span /> Assistente de IA · INT 5224</div>
         <h1>O cuidado no processo de viver humano II: a condição cirúrgica</h1>
         <p className="guapu-lead">
-          Este espaço foi pensado para facilitar sua jornada de aprendizagem sobre o cuidado no processo de viver humano em condição cirúrgica. Aqui você revisa conteúdos, pratica com simulados e acessa informações essenciais da disciplina.
+          Olá, eu sou o Guapu, o tutor inteligente da disciplina INT 5224, do curso de Graduação em Enfermagem da UFSC. Estarei aqui para facilitar sua jornada de aprendizagem sobre o cuidado de enfermagem ao paciente cirúrgico.
         </p>
 
         <div className="guapu-transparency-note">
           <Info size={18} strokeWidth={2} aria-hidden="true" />
           <p>
-            <strong>Nota de transparência:</strong> este assistente utiliza inteligência artificial para apoiar seu estudo. Ele não substitui o raciocínio clínico, a leitura das aulas ou a orientação docente. Todas as respostas seguem o plano de ensino e os limites éticos da disciplina.
+            <strong>Atenção:</strong> o uso do tutor inteligente não substitui o raciocínio clínico, a leitura dos conteúdos na íntegra ou a orientação docente.
           </p>
-        </div>
-
-        <div className="guapu-how-to">
-          <div>
-            <Check size={15} strokeWidth={2.2} aria-hidden="true" />
-            <p><strong>Como usar:</strong> fale comigo como se estivesse conversando com um tutor. Peça explicações, tire dúvidas ou escolha uma das opções abaixo.</p>
-          </div>
-          <div>
-            <Check size={15} strokeWidth={2.2} aria-hidden="true" />
-            <p><strong>O que esperar:</strong> clareza, objetividade e apoio contínuo — sempre dentro dos limites da disciplina.</p>
-          </div>
         </div>
       </section>
 
@@ -214,12 +207,12 @@ function WelcomeMenu({ onSelect }: { onSelect: (message: string) => void }) {
       </div>
 
       <div className="guapu-action-grid">
-        {WELCOME_ACTIONS.map(({ label, description, tone, icon: Icon }) => (
+        {WELCOME_ACTIONS.map(({ label, message, description, tone, icon: Icon }) => (
           <button
             key={label}
             type="button"
             className={`guapu-action-card is-${tone}`}
-            onClick={() => onSelect(label)}
+            onClick={() => onSelect(message)}
           >
             <span className="guapu-action-icon"><Icon size={20} strokeWidth={1.8} /></span>
             <span>

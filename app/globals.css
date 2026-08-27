@@ -146,7 +146,7 @@ button {
   align-items: center;
   justify-content: space-between;
   flex: 0 0 auto;
-  margin-bottom: var(--space-6);
+  margin-bottom: var(--space-7);
 }
 
 .guapu-brand,
@@ -156,7 +156,7 @@ button {
 }
 
 .guapu-brand {
-  gap: var(--space-4);
+  gap: var(--space-3);
 }
 
 .guapu-brand-copy {
@@ -166,7 +166,7 @@ button {
 .guapu-wordmark {
   color: var(--azul);
   font-family: var(--font-display), serif;
-  font-size: 29px;
+  font-size: var(--text-display-sm);
   font-weight: 600;
   letter-spacing: 0.2px;
   line-height: 1.2;
@@ -194,6 +194,13 @@ button {
   justify-content: center;
   width: 100%;
   margin-top: calc(-1 * var(--space-3));
+  margin-bottom: var(--space-4);
+}
+
+.guapu-hero > .guapu-header-eyebrow {
+  display: flex;
+  justify-content: center;
+  width: 100%;
   margin-bottom: var(--space-4);
 }
 
@@ -958,8 +965,8 @@ button {
   }
 
   .guapu-hero {
-    /* Compacta o início sem esconder conteúdo nem criar rolagem residual. */
-    padding: 8px var(--space-7);
+    /* Mantém o conteúdo inteiro visível em telas baixas sem apertar o texto. */
+    padding: var(--space-5) var(--space-7);
   }
 
   .guapu-main-content.is-welcome {
@@ -978,17 +985,8 @@ button {
   }
 
   .guapu-transparency-note {
-    margin-bottom: var(--space-2);
-    padding: 8px var(--space-4);
-  }
-
-  .guapu-transparency-note p,
-  .guapu-how-to p {
-    line-height: 1.38;
-  }
-
-  .guapu-how-to {
-    gap: var(--space-2) var(--space-5);
+    margin-bottom: var(--space-4);
+    padding: var(--space-3) var(--space-4);
   }
 
   .guapu-divider {
@@ -1047,7 +1045,7 @@ button {
   .guapu-header-eyebrow {
     display: inline-flex;
     gap: 4px;
-    font-size: 8px;
+    font-size: var(--text-body-xs);
     letter-spacing: 0.02em;
     line-height: 1.15;
   }
