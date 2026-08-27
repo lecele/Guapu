@@ -12,6 +12,8 @@ const SYNTHETIC_SESSION_PREFIXES = [
   'real_test_',
   'session-monitor-',
   'info-session-',
+  // QA da Fase 1: rastreável no banco, mas fora das métricas de uso real.
+  'qa-phase1-',
 ];
 
 export function isSyntheticSession(sessionId: string | null | undefined): boolean {

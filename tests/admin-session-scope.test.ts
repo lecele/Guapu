@@ -12,6 +12,7 @@ test('exclui sessões automáticas das métricas administrativas', () => {
   assert.equal(isSyntheticSession('audit_session_abc'), true);
   assert.equal(isSyntheticSession('real_test_answer-abc'), true);
   assert.equal(isSyntheticSession('session-monitor-check-abc'), true);
+  assert.equal(isSyntheticSession('qa-phase1-plano-vigente-abc'), true);
 });
 
 test('preserva sessões de alunos', () => {
