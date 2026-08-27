@@ -461,10 +461,12 @@ export async function GET(request: NextRequest) {
       queued: evaluations.filter((evaluation) => evaluation.status === 'queued').length,
       running: evaluations.filter((evaluation) => evaluation.status === 'running').length,
       failed: evaluations.filter((evaluation) => evaluation.status === 'failed').length,
-      correct: evaluations.filter((evaluation) => evaluation.verdict === 'correct').length,
-      incomplete: evaluations.filter((evaluation) => evaluation.verdict === 'incomplete').length,
-      incorrect: evaluations.filter((evaluation) => evaluation.verdict === 'incorrect').length,
-      unverifiable: evaluations.filter((evaluation) => evaluation.verdict === 'unverifiable').length,
+      // Veredictos só entram na distribuição quando a avaliação terminou.
+      // Registros queued/running/failed não representam qualidade medida.
+      correct: successfulEvaluations.filter((evaluation) => evaluation.verdict === 'correct').length,
+      incomplete: successfulEvaluations.filter((evaluation) => evaluation.verdict === 'incomplete').length,
+      incorrect: successfulEvaluations.filter((evaluation) => evaluation.verdict === 'incorrect').length,
+      unverifiable: successfulEvaluations.filter((evaluation) => evaluation.verdict === 'unverifiable').length,
       eligibleTurns: eligibleRagTurns.length,
       evaluatedEligibleTurns: evaluatedEligibleTurns.length,
       coverageRate: eligibleRagTurns.length > 0
