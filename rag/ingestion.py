@@ -53,7 +53,7 @@ import pdfplumber
 import structlog
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.embeddings import Embeddings
-from tenacity import retry, stop_after_attempt, wait_exponential
+from tenacity import RetryCallState, retry, stop_after_attempt, wait_exponential
 
 from config import get_settings
 from db.supabase_client import get_supabase_client
@@ -386,9 +386,25 @@ def iter_pdf_chunks(
 # 4. EMBEDDING + UPSERT NO SUPABASE (com batch e deduplicação)
 # ==============================================================================
 
+def _log_embedding_retry(retry_state: RetryCallState) -> None:
+    """Registra recuos da API para distinguir retry ativo de travamento."""
+    error = retry_state.outcome.exception() if retry_state.outcome else None
+    next_action = retry_state.next_action
+    batch_size = len(retry_state.args[0]) if retry_state.args else None
+    logger.warning(
+        "ingestion_embedding_retry",
+        attempt=retry_state.attempt_number,
+        max_attempts=3,
+        batch_size=batch_size,
+        wait_seconds=next_action.sleep if next_action else None,
+        error=str(error)[:300] if error else None,
+    )
+
+
 @retry(
     stop=stop_after_attempt(3),
     wait=wait_exponential(multiplier=1, min=2, max=10),
+    before_sleep=_log_embedding_retry,
     reraise=True,
 )
 def _embed_batch(texts: list[str], embeddings_model: Embeddings) -> list[list[float]]:
