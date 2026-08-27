@@ -105,7 +105,7 @@ export default function HomePage() {
             </div>
           </div>
           <div className="guapu-header-actions">
-            <div className="guapu-header-eyebrow"><span /> Assistente de IA · INT 5224</div>
+            <div className="guapu-header-eyebrow guapu-course-label-desktop"><span /> Assistente de IA · INT 5224</div>
             <button
               type="button"
               className="guapu-icon-button"
@@ -117,6 +117,8 @@ export default function HomePage() {
             </button>
           </div>
         </header>
+
+        <div className="guapu-header-eyebrow guapu-course-label"><span /> Assistente de IA · INT 5224</div>
 
         <section
           ref={mainContentRef}
