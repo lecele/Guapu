@@ -172,17 +172,6 @@ button {
   line-height: 1.2;
 }
 
-.guapu-context-pill {
-  padding: 7px var(--space-4);
-  border: 1px solid var(--borda);
-  border-radius: 999px;
-  background: var(--superficie);
-  color: var(--texto-suave);
-  font-size: 13px;
-  font-weight: 500;
-  line-height: 1.3;
-}
-
 .guapu-header-actions {
   display: flex;
   align-items: center;
@@ -1035,10 +1024,6 @@ button {
 
   .guapu-header {
     margin-bottom: var(--space-4);
-  }
-
-  .guapu-context-pill {
-    display: none;
   }
 
   /* A identificação fica abaixo da marca, centralizada antes do conteúdo. */
