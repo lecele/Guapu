@@ -25,18 +25,30 @@ SCENARIOS = (
         "question": "Qual é a carga horária e o período do plano de ensino vigente da disciplina INT 5224?",
         "required_source": "administrativo__plano_ensino_INT55224__plano__ufsc__2026_2.pdf",
         "forbidden_source": "administrativo__plano_ensino_INT55224__plano__ufsc__2026__v1.pdf",
+        "expects_context": True,
+        "expects_fallback": False,
+        "requires_references": True,
+        "forbid_reference_fallback": True,
     },
     {
         "name": "glossario_near_miss",
         "question": "No glossário técnico da disciplina, o que significa near miss?",
         "required_source": "glossario",
         "forbidden_source": "administrativo__plano_ensino_INT55224__plano__ufsc__2026__v1.pdf",
+        "expects_context": True,
+        "expects_fallback": False,
+        "requires_references": True,
+        "forbid_reference_fallback": True,
     },
     {
         "name": "plano_antigo_bloqueado",
         "question": "Segundo Alexandre Caminha, qual é a orientação do plano anterior?",
         "required_source": None,
         "forbidden_source": "administrativo__plano_ensino_INT55224__plano__ufsc__2026__v1.pdf",
+        "expects_context": False,
+        "expects_fallback": True,
+        "requires_references": False,
+        "forbid_reference_fallback": False,
     },
 )
 
@@ -106,12 +118,26 @@ def main() -> None:
             sources = [str(item.get("source", "")) for item in metadata.get("retrieval", [])]
             required = scenario["required_source"]
             forbidden = scenario["forbidden_source"]
+            answer = str(stored.get("content", ""))
+            has_context = bool(metadata.get("has_context"))
+            has_references = "**Referências:**" in answer
+            has_reference_fallback = "Informação não disponível no artigo" in answer
+            error_code = metadata.get("error_code")
+            error_code_ok = (
+                error_code is None
+                if scenario["expects_context"]
+                else error_code == "NO_RELEVANT_CONTEXT"
+            )
             passed = (
                 not response.get("error")
-                and not metadata.get("fallback_used")
-                and not metadata.get("error_code")
+                and error_code_ok
+                and has_context is scenario["expects_context"]
+                and bool(metadata.get("fallback_used")) is scenario["expects_fallback"]
                 and (required is None or required in sources)
                 and forbidden not in sources
+                and forbidden not in answer
+                and has_references is scenario["requires_references"]
+                and (not scenario["forbid_reference_fallback"] or not has_reference_fallback)
             )
             results.append(
                 {
@@ -124,7 +150,7 @@ def main() -> None:
                     "latency_ms": metadata.get("latency_ms", {}),
                     "fallback_used": metadata.get("fallback_used"),
                     "error_code": metadata.get("error_code"),
-                    "answer": stored.get("content", ""),
+                    "answer": answer,
                 }
             )
 
