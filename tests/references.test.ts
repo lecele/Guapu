@@ -15,7 +15,7 @@ test('substitui referências geradas pelo modelo por dados presentes no trecho R
   );
 
   assert.match(answer, /- Silva \(2022\) Cuidados perioperatórios em cirurgia geral\. p\. 45-52\./);
-  assert.match(answer, /- Informação não disponível no artigo/);
+  assert.doesNotMatch(answer, /- Informação não disponível no artigo/);
   assert.doesNotMatch(answer, /aula cuidados pos operatorios|plano de ensino\.docx/i);
   assert.doesNotMatch(answer, /fonte inventada/);
   assert.match(answer, /Deseja aprofundar este tema\?/);
