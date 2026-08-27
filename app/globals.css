@@ -190,7 +190,7 @@ button {
 }
 
 .guapu-course-label {
-  display: none;
+  display: inline-flex;
   justify-content: center;
   width: 100%;
   margin-top: calc(-1 * var(--space-3));
@@ -1046,10 +1046,6 @@ button {
   .guapu-header-eyebrow span {
     width: 4px;
     height: 4px;
-  }
-
-  .guapu-course-label-desktop {
-    display: none;
   }
 
   .guapu-course-label {

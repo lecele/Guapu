@@ -105,7 +105,6 @@ export default function HomePage() {
             </div>
           </div>
           <div className="guapu-header-actions">
-            <div className="guapu-header-eyebrow guapu-course-label-desktop"><span /> Assistente de IA · INT 5224</div>
             <button
               type="button"
               className="guapu-icon-button"
