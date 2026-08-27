@@ -949,12 +949,17 @@ button {
   }
 
   .guapu-header {
-    margin-bottom: var(--space-3);
+    margin-bottom: var(--space-1);
+  }
+
+  .guapu-course-label {
+    margin-top: calc(-1 * var(--space-2));
+    margin-bottom: var(--space-2);
   }
 
   .guapu-hero {
     /* Compacta o início sem esconder conteúdo nem criar rolagem residual. */
-    padding: 10px var(--space-7);
+    padding: 8px var(--space-7);
   }
 
   .guapu-main-content.is-welcome {
@@ -963,39 +968,39 @@ button {
 
   .guapu-hero h1 {
     margin-bottom: var(--space-2);
-    font-size: 25px;
+    font-size: 24px;
     line-height: 1.2;
   }
 
   .guapu-lead {
-    margin-bottom: var(--space-3);
-    line-height: 1.5;
+    margin-bottom: var(--space-2);
+    line-height: 1.42;
   }
 
   .guapu-transparency-note {
-    margin-bottom: var(--space-3);
-    padding: var(--space-3) var(--space-4);
+    margin-bottom: var(--space-2);
+    padding: 8px var(--space-4);
   }
 
   .guapu-transparency-note p,
   .guapu-how-to p {
-    line-height: 1.45;
+    line-height: 1.38;
   }
 
   .guapu-how-to {
-    gap: var(--space-3) var(--space-5);
+    gap: var(--space-2) var(--space-5);
   }
 
   .guapu-divider {
-    margin: 6px 0;
+    margin: 4px 0;
   }
 
   .guapu-action-grid {
-    gap: var(--space-3);
+    gap: var(--space-2);
   }
 
   .guapu-action-card {
-    padding: var(--space-2) var(--space-4);
+    padding: 6px var(--space-4);
   }
 
   .guapu-action-icon {
@@ -1005,7 +1010,7 @@ button {
   }
 
   .guapu-action-card small {
-    line-height: 1.35;
+    line-height: 1.28;
   }
 
   .guapu-caption {
@@ -1014,6 +1019,7 @@ button {
 
   .guapu-footer-meta {
     margin-top: var(--space-1);
+    min-height: 22px;
   }
 
   .guapu-footer {
