@@ -1,6 +1,6 @@
 // lib/api.ts — Cliente HTTP para o backend do Tutor com Auto-Retry Resiliente
 
-import { ChatRequest, ChatResponse } from '@/types/chat';
+import { ChatRequest, ChatResponse, type ChatActionMode } from '@/types/chat';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? '/api';
 
@@ -20,11 +20,17 @@ function generateRequestId(): string {
 export async function sendChatMessage(
   session_id: string,
   message: string,
+  activeMode?: ChatActionMode,
   maxRetries: number = 2
 ): Promise<ChatResponse> {
   // O mesmo request_id é reutilizado em todas as tentativas para impedir
   // mensagens/respostas duplicadas quando a rede oscila.
-  const payload: ChatRequest = { session_id, request_id: generateRequestId(), message };
+  const payload: ChatRequest = {
+    session_id,
+    request_id: generateRequestId(),
+    message,
+    ...(activeMode ? { active_mode: activeMode } : {}),
+  };
 
   let lastError: Error | null = null;
 

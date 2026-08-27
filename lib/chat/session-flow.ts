@@ -1,6 +1,7 @@
 export const FLOW_VERSION = 'v1';
 
 export type ChatMode = 'livre' | 'resumo' | 'quiz' | 'info';
+export type ChatActionMode = 'resumo' | 'quiz' | 'info' | 'encerrar';
 
 export type ChatFlowState =
   | 'MENU_PRINCIPAL'
@@ -155,7 +156,42 @@ function extractInlineRequest(message: string): { mode: ChatMode; topic: string 
   return null;
 }
 
-export function resolveTurn(state: SessionState, message: string): FlowDecision {
+function extractNewQuizCommand(message: string): { topic: string } | null {
+  const norm = normalizeInput(message);
+  const match = norm.match(
+    /^(?:(?:quero|queria)\s+)?(?:um\s+)?(?:novo|outro)\s+(?:quiz|simulado(?:\s+de\s+prova)?)(?:\s+(?:da\s+disciplina|sobre|de|do|da|com)\s+(.+))?$/,
+  );
+  if (!match) return null;
+  return { topic: match[1]?.trim() || '' };
+}
+
+export function resolveTurn(state: SessionState, message: string, activeMode?: ChatActionMode): FlowDecision {
+  if (activeMode) {
+    const base = { intent: 'content' as FlowIntent, stateBefore: state, quizQuestion: state.quizQuestion, quizAttempt: state.quizAttempt };
+    if (activeMode === 'encerrar') {
+      return {
+        ...base,
+        kind: 'fast',
+        fastResponse: 'farewell',
+        topic: state.currentTopic,
+        stateAfter: nextState(state, { state: 'ENCERRADA', mode: 'livre', quizQuestion: 0, quizAttempt: 0 }),
+      };
+    }
+    const fastResponse: FastResponseKey = activeMode === 'quiz' ? 'quiz_menu' : activeMode === 'info' ? 'info_menu' : 'resumo_menu';
+    const targetState: ChatFlowState = activeMode === 'quiz'
+      ? 'QUIZ_AGUARDANDO_TEMA'
+      : activeMode === 'info'
+        ? 'INFORMACOES_AGUARDANDO_PERGUNTA'
+        : 'RESUMO_AGUARDANDO_TEMA';
+    return {
+      ...base,
+      kind: 'fast',
+      fastResponse,
+      topic: '',
+      stateAfter: nextState(state, { state: targetState, mode: activeMode === 'quiz' ? 'quiz' : activeMode === 'info' ? 'info' : 'resumo', currentTopic: '', quizQuestion: 0, quizAttempt: 0 }),
+    };
+  }
+
   const intent = detectFlowIntent(message);
   const base = { intent, stateBefore: state, quizQuestion: state.quizQuestion, quizAttempt: state.quizAttempt };
 
@@ -223,6 +259,28 @@ export function resolveTurn(state: SessionState, message: string): FlowDecision 
       fastResponse,
       topic: '',
       stateAfter: nextState(state, { state: targetState, mode, currentTopic: '', quizQuestion: 0, quizAttempt: 0 }),
+    };
+  }
+
+  const newQuiz = extractNewQuizCommand(message);
+  if (newQuiz) {
+    if (!newQuiz.topic) {
+      return {
+        ...base,
+        kind: 'fast',
+        fastResponse: 'quiz_menu',
+        topic: '',
+        stateAfter: nextState(state, { state: 'QUIZ_AGUARDANDO_TEMA', mode: 'quiz', currentTopic: '', quizQuestion: 0, quizAttempt: 0 }),
+      };
+    }
+    return {
+      ...base,
+      kind: 'generate',
+      generationMode: 'simulado_tema',
+      topic: newQuiz.topic,
+      quizQuestion: 1,
+      quizAttempt: 1,
+      stateAfter: nextState(state, { state: 'QUIZ_EM_ANDAMENTO', mode: 'quiz', currentTopic: newQuiz.topic, quizQuestion: 1, quizAttempt: 1 }),
     };
   }
 

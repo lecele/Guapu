@@ -1,7 +1,7 @@
-// Cliente: arquitetura de três prompts v1.1.0 (27/08/2026).
+// Cliente: arquitetura de três prompts v1.3.0 (27/08/2026).
 // O código mantém estado, RAG e referências determinísticas; este núcleo é a
 // camada estável de identidade, ética e segurança.
-export const PROMPT_VERSION = 'v3.1.0';
+export const PROMPT_VERSION = 'v1.3.0';
 
 interface CorePromptInput {
   context: string;

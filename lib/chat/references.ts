@@ -84,7 +84,11 @@ export function finalizeReferences(
   mode: GenerationMode,
   enabled = true,
 ): string {
-  const withoutModelReferences = removeModelReferences(text);
+  const withoutModelReferences = removeModelReferences(text)
+    .replace(/\[\s*\d+(?:\s*,\s*\d+)*\s*\]/g, '')
+    .replace(/[ \t]{2,}/g, ' ')
+    .replace(/\n[ \t]+\n/g, '\n\n')
+    .trim();
   if (!enabled) return withoutModelReferences;
   if (!needsReferences(mode)) return withoutModelReferences;
 

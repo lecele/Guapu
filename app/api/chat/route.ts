@@ -1,5 +1,5 @@
 // app/api/chat/route.ts — Tutor de Enfermagem INT 5224
-// Prompt Mestre conforme Prompt 10Aug2026.docx (15 seções implementadas)
+// Prompt Mestre conforme o pacote de prompts v1.3.0 do cliente.
 
 import { randomUUID } from 'node:crypto';
 
@@ -12,6 +12,7 @@ import {
   resolveTurn,
   type FastResponseKey,
   type GenerationMode,
+  type ChatActionMode,
 } from '@/lib/chat/session-flow';
 import {
   findCompletedTurn,
@@ -39,24 +40,19 @@ const RAG_REFERENCES_ENABLED = process.env.RAG_REFERENCES_ENABLED === 'true';
 // ── Respostas fixas (zero tokens de LLM para navegação rápida) ───────────────
 
 const GREETING_RESPONSE =
-  'Olá! Que bom ter você aqui no Assistente de Inteligência Artificial da INT 5224 – O cuidado no processo de viver humano II: a condição cirúrgica\n\n' +
-  'Este espaço foi pensado para facilitar sua jornada de aprendizagem sobre o cuidado no processo de viver humano em condição cirúrgica. Aqui você revisa conteúdos, pratica com simulados e acessa informações essenciais da disciplina.\n\n' +
-  'Nota de transparência: Este assistente utiliza inteligência artificial para apoiar seu estudo. Ele não substitui o raciocínio clínico, a leitura das aulas ou a orientação docente. Todas as respostas seguem o plano de ensino e os limites éticos da disciplina.\n\n' +
-  'Como usar: Fale comigo como se estivesse conversando com um tutor. Peça explicações, tire dúvidas ou escolha uma das opções abaixo.\n\n' +
-  'O que esperar: Clareza, objetividade e apoio contínuo — sempre dentro dos limites da disciplina.\n\n' +
-  'Opções:\n' +
-  '• Resumo de Conteúdo\n' +
-  '• Quiz da Disciplina\n' +
-  '• Informações da Disciplina\n' +
-  '• Encerrar Sessão';
+  'Como posso ajudar? Escolha uma opção ou envie uma pergunta livre relacionada à disciplina:\n' +
+  '- Resumo de conteúdo\n' +
+  '- Quiz da disciplina\n' +
+  '- Informações da disciplina\n' +
+  '- Encerrar sessão';
 
 const MENU_RETURN_RESPONSE =
   'Você voltou ao menu principal.\n\n' +
   'Escolha uma opção ou envie uma pergunta livre relacionada à disciplina:\n' +
-  '• Resumo de Conteúdo\n' +
-  '• Quiz da Disciplina\n' +
-  '• Informações da Disciplina\n' +
-  '• Encerrar Sessão';
+  '- Resumo de conteúdo\n' +
+  '- Quiz da disciplina\n' +
+  '- Informações da disciplina\n' +
+  '- Encerrar sessão';
 
 const FAREWELL_RESPONSE =
   'Sessão encerrada. Bons estudos! Estarei aqui sempre quando precisar.';
@@ -66,7 +62,7 @@ const RESUMO_MENU_RESPONSE =
   '*(Exemplos: Controle de infecção no perioperatório, Feridas, Nomenclatura Cirúrgica, Suturas, Dor pós-operatória, Cuidados pré-operatórios, Avaliação Nutricional, entre outros)*';
 
 const SIMULADO_MENU_RESPONSE =
-  'Qual tema você deseja para o Quiz da Disciplina? Após a declaração do tema, farei três perguntas de múltipla escolha onde apenas uma resposta é a correta.\n\n' +
+  'Qual tema você deseja para o quiz da disciplina? Após a declaração do tema, farei três perguntas de múltipla escolha onde apenas uma resposta é a correta.\n\n' +
   '*(Exemplos: Hemostasia, Cirurgia Bariátrica, Estomas, Capacitação Hospitalar, Teleconsulta, Cuidados pós-operatórios, entre outros)*';
 
 const QUIZ_INVALID_RESPONSE =
@@ -76,14 +72,13 @@ const INFO_MENU_RESPONSE =
   'Que informação da disciplina você deseja consultar?\n\n' +
   'Você pode perguntar sobre o plano de ensino, professores, horários, cronograma, avaliações, frequência, trabalhos ou conteúdo programático.';
 
-const FALLBACK_RESPONSE =
-  'Desculpe, o material de estudo disponível não contém informações suficientes ' +
-  'para responder a sua pergunta com precisão acadêmica.\n\n' +
-  'Recomendo consultar:\n' +
-  '- Seu professor orientador ou tutor da disciplina\n' +
-  '- Biblioteca virtual da instituição\n' +
-  '- Bases de dados científicas: **LILACS**, **BVS**, **PubMed**\n' +
-  '- Publicações do **COFEN** (cofen.gov.br) e **Ministério da Saúde** (saude.gov.br)';
+function insufficientContentResponse(topic: string): string {
+  const safeTopic = topic.trim() || 'esse tema';
+  return `Não encontrei, nos materiais da disciplina disponíveis, conteúdo suficiente sobre "${safeTopic}". Consulte o Moodle, a secretaria ou os docentes para mais informações. Deseja tentar outro tema ou voltar ao menu principal?`;
+}
+
+const TECHNICAL_FALLBACK_RESPONSE =
+  'Ocorreu uma falha temporária ao consultar os materiais da disciplina. Tente novamente em instantes ou procure o Moodle e os docentes para confirmar a informação.';
 
 
 // ── Tipos ─────────────────────────────────────────────────────────────────────
@@ -92,6 +87,7 @@ interface ChatRequest {
   session_id: string;
   request_id?: string;
   message: string;
+  active_mode?: ChatActionMode;
 }
 
 interface Document {
@@ -446,6 +442,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json().catch(() => null) as Partial<ChatRequest> | null;
     const sessionId = body?.session_id?.trim() ?? '';
     const question = body?.message?.trim() ?? '';
+    const activeMode = body?.active_mode;
 
     if (body?.request_id) {
       if (!UUID_PATTERN.test(body.request_id)) {
@@ -457,7 +454,12 @@ export async function POST(req: NextRequest) {
       requestId = body.request_id;
     }
 
-    if (!SESSION_ID_PATTERN.test(sessionId) || !question || question.length > 8_000) {
+    if (
+      !SESSION_ID_PATTERN.test(sessionId) ||
+      !question ||
+      question.length > 8_000 ||
+      (activeMode !== undefined && !['resumo', 'quiz', 'info', 'encerrar'].includes(activeMode))
+    ) {
       return NextResponse.json(
         { error: 'Sessão ou mensagem inválida', error_code: 'INVALID_REQUEST', request_id: requestId },
         { status: 400 },
@@ -489,7 +491,7 @@ export async function POST(req: NextRequest) {
       sessionState = inferLegacySessionState(sessionId, history);
     }
 
-    const decision = resolveTurn(sessionState, question);
+    const decision = resolveTurn(sessionState, question, activeMode);
 
     if (decision.kind === 'fast' && decision.fastResponse) {
       const answer = FAST_RESPONSES[decision.fastResponse];
@@ -573,7 +575,9 @@ export async function POST(req: NextRequest) {
     let generationErrorCode: string | null = null;
 
     if (docs.length === 0) {
-      answer = FALLBACK_RESPONSE;
+      answer = retrievalErrorCode === 'NO_RELEVANT_CONTEXT'
+        ? insufficientContentResponse(decision.topic || searchQuery)
+        : TECHNICAL_FALLBACK_RESPONSE;
       finalState = decision.stateBefore;
       fallbackUsed = true;
       fallbackReason = retrievalErrorCode;

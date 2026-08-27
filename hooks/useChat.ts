@@ -3,7 +3,7 @@
 // hooks/useChat.ts — Toda a lógica de estado do chat em um hook reutilizável
 
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { Message, ChatSession } from '@/types/chat';
+import { Message, ChatSession, type ChatActionMode } from '@/types/chat';
 import { sendChatMessage, checkHealth } from '@/lib/api';
 
 function generateSessionId(): string {
@@ -48,7 +48,7 @@ export function useChat() {
    * Envia uma nova mensagem do estudante para o tutor de IA.
    */
   const sendMessage = useCallback(
-    async (content: string) => {
+    async (content: string, activeMode?: ChatActionMode) => {
       const trimmed = content.trim();
       if (!trimmed || isLoading) return;
 
@@ -65,7 +65,7 @@ export function useChat() {
       setError(null);
 
       try {
-        const response = await sendChatMessage(session.id, trimmed);
+        const response = await sendChatMessage(session.id, trimmed, activeMode);
 
         const aiMessage: Message = {
           id: generateSessionId(),

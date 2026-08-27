@@ -62,6 +62,34 @@ test('quiz com tema inline começa na questão 1', () => {
   assert.equal(decision.stateAfter.currentTopic, 'feridas');
 });
 
+test('um novo quiz interrompe a pergunta livre e solicita o tema', () => {
+  const decision = resolveTurn(state({ state: 'LIVRE', mode: 'livre', currentTopic: 'teleconsulta' }), 'um novo quiz');
+  assert.equal(decision.kind, 'fast');
+  assert.equal(decision.fastResponse, 'quiz_menu');
+  assert.equal(decision.stateAfter.state, 'QUIZ_AGUARDANDO_TEMA');
+  assert.equal(decision.stateAfter.currentTopic, '');
+});
+
+test('um novo quiz com tema inicia um novo fluxo sem herdar o tema anterior', () => {
+  const decision = resolveTurn(state({ state: 'LIVRE', mode: 'livre', currentTopic: 'teleconsulta' }), 'um novo quiz sobre hemostasia');
+  assert.equal(decision.generationMode, 'simulado_tema');
+  assert.equal(decision.topic, 'hemostasia');
+  assert.equal(decision.stateAfter.currentTopic, 'hemostasia');
+  assert.equal(decision.stateAfter.quizQuestion, 1);
+});
+
+test('action card usa modalidade estruturada e ignora o texto visível', () => {
+  const decision = resolveTurn(
+    state({ state: 'QUIZ_EM_ANDAMENTO', mode: 'quiz', currentTopic: 'feridas', quizQuestion: 2, quizAttempt: 1 }),
+    'Quiz da Disciplina',
+    'resumo',
+  );
+  assert.equal(decision.kind, 'fast');
+  assert.equal(decision.fastResponse, 'resumo_menu');
+  assert.equal(decision.stateAfter.state, 'RESUMO_AGUARDANDO_TEMA');
+  assert.equal(decision.stateAfter.currentTopic, '');
+});
+
 test('resposta incorreta no quiz mantém a questão e abre segunda tentativa', () => {
   const before = state({ state: 'QUIZ_EM_ANDAMENTO', mode: 'quiz', currentTopic: 'feridas', quizQuestion: 1, quizAttempt: 1 });
   const decision = resolveTurn(before, 'B');

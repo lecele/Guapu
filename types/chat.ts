@@ -17,10 +17,13 @@ export interface Message {
   timestamp: Date;
 }
 
+export type ChatActionMode = 'resumo' | 'quiz' | 'info' | 'encerrar';
+
 export interface ChatRequest {
   session_id: string;
   request_id: string;
   message: string;
+  active_mode?: ChatActionMode;
 }
 
 export interface ChatResponse {

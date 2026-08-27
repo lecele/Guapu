@@ -90,3 +90,13 @@ test('remove referências do modelo e não adiciona novas quando a exibição es
   assert.equal(answer, 'Resposta segura.');
   assert.doesNotMatch(answer, /Referências|fragmento inválido/);
 });
+
+test('remove marcadores numéricos herdados dos documentos', () => {
+  const answer = finalizeReferences(
+    'As normas da ABNT [2] incluem etapas específicas [3, 4, 5].',
+    [{ source: 'aula.pdf', content: 'Capítulo 2 — Produção acadêmica.' }],
+    'livre',
+  );
+  assert.doesNotMatch(answer, /\[\s*\d/);
+  assert.match(answer, /normas da ABNT incluem etapas específicas/);
+});

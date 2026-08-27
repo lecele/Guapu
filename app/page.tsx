@@ -15,12 +15,14 @@ import { GuapuMark } from '@/components/icons/GuapuMark';
 import { MessageInput } from '@/components/chat/MessageInput';
 import { MessageBubble } from '@/components/chat/MessageBubble';
 import { TypingIndicator } from '@/components/chat/TypingIndicator';
+import type { ChatActionMode } from '@/types/chat';
 
 type ActionTone = 'verde' | 'azul' | 'dourado' | 'neutro';
 
 interface WelcomeAction {
   label: string;
   message: string;
+  activeMode: ChatActionMode;
   description: string;
   tone: ActionTone;
   icon: ComponentType<LucideProps>;
@@ -29,28 +31,32 @@ interface WelcomeAction {
 const WELCOME_ACTIONS: WelcomeAction[] = [
   {
     label: 'Resumo de conteúdo',
-    message: 'Resumo de Conteúdo',
+    message: 'Resumo de conteúdo',
+    activeMode: 'resumo',
     description: 'Revise os temas da disciplina com explicações e exemplos clínicos',
     tone: 'verde',
     icon: BookOpen,
   },
   {
     label: 'Quiz da disciplina',
-    message: 'Quiz da Disciplina',
+    message: 'Quiz da disciplina',
+    activeMode: 'quiz',
     description: 'Pratique com questões de múltipla escolha e feedback imediato',
     tone: 'azul',
     icon: CircleHelp,
   },
   {
     label: 'Informações da disciplina',
-    message: 'Informações da Disciplina',
+    message: 'Informações da disciplina',
+    activeMode: 'info',
     description: 'Consulte o conteúdo programático, calendário e critérios de avaliação',
     tone: 'dourado',
     icon: Info,
   },
   {
     label: 'Encerrar sessão',
-    message: 'Encerrar Sessão',
+    message: 'Encerrar sessão',
+    activeMode: 'encerrar',
     description: 'Encerre a sessão atual',
     tone: 'neutro',
     icon: LogOut,
@@ -182,7 +188,7 @@ export default function HomePage() {
   );
 }
 
-function WelcomeMenu({ onSelect }: { onSelect: (message: string) => void }) {
+function WelcomeMenu({ onSelect }: { onSelect: (message: string, activeMode: ChatActionMode) => void }) {
   return (
     <div className="guapu-welcome">
       <section className="guapu-hero">
@@ -207,12 +213,12 @@ function WelcomeMenu({ onSelect }: { onSelect: (message: string) => void }) {
       </div>
 
       <div className="guapu-action-grid">
-        {WELCOME_ACTIONS.map(({ label, message, description, tone, icon: Icon }) => (
+        {WELCOME_ACTIONS.map(({ label, message, activeMode, description, tone, icon: Icon }) => (
           <button
             key={label}
             type="button"
             className={`guapu-action-card is-${tone}`}
-            onClick={() => onSelect(message)}
+            onClick={() => onSelect(message, activeMode)}
           >
             <span className="guapu-action-icon"><Icon size={20} strokeWidth={1.8} /></span>
             <span>
