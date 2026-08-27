@@ -86,10 +86,16 @@ export function finalizeReferences(
   const withoutModelReferences = removeModelReferences(text);
   if (!needsReferences(mode)) return withoutModelReferences;
 
-  const sources = [...new Set(docs.map((doc) => referenceFromContent(doc.content, doc.metadata)))].slice(0, 5);
+  const fallback = 'Informação não disponível no artigo, consultar o Plano de Ensino ou docentes.';
+  const extracted = [...new Set(docs.map((doc) => referenceFromContent(doc.content, doc.metadata)))];
+  // A camada 3 só é permitida quando nenhum dos trechos trouxe pista útil.
+  // Nunca misture uma referência identificada com uma linha de fallback.
+  const sources = extracted.some((source) => source !== fallback)
+    ? extracted.filter((source) => source !== fallback).slice(0, 5)
+    : extracted.slice(0, 1);
   const lines = sources.length > 0
     ? sources.map((source) => `- ${source}`)
-    : ['- Informação não disponível no artigo, consultar o Plano de Ensino ou docentes.'];
+    : [`- ${fallback}`];
 
   return `${withoutModelReferences}\n\n**Referências:**\n${lines.join('\n')}`.trim();
 }

@@ -45,3 +45,16 @@ test('reconhece título quando autores estão na linha seguinte do trecho', () =
   );
   assert.match(answer, /- Intervenções fundamentais em cirurgia: diérese, hemostasia e síntese\./);
 });
+
+test('não mistura fallback com uma referência identificada', () => {
+  const answer = finalizeReferences(
+    'Resumo.',
+    [
+      { source: 'um.pdf', content: 'Intervenções fundamentais em cirurgia\nMedeiros AC, Dantas-Filho AM' },
+      { source: 'dois.pdf', content: 'Trecho sem pista bibliográfica.' },
+    ],
+    'resumo',
+  );
+  assert.match(answer, /Intervenções fundamentais em cirurgia/);
+  assert.doesNotMatch(answer, /Informação não disponível no artigo/);
+});
