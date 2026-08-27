@@ -73,12 +73,33 @@ def mark_job_complete(client: Any, job_id: str) -> None:
         {
             "status": "succeeded",
             "completed_at": now,
+            "last_error": None,
+            "worker_id": None,
             "lease_expires_at": None,
             "updated_at": now,
         }
     ).eq("id", job_id).execute()
     if getattr(response, "error", None):
         raise RuntimeError(f"DRIVE_SYNC_QUEUE_COMPLETE_FAILED: {response.error}")
+
+
+def renew_job_lease(
+    client: Any,
+    job_id: str,
+    worker_id: str,
+    lease_seconds: int,
+) -> bool:
+    response = client.rpc(
+        "renew_drive_sync_job_lease",
+        {
+            "p_job_id": job_id,
+            "p_worker_id": worker_id,
+            "p_lease_seconds": lease_seconds,
+        },
+    ).execute()
+    if getattr(response, "error", None):
+        raise RuntimeError(f"DRIVE_SYNC_QUEUE_RENEW_FAILED: {response.error}")
+    return bool(response.data)
 
 
 def mark_job_failed(client: Any, job: dict[str, Any], error: Exception) -> None:

@@ -1,0 +1,17 @@
+.git
+.next
+node_modules
+__pycache__
+.pytest_cache
+.vercel
+.env
+.env.*
+!.env.example
+credentials
+documentos
+qa
+scratch
+*.docx
+*.pdf
+*.jsonl
+*.gz

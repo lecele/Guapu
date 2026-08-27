@@ -83,6 +83,20 @@ class DriveSyncPlanTests(unittest.TestCase):
 
         self.assertEqual([item["id"] for item in plan.changed], ["retry"])
 
+    def test_reindexes_active_manifest_without_active_vectors(self):
+        current = [{"id": "missing-vectors", "name": "arquivo.pdf", "modifiedTime": "2026-08-25T10:00:00Z"}]
+        manifest = [{
+            "drive_file_id": "missing-vectors",
+            "name": "arquivo.pdf",
+            "modified_time": "2026-08-25T10:00:00+00:00",
+            "status": "active",
+        }]
+
+        plan = plan_drive_sync(current, manifest, indexed_drive_file_ids=set())
+
+        self.assertEqual([item["id"] for item in plan.changed], ["missing-vectors"])
+        self.assertEqual(list(plan.unchanged), [])
+
     def test_rename_is_a_change_even_when_checksum_matches(self):
         current = [
             {

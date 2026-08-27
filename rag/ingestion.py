@@ -36,11 +36,18 @@ except Exception:
 import hashlib
 import re
 import io
+import gc
+import json
+import os
+import subprocess
+import tempfile
+import time
+from itertools import chain, islice
 import zipfile
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import Optional
+from typing import Iterable, Iterator, Optional
 
 import pdfplumber
 import structlog
@@ -51,6 +58,7 @@ from tenacity import retry, stop_after_attempt, wait_exponential
 from config import get_settings
 from db.supabase_client import get_supabase_client
 from rag.graph import _get_embeddings
+from reference_metadata import extract_reference_metadata
 from rag.sync_plan import chunk_record_id, plan_drive_sync, select_file_batch
 
 logger = structlog.get_logger(__name__)
@@ -169,40 +177,14 @@ def sanitize_text_for_storage(value: str) -> str:
     return value.replace(chr(0), "")
 
 
-def extract_reference_metadata(pages: list[dict]) -> dict[str, str]:
-    """Extrai somente pistas bibliográficas presentes no texto do documento.
-
-    Nunca usa o nome do arquivo como citação. Os campos são copiados para cada
-    chunk para que uma busca semântica não perca a folha de rosto ou o heading.
-    """
-    text = "\n".join(str(page.get("text", "")) for page in pages[:3])
-    text = sanitize_text_for_storage(text)
-    metadata: dict[str, str] = {}
-
-    citation = re.search(
-        r"(?m)^\s*([A-ZÀ-Ý][A-Za-zÀ-ÿ'’.-]+(?:\s+(?:[A-ZÀ-Ý][A-Za-zÀ-ÿ'’.-]+|de|da|do|dos|das)){0,5})\s*\(?((?:19|20)\d{2})\)?[.,]\s*(.{12,180})$",
-        text,
-    )
-    if citation:
-        metadata["reference_author"] = citation.group(1).strip()
-        metadata["reference_year"] = citation.group(2)
-        metadata["reference_title"] = citation.group(3).strip().rstrip(". ")
-        return metadata
-
-    # Títulos/seções são válidos como referência parcial (camada 2 do prompt).
-    chapter = re.search(r"(?im)^\s*(?:cap[ií]tulo|cap\.)\s*(\d+)?\s*[-—–:.]\s*(.{8,180})$", text)
-    if chapter:
-        metadata["reference_title"] = chapter.group(2).strip().rstrip(". ")
-        if chapter.group(1):
-            metadata["reference_section"] = f"Cap. {chapter.group(1)}"
-    return metadata
-
-
 def chunk_text(
     pages: list[dict],
     source_name: str,
     chunk_size: int = 1000,
     chunk_overlap: int = 150,
+    *,
+    start_index: int = 0,
+    reference_metadata: Optional[dict[str, str]] = None,
 ) -> list[dict]:
     """
     Divide o texto das páginas em chunks usando RecursiveCharacterTextSplitter.
@@ -226,10 +208,14 @@ def chunk_text(
     )
 
     chunks = []
-    global_chunk_index = 0
+    global_chunk_index = start_index
 
     safe_source_name = sanitize_text_for_storage(source_name)
-    reference_metadata = extract_reference_metadata(pages)
+    resolved_reference_metadata = (
+        reference_metadata
+        if reference_metadata is not None
+        else extract_reference_metadata(pages)
+    )
 
     for page in pages:
         page_text = sanitize_text_for_storage(str(page["text"]))
@@ -250,7 +236,7 @@ def chunk_text(
                     "page_number": page["page_number"],
                     "chunk_index": global_chunk_index,
                     "content_hash": content_hash,
-                    "reference_metadata": reference_metadata,
+                    "reference_metadata": resolved_reference_metadata,
                 }
             )
             global_chunk_index += 1
@@ -263,6 +249,137 @@ def chunk_text(
         chunk_overlap=chunk_overlap,
     )
     return chunks
+
+
+def _release_pdf_page(page: object) -> None:
+    """Libera caches internos do pdfplumber após cada página."""
+    flush_cache = getattr(page, "flush_cache", None)
+    if callable(flush_cache):
+        flush_cache()
+
+
+def _run_pdf_page_worker(pdf_path: str, *args: str) -> list[dict]:
+    """Executa a extração em um processo que será descartado ao terminar."""
+    timeout_seconds = max(30, int(os.getenv("PDF_EXTRACTION_TIMEOUT_SECONDS", "300")))
+    command = [sys.executable, "-m", "rag.pdf_page_worker", pdf_path, *args]
+    completed = subprocess.run(
+        command,
+        cwd=os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        timeout=timeout_seconds,
+        check=False,
+    )
+    rows: list[dict] = []
+    invalid_stdout: list[str] = []
+    for line in completed.stdout.splitlines():
+        if not line.strip():
+            continue
+        try:
+            rows.append(json.loads(line))
+        except json.JSONDecodeError:
+            invalid_stdout.append(line.strip())
+    if completed.returncode != 0:
+        detail = next((row.get("error") for row in rows if row.get("error")), None)
+        stderr_detail = next(
+            (line.strip() for line in reversed(completed.stderr.splitlines()) if line.strip()),
+            None,
+        )
+        stdout_detail = invalid_stdout[-1] if invalid_stdout else None
+        detail = detail or stderr_detail or stdout_detail
+        raise RuntimeError(
+            detail or f"extrator PDF terminou com código {completed.returncode}"
+        )
+    return rows
+
+
+def _isolated_pdf_page_count(pdf_path: str) -> int:
+    rows = _run_pdf_page_worker(pdf_path, "--count")
+    if len(rows) != 1 or int(rows[0].get("total_pages", 0)) < 1:
+        raise RuntimeError("extrator PDF não informou uma contagem válida de páginas")
+    return int(rows[0]["total_pages"])
+
+
+def _iter_isolated_pdf_pages(
+    pdf_path: str,
+    total_pages: int,
+    window_size: int,
+) -> Iterator[dict]:
+    for start in range(1, total_pages + 1, window_size):
+        end = min(total_pages, start + window_size - 1)
+        rows = _run_pdf_page_worker(
+            pdf_path,
+            "--start",
+            str(start),
+            "--end",
+            str(end),
+        )
+        expected = end - start + 1
+        if len(rows) != expected:
+            raise RuntimeError(
+                f"extrator PDF retornou {len(rows)} de {expected} páginas no intervalo {start}-{end}"
+            )
+        yield from rows
+
+
+def iter_pdf_chunks(
+    pdf_bytes: bytes,
+    source_name: str,
+    result: IngestionResult,
+    *,
+    chunk_size: int = 1000,
+    chunk_overlap: int = 150,
+) -> Iterator[dict]:
+    """Extrai e divide um PDF com memória limitada e isolamento por janelas."""
+    window_size = max(1, int(os.getenv("PDF_EXTRACTION_WINDOW_PAGES", "10")))
+    temp_path = ""
+    try:
+        with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as temp_pdf:
+            temp_pdf.write(pdf_bytes)
+            temp_path = temp_pdf.name
+
+        result.total_pages = _isolated_pdf_page_count(temp_path)
+        page_iterator = iter(
+            _iter_isolated_pdf_pages(temp_path, result.total_pages, window_size)
+        )
+        first_window = list(islice(page_iterator, window_size))
+        reference_pages = [page for page in first_window[:3] if page.get("text", "").strip()]
+        resolved_reference_metadata = extract_reference_metadata(reference_pages)
+        global_chunk_index = 0
+
+        for page in chain(first_window, page_iterator):
+            page_number = int(page["page_number"])
+            text = str(page.get("text", "")).strip()
+            if not text:
+                logger.debug("pdf_page_no_text", page=page_number)
+                continue
+            page_chunks = chunk_text(
+                [{"page_number": page_number, "text": text}],
+                source_name=source_name,
+                chunk_size=chunk_size,
+                chunk_overlap=chunk_overlap,
+                start_index=global_chunk_index,
+                reference_metadata=resolved_reference_metadata,
+            )
+            global_chunk_index += len(page_chunks)
+            yield from page_chunks
+
+        logger.info(
+            "pdf_text_streamed",
+            pages_total=result.total_pages,
+            chunks_total=global_chunk_index,
+            extraction_window_pages=window_size,
+        )
+    finally:
+        if temp_path:
+            try:
+                os.unlink(temp_path)
+            except FileNotFoundError:
+                pass
+        gc.collect()
 
 
 # ==============================================================================
@@ -388,6 +505,142 @@ def upsert_chunks_to_supabase(
     return inserted, current_ids
 
 
+def upsert_chunk_stream_to_supabase(
+    chunks: Iterable[dict],
+    file_id: str,
+    modified_time: str = "",
+    drive_path: str = "",
+    batch_size: int = 20,
+) -> tuple[int, set[str], int]:
+    """Embute e grava um iterável de chunks sem carregar o documento inteiro."""
+    settings = get_settings()
+    client = get_supabase_client()
+    embeddings_model = _get_embeddings()
+    existing_rows_before = _document_rows_for_file(file_id)
+    existing_active_ids_before = {
+        row["id"]
+        for row in existing_rows_before
+        if (row.get("metadata") or {}).get("rag_status", "active") == "active"
+    }
+    current_ids: set[str] = set()
+    inserted = 0
+    total_chunks = 0
+    iterator = iter(chunks)
+    batch_number = 0
+
+    while True:
+        batch = list(islice(iterator, batch_size))
+        if not batch:
+            break
+        batch_number += 1
+        total_chunks += len(batch)
+        texts = [chunk["content"] for chunk in batch]
+        logger.info("ingestion_batch_start", batch=batch_number, size=len(batch))
+
+        try:
+            batch_started_at = time.perf_counter()
+            embedding_started_at = batch_started_at
+            vectors = _embed_batch(texts, embeddings_model)
+            embedding_elapsed_ms = round((time.perf_counter() - embedding_started_at) * 1000)
+            records = []
+            for chunk, vector in zip(batch, vectors):
+                record_id = chunk_record_id(
+                        file_id,
+                        chunk["content_hash"],
+                        chunk["page_number"],
+                        chunk["chunk_index"],
+                    )
+                records.append({
+                    "id": record_id,
+                    "content": chunk["content"],
+                    "embedding": vector,
+                    "source": chunk["source"],
+                    "metadata": {
+                        "page_number": chunk["page_number"],
+                        "chunk_index": chunk["chunk_index"],
+                        "content_hash": chunk["content_hash"],
+                        "drive_file_id": file_id,
+                        "drive_modified_time": modified_time,
+                        "drive_path": drive_path,
+                        "rag_status": (
+                            "active" if record_id in existing_active_ids_before else "staging"
+                        ),
+                        **chunk.get("reference_metadata", {}),
+                    },
+                })
+            current_ids.update(record["id"] for record in records)
+            upsert_started_at = time.perf_counter()
+            response = _upsert_records_with_retry(client, settings.rag_table_name, records)
+            upsert_elapsed_ms = round((time.perf_counter() - upsert_started_at) * 1000)
+            written = len(response.data) if response.data else 0
+            inserted += written
+            logger.info(
+                "ingestion_batch_done",
+                batch=batch_number,
+                written=written,
+                duration_ms=round((time.perf_counter() - batch_started_at) * 1000),
+                embedding_ms=embedding_elapsed_ms,
+                upsert_ms=upsert_elapsed_ms,
+            )
+        except Exception as exc:
+            logger.error("ingestion_stream_batch_error", batch=batch_number, error=str(exc))
+            try:
+                _delete_document_rows(sorted(current_ids - existing_active_ids_before))
+            except Exception as cleanup_exc:
+                logger.error("ingestion_partial_cleanup_error", error=str(cleanup_exc))
+            raise RuntimeError(f"Falha ao processar lote {batch_number}: {exc}") from exc
+        finally:
+            del batch, texts
+
+    return inserted, current_ids, total_chunks
+
+
+def _upsert_records_with_retry(client, table_name: str, records: list[dict], attempts: int = 4):
+    """Grava um lote idempotente e tolera timeout transitório do PostgREST.
+
+    Os IDs determinísticos tornam a repetição segura. A falha só sobe ao worker
+    depois de esgotar as tentativas, evitando reprocessar livros grandes por um
+    único timeout momentâneo do banco.
+    """
+    for attempt in range(1, attempts + 1):
+        try:
+            return (
+                client.table(table_name)
+                .upsert(records, on_conflict="id", ignore_duplicates=False)
+                .execute()
+            )
+        except Exception as error:
+            if attempt == attempts:
+                raise
+            wait_seconds = min(8, 2 ** (attempt - 1))
+            logger.warning(
+                "ingestion_upsert_retry",
+                attempt=attempt,
+                max_attempts=attempts,
+                records=len(records),
+                wait_seconds=wait_seconds,
+                error=str(error),
+            )
+            time.sleep(wait_seconds)
+
+
+def _finalize_document_sync(file_id: str, current_ids: set[str]) -> int:
+    """Ativa a versão completa e remove a versão obsoleta numa transação."""
+    if not current_ids:
+        raise ValueError("A finalização exige ao menos um chunk atual")
+    response = get_supabase_client().rpc(
+        "finalize_drive_document_sync",
+        {
+            "p_drive_file_id": file_id,
+            "p_current_ids": sorted(current_ids),
+        },
+    ).execute()
+    rows = response.data or []
+    if not rows:
+        raise RuntimeError("finalize_drive_document_sync não retornou resultado")
+    return int(rows[0].get("removed_count", 0))
+
+
 def _delete_document_rows(row_ids: list[str], batch_size: int = 200) -> int:
     """Exclui IDs explícitos em lotes pequenos para evitar URLs muito grandes."""
     if not row_ids:
@@ -487,6 +740,18 @@ def _load_drive_manifest() -> list[dict]:
     return rows
 
 
+def _load_indexed_drive_file_ids() -> set[str]:
+    """Retorna somente IDs que possuem ao menos um chunk atualmente ativo."""
+    response = get_supabase_client().rpc("get_rag_drive_file_states").execute()
+    if getattr(response, "error", None):
+        raise RuntimeError(f"DRIVE_SYNC_INTEGRITY_QUERY_FAILED: {response.error}")
+    return {
+        str(row["drive_file_id"])
+        for row in (response.data or [])
+        if int(row.get("active_chunks") or 0) > 0
+    }
+
+
 def _manifest_payload(file_info: dict, result: IngestionResult) -> dict:
     now = datetime.now(timezone.utc).isoformat()
     return {
@@ -566,14 +831,35 @@ def ingest_pdf_from_bytes(
     logger.info("ingestion_start", file_name=file_name, file_id=file_id)
 
     try:
-        # ── Passo 1: Extração de texto ────────────────────────────────────────
+        # ── Passos 1 a 4: extração, chunking, embedding e gravação ───────────
         if file_name.lower().endswith(".docx"):
             pages = extract_text_from_docx_bytes(pdf_bytes)
+            result.total_pages = len(pages)
+            chunks: Iterable[dict] = chunk_text(
+                pages,
+                source_name=file_name,
+                chunk_size=chunk_size,
+                chunk_overlap=chunk_overlap,
+            )
         else:
-            pages = extract_text_from_pdf(pdf_bytes)
-        result.total_pages = len(pages)
+            chunks = iter_pdf_chunks(
+                pdf_bytes,
+                source_name=file_name,
+                result=result,
+                chunk_size=chunk_size,
+                chunk_overlap=chunk_overlap,
+            )
 
-        if not pages:
+        inserted, current_ids, total_chunks = upsert_chunk_stream_to_supabase(
+            chunks,
+            file_id=file_id,
+            modified_time=modified_time,
+            drive_path=drive_path,
+            batch_size=get_settings().ingestion_batch_size,
+        )
+        result.total_chunks = total_chunks
+
+        if total_chunks == 0:
             # PDFs digitalizados não podem ser pesquisados sem OCR. Não devem
             # interromper a reconciliação inteira, mas também não podem manter
             # chunks de uma versão anterior do mesmo arquivo no RAG.
@@ -588,26 +874,8 @@ def ingest_pdf_from_bytes(
                 chunks_removed=result.chunks_removed,
             )
             return result
-
-        # ── Passo 2: Chunking ─────────────────────────────────────────────────
-        chunks = chunk_text(
-            pages,
-            source_name=file_name,
-            chunk_size=chunk_size,
-            chunk_overlap=chunk_overlap,
-        )
-        result.total_chunks = len(chunks)
-
-        # ── Passo 3 & 4: Embed + Upsert ──────────────────────────────────────
-        inserted, current_ids = upsert_chunks_to_supabase(
-            chunks,
-            file_id=file_id,
-            modified_time=modified_time,
-            drive_path=drive_path,
-            batch_size=get_settings().ingestion_batch_size,
-        )
         result.chunks_inserted = inserted
-        result.chunks_removed = _remove_stale_chunks(file_id, current_ids)
+        result.chunks_removed = _finalize_document_sync(file_id, current_ids)
         if cleanup_legacy_source:
             result.chunks_removed += _remove_legacy_chunks_for_unique_source(file_name, file_id)
 
@@ -649,7 +917,11 @@ def ingest_all_from_drive() -> list[IngestionResult]:
     files = list_pdf_files(settings.drive_folder_id)
 
     manifest_rows = _load_drive_manifest()
-    plan = plan_drive_sync(files, manifest_rows)
+    plan = plan_drive_sync(
+        files,
+        manifest_rows,
+        indexed_drive_file_ids=_load_indexed_drive_file_ids(),
+    )
     logger.info(
         "drive_sync_plan",
         new=len(plan.new),

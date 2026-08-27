@@ -50,10 +50,23 @@ def _same_version(drive_file: dict, manifest_entry: dict) -> bool:
     return normalize(drive_file.get("modifiedTime")) == normalize(manifest_entry.get("modified_time"))
 
 
-def plan_drive_sync(current_files: list[dict], manifest_rows: list[dict]) -> DriveSyncPlan:
-    """Classifica arquivos sem tocar no Drive nem no banco."""
+def plan_drive_sync(
+    current_files: list[dict],
+    manifest_rows: list[dict],
+    *,
+    indexed_drive_file_ids: set[str] | None = None,
+) -> DriveSyncPlan:
+    """Classifica arquivos e detecta manifestos sem vetores ativos.
+
+    Um manifesto ``active`` só é suficiente quando há pelo menos um chunk ativo
+    associado ao mesmo ``drive_file_id``. Sem essa conferência, uma migração de
+    legado pode deixar o manifesto verde enquanto o RAG não contém o arquivo.
+    """
     current_by_id = {item["id"]: item for item in current_files}
     manifest_by_id = {item["drive_file_id"]: item for item in manifest_rows}
+    indexed_ids = None if indexed_drive_file_ids is None else {
+        str(file_id) for file_id in indexed_drive_file_ids
+    }
 
     new: list[dict] = []
     changed: list[dict] = []
@@ -63,7 +76,11 @@ def plan_drive_sync(current_files: list[dict], manifest_rows: list[dict]) -> Dri
         previous = manifest_by_id.get(file_id)
         if previous is None:
             new.append(drive_file)
-        elif previous.get("status") != "active" or not _same_version(drive_file, previous):
+        elif (
+            previous.get("status") != "active"
+            or not _same_version(drive_file, previous)
+            or (indexed_ids is not None and str(file_id) not in indexed_ids)
+        ):
             changed.append(drive_file)
         else:
             unchanged.append(drive_file)

@@ -3,7 +3,7 @@ Description=Schedule Guapu Drive-to-RAG queue planning
 
 [Timer]
 OnBootSec=2min
-OnUnitActiveSec=10min
+OnUnitInactiveSec=10min
 Persistent=true
 Unit=guapu-drive-sync-queue.service
 

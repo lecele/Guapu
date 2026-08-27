@@ -82,8 +82,10 @@ export function finalizeReferences(
   text: string,
   docs: RetrievedSource[],
   mode: GenerationMode,
+  enabled = true,
 ): string {
   const withoutModelReferences = removeModelReferences(text);
+  if (!enabled) return withoutModelReferences;
   if (!needsReferences(mode)) return withoutModelReferences;
 
   const fallback = 'Informação não disponível no artigo, consultar o Plano de Ensino ou docentes.';

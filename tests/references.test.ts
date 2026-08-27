@@ -37,6 +37,26 @@ test('usa título de capítulo do conteúdo antes do fallback', () => {
   assert.doesNotMatch(answer, /arquivo-que-nao-deve-aparecer/i);
 });
 
+test('prioriza a referência extraída do próprio documento e nunca o nome do arquivo', () => {
+  const answer = finalizeReferences(
+    'Explicação baseada no contexto.\n\nReferências: referência inventada.',
+    [{
+      source: 'biblioteca__nome-interno-que-nao-pode-ser-exibido.pdf',
+      content: 'Trecho clínico recuperado.',
+      metadata: {
+        reference_author: 'Morton, P.',
+        reference_year: '2011',
+        reference_title: 'Cuidados Críticos de Enfermagem',
+        reference_section: 'Cap. 8',
+      },
+    }],
+    'livre',
+  );
+
+  assert.match(answer, /- Morton, P\. \(2011\) Cuidados Críticos de Enfermagem \(Cap\. 8\)\./);
+  assert.doesNotMatch(answer, /nome-interno|referência inventada/i);
+});
+
 test('reconhece título quando autores estão na linha seguinte do trecho', () => {
   const answer = finalizeReferences(
     'Resumo.',
@@ -57,4 +77,16 @@ test('não mistura fallback com uma referência identificada', () => {
   );
   assert.match(answer, /Intervenções fundamentais em cirurgia/);
   assert.doesNotMatch(answer, /Informação não disponível no artigo/);
+});
+
+test('remove referências do modelo e não adiciona novas quando a exibição está desativada', () => {
+  const answer = finalizeReferences(
+    'Resposta segura.\n\nReferências:\n- fragmento inválido',
+    [{ source: 'plano.pdf', content: 'Trecho do documento.' }],
+    'info',
+    false,
+  );
+
+  assert.equal(answer, 'Resposta segura.');
+  assert.doesNotMatch(answer, /Referências|fragmento inválido/);
 });

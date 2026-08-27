@@ -30,6 +30,12 @@ import { finalizeReferences } from '@/lib/chat/references';
 export const runtime = 'nodejs';
 export const maxDuration = 120;
 
+const ACTIVE_PLAN_SOURCE = (
+  process.env.ACTIVE_PLAN_SOURCE ||
+  'administrativo__plano_ensino_INT55224__plano__ufsc__2026_2.pdf'
+).trim();
+const RAG_REFERENCES_ENABLED = process.env.RAG_REFERENCES_ENABLED === 'true';
+
 // ── Respostas fixas (zero tokens de LLM para navegação rápida) ───────────────
 
 const GREETING_RESPONSE =
@@ -105,12 +111,13 @@ interface MatchDocumentRow {
 }
 
 type MatchDocumentsRpc = (
-  functionName: 'match_documents' | 'match_documents_filtered',
+  functionName: 'match_documents' | 'match_documents_filtered' | 'match_documents_hybrid',
   args: {
     query_embedding: number[];
     match_threshold: number;
     match_count: number;
     source_pattern?: string;
+    query_text?: string;
   },
 ) => Promise<{ data: MatchDocumentRow[] | null; error: { message: string } | null }>;
 
@@ -177,16 +184,18 @@ async function retrieveDocs(
   embedding: number[],
   threshold = 0.35,
   sourcePattern?: string,
+  queryText?: string,
 ): Promise<Document[]> {
   const supabase = getSupabase();
   const matchDocuments = supabase.rpc.bind(supabase) as unknown as MatchDocumentsRpc;
   const { data, error } = await matchDocuments(
-    sourcePattern ? 'match_documents_filtered' : 'match_documents',
+    sourcePattern ? 'match_documents_filtered' : queryText ? 'match_documents_hybrid' : 'match_documents',
     {
     query_embedding: embedding,
     match_threshold: threshold,
     match_count: parseInt(process.env.RAG_MATCH_COUNT || '5'),
       ...(sourcePattern ? { source_pattern: sourcePattern } : {}),
+      ...(!sourcePattern && queryText ? { query_text: queryText } : {}),
     },
   );
   if (error) throw new Error(`RETRIEVAL_FAILED: ${error.message}`);
@@ -275,7 +284,7 @@ async function generateResponse(
 
       if (text && text.trim().length > 0) {
         return {
-          text: finalizeReferences(text, docs, sessionMode),
+          text: finalizeReferences(text, docs, sessionMode, RAG_REFERENCES_ENABLED),
           modelRequested: candidateModels[0],
           modelUsed: modelName,
           fallbackUsed: modelName !== candidateModels[0],
@@ -543,7 +552,8 @@ export async function POST(req: NextRequest) {
       docs = await retrieveDocs(
         embedding,
         decision.generationMode === 'info' ? -1 : isCourseQuery ? 0.25 : 0.35,
-        decision.generationMode === 'info' ? 'administrativo__plano_ensino%' : undefined,
+        decision.generationMode === 'info' ? ACTIVE_PLAN_SOURCE : undefined,
+        searchQuery,
       );
       retrievalLatency = Date.now() - retrievalStartedAt;
 

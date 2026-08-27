@@ -1,0 +1,63 @@
+services:
+  guapu-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: guapu-app:homologacao
+    container_name: guapu-app
+    restart: unless-stopped
+    env_file:
+      - /etc/guapu/app.env
+    ports:
+      - "127.0.0.1:3212:3212"
+    read_only: true
+    tmpfs:
+      - /tmp:size=128m,noexec,nosuid
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:3212/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    mem_limit: 768m
+    cpus: 1.5
+
+  guapu-panel:
+    image: guapu-app:homologacao
+    container_name: guapu-panel
+    restart: unless-stopped
+    env_file:
+      - /etc/guapu/panel.env
+    environment:
+      GUAPU_SURFACE: panel
+      PORT: 3213
+      HOSTNAME: 0.0.0.0
+    ports:
+      - "127.0.0.1:3213:3213"
+    read_only: true
+    tmpfs:
+      - /tmp:size=128m,noexec,nosuid
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:3213/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    mem_limit: 512m
+    cpus: 1

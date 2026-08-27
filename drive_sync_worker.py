@@ -10,6 +10,7 @@ import argparse
 import os
 import socket
 import sys
+import threading
 import time
 
 import structlog
@@ -21,10 +22,64 @@ from rag.ingestion import (
     ingest_pdf_from_bytes,
     save_drive_manifest_result,
 )
-from rag.sync_queue import claim_next_job, mark_job_complete, mark_job_failed
+from rag.sync_queue import (
+    claim_next_job,
+    mark_job_complete,
+    mark_job_failed,
+    renew_job_lease,
+)
 from services.drive_service import download_pdf
 
 logger = structlog.get_logger("drive_sync_worker")
+
+
+class LeaseHeartbeat:
+    """Mantém a posse do job enquanto um documento grande é processado."""
+
+    def __init__(self, client, job_id: str, worker_id: str, lease_seconds: int):
+        self.client = client
+        self.job_id = job_id
+        self.worker_id = worker_id
+        self.lease_seconds = lease_seconds
+        self.interval = max(30, lease_seconds // 3)
+        self._stop = threading.Event()
+        self._thread = threading.Thread(
+            target=self._run,
+            name=f"lease-heartbeat-{job_id}",
+            daemon=True,
+        )
+
+    def _run(self) -> None:
+        while not self._stop.wait(self.interval):
+            try:
+                renewed = renew_job_lease(
+                    self.client,
+                    self.job_id,
+                    self.worker_id,
+                    self.lease_seconds,
+                )
+                if not renewed:
+                    logger.error(
+                        "drive_sync_lease_lost",
+                        job_id=self.job_id,
+                        worker_id=self.worker_id,
+                    )
+                    return
+                logger.info("drive_sync_lease_renewed", job_id=self.job_id)
+            except Exception as error:
+                logger.error(
+                    "drive_sync_lease_renew_failed",
+                    job_id=self.job_id,
+                    error=str(error),
+                )
+
+    def __enter__(self):
+        self._thread.start()
+        return self
+
+    def __exit__(self, *_args):
+        self._stop.set()
+        self._thread.join(timeout=5)
 
 
 def process_job(job: dict) -> IngestionResult | None:
@@ -68,7 +123,13 @@ def run_worker(*, once: bool, poll_seconds: int, lease_seconds: int) -> None:
             continue
 
         try:
-            result = process_job(job)
+            with LeaseHeartbeat(
+                client,
+                str(job["id"]),
+                worker_id,
+                lease_seconds,
+            ):
+                result = process_job(job)
             mark_job_complete(client, str(job["id"]))
             logger.info(
                 "drive_sync_job_completed",

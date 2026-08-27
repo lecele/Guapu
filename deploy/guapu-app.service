@@ -1,0 +1,16 @@
+[Unit]
+Description=Guapu web application container
+Requires=docker.service
+After=docker.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory=/opt/guapu-app
+ExecStart=/usr/bin/docker compose -f /opt/guapu-app/docker-compose.guapu.yml up -d
+ExecStop=/usr/bin/docker compose -f /opt/guapu-app/docker-compose.guapu.yml down
+TimeoutStartSec=0
+
+[Install]
+WantedBy=multi-user.target

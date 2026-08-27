@@ -1,0 +1,74 @@
+{
+  "phase": 1,
+  "passed": false,
+  "inventory_drive_files": 119,
+  "active_managed_file_ids": 112,
+  "active_managed_chunks": 18686,
+  "staging_chunks": 5840,
+  "checks": {
+    "drive_files_without_active_vectors": [
+      "19X545ckd-ZnfYbo73Tz2glTklUiDA9qd",
+      "1IEpBXcCPCvgrivRH57lEmK_0i_7Jr-Tf",
+      "1QIm6St6nnOIf7JXFwoXCy6-InqKhF2WI",
+      "1YUfjf2WG5FonQaOImCsAY6aHSuyK7XNL",
+      "1gu0sH0qoUa1kVbqtv0-Zz33OC4vvSEYD",
+      "1hPPWPIJJ6zc-C0Tnihf6fpVwlE13HaoL",
+      "1rsAmg3UK8m_2fP4STqoiB_Zhyktnlw-W"
+    ],
+    "active_vectors_without_live_drive_file": [],
+    "drive_files_without_active_manifest": [
+      "19X545ckd-ZnfYbo73Tz2glTklUiDA9qd",
+      "1hPPWPIJJ6zc-C0Tnihf6fpVwlE13HaoL",
+      "1rsAmg3UK8m_2fP4STqoiB_Zhyktnlw-W"
+    ],
+    "staging_drive_file_ids": [
+      "19X545ckd-ZnfYbo73Tz2glTklUiDA9qd"
+    ],
+    "pending_jobs": [
+      {
+        "drive_file_id": "1YUfjf2WG5FonQaOImCsAY6aHSuyK7XNL",
+        "status": "queued",
+        "attempts": 1,
+        "max_attempts": 3
+      },
+      {
+        "drive_file_id": "1IEpBXcCPCvgrivRH57lEmK_0i_7Jr-Tf",
+        "status": "queued",
+        "attempts": 0,
+        "max_attempts": 3
+      },
+      {
+        "drive_file_id": "1gu0sH0qoUa1kVbqtv0-Zz33OC4vvSEYD",
+        "status": "queued",
+        "attempts": 1,
+        "max_attempts": 3
+      },
+      {
+        "drive_file_id": "1rsAmg3UK8m_2fP4STqoiB_Zhyktnlw-W",
+        "status": "queued",
+        "attempts": 2,
+        "max_attempts": 3
+      },
+      {
+        "drive_file_id": "19X545ckd-ZnfYbo73Tz2glTklUiDA9qd",
+        "status": "running",
+        "attempts": 1,
+        "max_attempts": 3
+      },
+      {
+        "drive_file_id": "1QIm6St6nnOIf7JXFwoXCy6-InqKhF2WI",
+        "status": "queued",
+        "attempts": 1,
+        "max_attempts": 3
+      },
+      {
+        "drive_file_id": "1hPPWPIJJ6zc-C0Tnihf6fpVwlE13HaoL",
+        "status": "queued",
+        "attempts": 0,
+        "max_attempts": 3
+      }
+    ],
+    "failed_jobs": [],
+    "active_unmanaged_chunks": 0
+  }
+}

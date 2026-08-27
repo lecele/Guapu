@@ -372,9 +372,10 @@ async def retrieve(state: GraphState) -> dict:
     
     def _execute_rpc():
         return client.rpc(
-            "match_documents",
+            "match_documents_hybrid",
             {
                 "query_embedding": question_embedding,
+                "query_text": question,
                 "match_threshold": settings.rag_match_threshold,
                 "match_count": settings.rag_match_count,
             },
