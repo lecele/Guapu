@@ -99,7 +99,7 @@ export default function HomePage() {
 
         <header className="guapu-header">
           <div className="guapu-brand">
-            <GuapuMark size={50} />
+            <GuapuMark size={60} />
             <div className="guapu-brand-copy">
               <span className="guapu-wordmark">Guapu</span>
             </div>
