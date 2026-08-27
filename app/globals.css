@@ -942,7 +942,7 @@ button {
 /* Em notebooks com altura reduzida, a tela inicial permanece completa sem
    transformar o conteúdo em uma área de rolagem. A conversa mantém sua
    própria rolagem normalmente. */
-@media (min-width: 621px) and (max-height: 820px) {
+@media (min-width: 621px) and (max-height: 920px) {
   .guapu-app {
     padding-top: var(--space-3);
     padding-bottom: var(--space-2);
