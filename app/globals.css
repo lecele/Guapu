@@ -992,15 +992,18 @@ button {
   }
 
   .guapu-divider {
-    margin: 4px 0;
+    /* Separa a apresentação das escolhas sem quebrar o ritmo visual. */
+    margin: 12px 0 10px;
   }
 
   .guapu-action-grid {
-    gap: var(--space-2);
+    gap: 10px;
   }
 
   .guapu-action-card {
-    padding: 6px var(--space-4);
+    /* Usa o espaço livre acima da caixa de conversa para cartões mais
+       fáceis de percorrer e clicar. */
+    padding: 10px var(--space-4);
   }
 
   .guapu-action-icon {
@@ -1010,7 +1013,7 @@ button {
   }
 
   .guapu-action-card small {
-    line-height: 1.28;
+    line-height: 1.35;
   }
 
   .guapu-caption {
