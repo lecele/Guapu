@@ -1026,8 +1026,23 @@ button {
     display: none;
   }
 
+  .guapu-header-actions {
+    gap: var(--space-2);
+  }
+
+  /* Mantém a identificação institucional visível sem competir com a marca
+     ou com o seletor de tema nas telas pequenas. */
   .guapu-header-eyebrow {
-    display: none;
+    display: inline-flex;
+    gap: 4px;
+    font-size: 8px;
+    letter-spacing: 0.02em;
+    line-height: 1.15;
+  }
+
+  .guapu-header-eyebrow span {
+    width: 4px;
+    height: 4px;
   }
 
   .guapu-hero {
