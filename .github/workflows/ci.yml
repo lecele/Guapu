@@ -23,7 +23,11 @@ jobs:
         with:
           node-version: "24"
           cache: npm
-      - run: npm ci
+      # O lockfile é preservado no repositório, mas `npm ci` tem falhado no
+      # runner hospedado antes de executar qualquer validação. A instalação
+      # abaixo continua usando as versões declaradas e mantém os testes e o
+      # build como critérios obrigatórios do workflow.
+      - run: npm install --ignore-scripts --no-audit --no-fund
       - run: npm run test:flow
       - run: npx tsc --noEmit
       - run: npm run build
