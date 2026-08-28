@@ -139,9 +139,16 @@ type ResponseKind = 'navigation' | 'summary' | 'quiz_question' | 'quiz_feedback'
 function formatContext(docs: Document[]): string {
   if (!docs.length) return 'Nenhum material disponível.';
   return docs
-    .map((d, i) =>
-      `[${i + 1}] Trecho RAG ${i + 1} (similaridade: ${d.similarity.toFixed(2)})\n${d.content}`
-    )
+    .map((d, i) => {
+      const page = Number(d.metadata.page_number);
+      const chunk = Number(d.metadata.chunk_index);
+      const location = [
+        `arquivo: ${d.source}`,
+        Number.isFinite(page) && page > 0 ? `página: ${page}` : null,
+        Number.isFinite(chunk) && chunk >= 0 ? `trecho: ${chunk + 1}` : null,
+      ].filter(Boolean).join('; ');
+      return `[${i + 1}] Trecho RAG ${i + 1} (${location}; similaridade: ${d.similarity.toFixed(2)})\n${d.content}`;
+    })
     .join('\n\n---\n\n');
 }
 
@@ -419,6 +426,11 @@ function buildTurnMetadata(params: {
       source: doc.source,
       rank: index + 1,
       similarity: doc.similarity,
+      drive_file_id: typeof doc.metadata.drive_file_id === 'string' ? doc.metadata.drive_file_id : null,
+      content_hash: typeof doc.metadata.content_hash === 'string' ? doc.metadata.content_hash : null,
+      page_number: Number.isFinite(Number(doc.metadata.page_number)) ? Number(doc.metadata.page_number) : null,
+      chunk_index: Number.isFinite(Number(doc.metadata.chunk_index)) ? Number(doc.metadata.chunk_index) : null,
+      reference_section: typeof doc.metadata.reference_section === 'string' ? doc.metadata.reference_section : null,
     })),
     latency_ms: {
       embedding: params.embeddingLatency,

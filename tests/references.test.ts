@@ -7,14 +7,14 @@ test('substitui referências geradas pelo modelo por dados presentes no trecho R
   const answer = finalizeReferences(
     'Explicação breve.\n\nReferências: fonte inventada • Referência: outra fonte\n\nDeseja aprofundar este tema?',
     [
-      { source: 'aula__cuidados_pos_operatorios_v1.pdf', content: 'Silva (2022). Cuidados perioperatórios em cirurgia geral. Capítulo 4, p. 45-52.' },
+      { source: 'aula__cuidados_pos_operatorios_v1.pdf', content: 'Silva (2022). Cuidados perioperatórios em cirurgia geral. Capítulo 4, p. 45-52.', metadata: { drive_file_id: 'drive-aula', page_number: 1, chunk_index: 0 } },
       { source: 'aula__cuidados_pos_operatorios_v1.pdf', content: 'Silva (2022). Cuidados perioperatórios em cirurgia geral. Capítulo 4, p. 45-52.' },
       { source: 'plano_de_ensino.docx', content: 'Plano de ensino sem metadados bibliográficos no trecho recuperado.' },
     ],
     'resumo',
   );
 
-  assert.match(answer, /- Silva \(2022\) Cuidados perioperatórios em cirurgia geral\. p\. 45-52\./);
+  assert.match(answer, /- Silva \(2022\) Cuidados perioperatórios em cirurgia geral\. p\. 45-52\. \[Fonte: aula__cuidados_pos_operatorios_v1\.pdf; p\. 1; trecho 1\]/);
   assert.doesNotMatch(answer, /- Informação não disponível no artigo/);
   assert.doesNotMatch(answer, /aula cuidados pos operatorios|plano de ensino\.docx/i);
   assert.doesNotMatch(answer, /fonte inventada/);
@@ -44,17 +44,20 @@ test('prioriza a referência extraída do próprio documento e nunca o nome do a
       source: 'biblioteca__nome-interno-que-nao-pode-ser-exibido.pdf',
       content: 'Trecho clínico recuperado.',
       metadata: {
+        drive_file_id: 'drive-morton',
         reference_author: 'Morton, P.',
         reference_year: '2011',
         reference_title: 'Cuidados Críticos de Enfermagem',
         reference_section: 'Cap. 8',
+        page_number: 8,
+        chunk_index: 2,
       },
     }],
     'livre',
   );
 
-  assert.match(answer, /- Morton, P\. \(2011\) Cuidados Críticos de Enfermagem \(Cap\. 8\)\./);
-  assert.doesNotMatch(answer, /nome-interno|referência inventada/i);
+  assert.match(answer, /- Morton, P\. \(2011\) Cuidados Críticos de Enfermagem \(Cap\. 8\)\. \[Fonte: biblioteca__nome-interno-que-nao-pode-ser-exibido\.pdf; p\. 8; trecho 3; Cap\. 8\]/);
+  assert.doesNotMatch(answer, /referência inventada/i);
 });
 
 test('reconhece título quando autores estão na linha seguinte do trecho', () => {

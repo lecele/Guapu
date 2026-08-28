@@ -1,6 +1,6 @@
 # Baseline da Fase 2A — 28/08/2026
 
-Status: **baseline aprovado; otimizações ainda não iniciadas**.
+Status: **baseline aprovado; primeira melhoria de rastreabilidade implementada e aguardando publicação/verificação real**.
 
 ## Medição real
 
@@ -22,6 +22,14 @@ Status: **baseline aprovado; otimizações ainda não iniciadas**.
 ## Resultado
 
 O baseline atende à meta provisória do plano: P50 abaixo de 8 s, P95 abaixo de 15 s e taxa de erro abaixo de 1%. As respostas críticas permaneceram fundamentadas durante a carga moderada.
+
+## Melhoria implementada nesta etapa
+
+- O contexto entregue ao modelo passa a identificar, quando disponível, arquivo, página e número do trecho recuperado.
+- A telemetria de cada resposta passa a guardar `drive_file_id`, `content_hash`, página, trecho e seção de cada chunk recuperado.
+- As referências exibidas ao estudante passam a trazer a origem exata do chunk gerenciado pelo Drive, com página/trecho quando esses metadados existem.
+- Chunks sem vínculo comprovado com o Drive não ganham uma origem artificial na resposta.
+- A melhoria foi coberta por teste de referência e não altera a quantidade de chamadas ao Gemini.
 
 ## Próximas tarefas da Fase 2A
 

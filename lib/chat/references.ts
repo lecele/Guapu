@@ -28,6 +28,27 @@ function formatSourceReference(source?: string): string {
     : `${readableSource} (${sourceLabel})`;
 }
 
+function traceLocation(source?: string, metadata?: Record<string, unknown>): string {
+  const sourceLabel = source?.trim();
+  const driveFileId = typeof metadata?.drive_file_id === 'string' ? metadata.drive_file_id.trim() : '';
+  // Só exibimos a trilha de arquivo quando o chunk está vinculado ao Drive.
+  // Isso evita transformar um rótulo legado/desconhecido em uma referência
+  // aparentemente oficial.
+  if (!driveFileId) return '';
+  const page = Number(metadata?.page_number);
+  const chunk = Number(metadata?.chunk_index);
+  const section = typeof metadata?.reference_section === 'string'
+    ? metadata.reference_section.trim()
+    : '';
+  const location = [
+    sourceLabel ? `Fonte: ${sourceLabel}` : null,
+    Number.isFinite(page) && page > 0 ? `p. ${page}` : null,
+    Number.isFinite(chunk) && chunk >= 0 ? `trecho ${chunk + 1}` : null,
+    section ? section : null,
+  ].filter(Boolean);
+  return location.length > 0 ? ` [${location.join('; ')}]` : '';
+}
+
 function referenceFromContent(
   content?: string,
   metadata?: Record<string, unknown>,
@@ -123,18 +144,23 @@ export function finalizeReferences(
   if (!needsReferences(mode)) return withoutModelReferences;
 
   const fallback = 'Informação não disponível no artigo, consultar o Plano de Ensino ou docentes.';
-  const extracted = mode === 'info'
-    ? [...new Set(docs.map((doc) => formatSourceReference(doc.source)))]
-    : [...new Set(docs.map((doc) => referenceFromContent(doc.content, doc.metadata, doc.source)))];
+  const extracted = docs.map((doc) => {
+    const reference = mode === 'info'
+      ? formatSourceReference(doc.source)
+      : referenceFromContent(doc.content, doc.metadata, doc.source);
+    return {
+      reference,
+      traced: `${reference}${traceLocation(doc.source, doc.metadata)}`,
+    };
+  });
   // A camada 3 só é permitida quando nenhum dos trechos trouxe pista
   // bibliográfica melhor. Nunca misture uma referência identificada com
   // rótulos de arquivo ou uma linha de fallback.
-  const identified = extracted.filter((source) => source !== fallback && !isSourceOnlyReference(source));
-  const sources = identified.length > 0
-    ? identified.slice(0, 5)
-    : extracted.slice(0, 1);
+  const identified = extracted.filter((item) => item.reference !== fallback && !isSourceOnlyReference(item.reference));
+  const candidates = identified.length > 0 ? identified : extracted.slice(0, 1);
+  const sources = [...new Map(candidates.map((item) => [item.traced, item])).values()].slice(0, 5);
   const lines = sources.length > 0
-    ? sources.map((source) => `- ${source}`)
+    ? sources.map((item) => `- ${item.traced}`)
     : [`- ${fallback}`];
 
   return `${withoutModelReferences}\n\n**Referências:**\n${lines.join('\n')}`.trim();

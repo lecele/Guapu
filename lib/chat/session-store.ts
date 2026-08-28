@@ -34,6 +34,11 @@ export interface TurnMetadata {
     source: string;
     rank: number;
     similarity: number;
+    drive_file_id: string | null;
+    content_hash: string | null;
+    page_number: number | null;
+    chunk_index: number | null;
+    reference_section: string | null;
   }>;
   latency_ms: {
     embedding: number;
