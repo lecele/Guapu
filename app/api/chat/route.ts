@@ -508,7 +508,7 @@ function requiresNextQuizQuestion(decision: ReturnType<typeof resolveTurn>, answ
 }
 
 function needsClinicalCoverageRepair(question: string, answer: string): boolean {
-  const normalizedQuestion = question.normalize('NFD').replace(/[\\u0300-\\u036f]/g, '');
+  const normalizedQuestion = question.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
   const isPostoperativeImmediate = /principais cuidados.*pos-?operatorio imediato/i.test(normalizedQuestion);
   if (!isPostoperativeImmediate) return false;
 
@@ -519,7 +519,7 @@ function needsClinicalCoverageRepair(question: string, answer: string): boolean 
     || !/(?:dor|conforto|analges)/i.test(answer);
 }
 
-const POSTOPERATIVE_COVERAGE_REQUIREMENT = `Revise a resposta antes de finalizá-la. Como a pergunta pede os principais cuidados no pós-operatório imediato, cubra explicitamente, quando sustentados pelos trechos RAG, os eixos de sinais vitais, avaliação respiratória e avaliação da dor/conforto, além dos demais cuidados relevantes encontrados no contexto. Não invente condutas nem informações ausentes; se algum eixo não estiver sustentado, declare essa limitação.`;
+const POSTOPERATIVE_COVERAGE_REQUIREMENT = `Revise a resposta antes de finalizá-la. Como a pergunta pede os principais cuidados no pós-operatório imediato, organize os cuidados sustentados pelos trechos RAG e inclua explicitamente os três rótulos abaixo, quando houver evidência no contexto: "Sinais vitais", "Avaliação respiratória" e "Dor e conforto". Desenvolva cada eixo em uma frase objetiva e acrescente os demais cuidados relevantes encontrados. Não invente condutas nem informações ausentes; se algum eixo não estiver sustentado, declare essa limitação.`;
 
 // ── Histórico e Cache de Estado ───────────────────────────────────────────────
 
