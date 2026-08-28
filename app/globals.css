@@ -569,30 +569,20 @@ button {
   justify-self: end;
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  color: var(--texto-fraco);
-  font-size: 10px;
-  letter-spacing: 0.02em;
-  line-height: 1.4;
+  opacity: 0.36;
   text-decoration: none;
-  opacity: 0.85;
-  transition: color 150ms ease, opacity 150ms ease;
+  transition: opacity 150ms ease, transform 150ms ease;
 }
 
 .guapu-brand-watermark:hover,
 .guapu-brand-watermark:focus-visible {
-  color: var(--texto-suave);
-  opacity: 1;
+  opacity: 0.9;
+  transform: translateY(-1px);
 }
 
-.guapu-brand-watermark svg {
-  width: 14px;
-  height: 14px;
-  fill: none;
-  stroke: currentColor;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  stroke-width: 1.55;
+.guapu-brand-watermark img {
+  width: 104px;
+  height: auto;
 }
 
 .guapu-error {
@@ -1109,13 +1099,11 @@ button {
   }
 
   .guapu-brand-watermark {
-    gap: 4px;
-    font-size: 9px;
+    opacity: 0.42;
   }
 
-  .guapu-brand-watermark svg {
-    width: 12px;
-    height: 12px;
+  .guapu-brand-watermark img {
+    width: 82px;
   }
 
   .guapu-bubble-stack,
