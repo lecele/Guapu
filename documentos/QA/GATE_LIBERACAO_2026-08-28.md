@@ -9,7 +9,7 @@ Este documento é o controle de evidências para a liberação. Uma fase só pod
 | 0. Contenção e ambiente seguro | Aprovada operacionalmente | Segredos fora do repositório, deploy identificado e rotas protegidas | Manter rollback disponível |
 | 1. Reconciliação Drive ↔ RAG | Aprovada | 119 arquivos vivos, 119 ativos, 57.796 chunks, zero staging/órfãos; verificador estrito e bateria real 9/9 aprovados | Nenhum técnico conhecido |
 | 2. Recuperação e desempenho | Parcial | Fontes atuais, fallback seguro e medições reais aprovados | Fechar invalidação/cache seguro e repetir carga após a mudança |
-| 2A. Qualidade e velocidade | Em execução | 9/9 no deploy atual; P50 3,39 s, P95 8,40 s; 6/6 respostas com evidência rastreáveis; plano antigo bloqueado 3/3 | Cache com `corpus_version`, estabilidade e carga comparativa |
+| 2A. Qualidade e velocidade | Em execução | 9/9 no deploy `dpl_Bfq3kAP3rVgZpTxtUGkQKwXC5Rhh`; cache com corpus versionado ativo; 5 hits em 9 turnos, versão presente em 9/9, 6/6 respostas com evidência rastreáveis | Provar invalidação após alteração documental e repetir a bateria |
 | 3. Referências verificadas | Parcial | Referências geradas a partir dos chunks e teste live com 6/6 evidências rastreáveis | Amostra formal completa e aprovação específica da fase |
 | 4. Prompts e fluxos | Parcial | 31 testes locais de fluxo, sessão, prompts e referências aprovados | Homologação completa dos fluxos do cliente em produção |
 | 5. Interface | Parcial | Build e deploy aprovados; ajustes responsivos aplicados | QA visual formal em tamanhos móveis e desktop, sem rolagem ou corte |
@@ -20,13 +20,14 @@ Este documento é o controle de evidências para a liberação. Uma fase só pod
 ## Evidências reais mais recentes
 
 - Produção: `https://guapu.vercel.app`.
-- Deploy atual do código: `dpl_3JNSUXkanJGBcabPHzS5HScpiyWV`, estado `Ready`.
+- Deploy atual do código: `dpl_Bfq3kAP3rVgZpTxtUGkQKwXC5Rhh`, estado `Ready`.
 - Health check: `healthy`.
 - Bateria crítica atual: 9/9 aprovados em três repetições por cenário.
 - Modelo efetivo nas seis respostas com contexto: `gemini-3.5-flash-lite`.
 - Cada uma das seis respostas com contexto possui `drive_file_id`, `content_hash` e `chunk_index`.
 - As três consultas ao documento antigo retornaram `NO_RELEVANT_CONTEXT` e não geraram resposta fundamentada em fonte genérica.
 - Lint, build e 31 testes automatizados locais: aprovados.
+- Cache de recuperação: somente chunks, chave com `corpus_version`, TTL e limite de memória; 9 versões de corpus registradas e 5 cache hits na bateria pós-deploy.
 
 ## Regra de liberação
 

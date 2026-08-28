@@ -1,6 +1,6 @@
 # Baseline da Fase 2A — 28/08/2026
 
-Status: **rastreabilidade, seleção do modelo, proteção de latência e painel operacional publicados e verificados; cache seguro permanece pendente**.
+Status: **rastreabilidade, seleção do modelo, proteção de latência, busca híbrida e cache seguro publicados e verificados; falta o teste controlado de invalidação após alteração documental**.
 
 ## Medição real
 
@@ -51,11 +51,14 @@ O baseline atende à meta provisória do plano: P50 abaixo de 8 s, P95 abaixo de
 - A otimização adicional limitou os candidatos lexicais e eliminou a ordenação cara. O benchmark real passou em correção e orçamento: semântica entre 0,26–1,60 s e híbrida entre 0,12–1,99 s, com as fontes esperadas nos três cenários. A flag `RAG_HYBRID_ENABLED=true` foi ativada na produção com fallback semântico automático.
 - Após essa ativação, a bateria crítica de produção passou em 9/9: seis respostas com evidência usaram `gemini-3.5-flash-lite`, todas as referências ficaram rastreáveis, e os três pedidos sobre o plano antigo foram bloqueados. P50: 4,50 s; P95: 8,41 s; máximo: 8,49 s. Health HTTP 200 e nove chamadas sem erro nos logs da Vercel.
 - O mesmo código foi republicado a partir do commit `e9322c4` no deploy `dpl_YJ84sBgz5NQL2MUBpSZDkBRhqLu2`. O smoke test pós-publicação passou em 3/3 e o health check retornou HTTP 200; os logs posteriores não registraram timeout.
+- O cache de recuperação foi implementado no commit `5854700` e publicado no deploy `dpl_Bfq3kAP3rVgZpTxtUGkQKwXC5Rhh`. Ele armazena somente os chunks recuperados, nunca a resposta gerada, com limite de 128 entradas e TTL de 5 minutos. A chave inclui versão do corpus, pergunta normalizada, limiar e filtro de fonte.
+- A flag `RAG_RETRIEVAL_CACHE_ENABLED=true` foi ativada somente depois de lint, 31 testes de fluxo, build e smoke test pré-cache aprovados. A leitura de `get_rag_corpus_version()` usa timeout dedicado de 800 ms; se falhar, o caminho continua sem cache.
+- Na bateria real pós-ativação, o health check retornou HTTP 200 e 9/9 cenários passaram. A telemetria dos 9 turnos registrou versão de corpus em 9/9, 5 cache hits, 6 respostas com rastreabilidade documental e nenhuma quebra de fonte ou fallback.
+- Nessa mesma bateria pós-cache, as latências totais ficaram entre 790 ms e 8.901 ms; P50 de 7.505 ms e P95 de 8.159 ms. O cache reduz a recuperação, enquanto a geração do modelo continua sendo a maior parcela do tempo nos casos com resposta fundamentada.
+- A leitura repetida da versão do corpus retornou o mesmo hash nas duas consultas, com 119 itens ativos no manifesto. Ainda não foi feita uma alteração controlada no Drive para provar a troca do hash e a invalidação; esse é o único teste pendente antes de considerar a Fase 2A aprovada.
 
 ## Próximas tarefas da Fase 2A
 
-1. Versionar o corpus e testar invalidação após alteração documental.
-2. Medir a rastreabilidade completa das referências — arquivo, trecho e página/seção.
-3. Comparar modelos com o mesmo conjunto de perguntas, incluindo correção, latência, estabilidade e custo.
-4. Avaliar cache seguro somente depois de existir `corpus_version` confiável.
-5. Repetir a bateria após cada alteração e manter o baseline como comparação.
+1. Executar alteração controlada de um documento de teste no Drive, aguardar a reconciliação, confirmar nova `corpus_version`, ausência dos chunks antigos e nova resposta baseada no arquivo atualizado; restaurar o estado aprovado ao final.
+2. Repetir a bateria após o teste de invalidação e manter este baseline como comparação.
+3. Aprovar a Fase 2A somente se a atualização/remoção não servir conteúdo antigo e os critérios de latência e fundamentação continuarem passando.
