@@ -31,6 +31,13 @@ O baseline atende à meta provisória do plano: P50 abaixo de 8 s, P95 abaixo de
 - Chunks sem vínculo comprovado com o Drive não ganham uma origem artificial na resposta.
 - A melhoria foi coberta por teste de referência e não altera a quantidade de chamadas ao Gemini.
 
+## Publicação e bloqueio da validação ao vivo
+
+- Build local, lint e 31 testes automatizados passaram antes da publicação.
+- A versão foi publicada na Vercel e está `Ready`, com os aliases de produção preservados.
+- A primeira consulta real pós-publicação foi registrada com `EMBEDDING_FAILED` porque a chave `GOOGLE_API_KEY` de produção recebeu `429 RESOURCE_EXHAUSTED` (créditos pré-pagos esgotados). Isso é uma indisponibilidade da conta Gemini, não uma falha do código de rastreabilidade.
+- A validação ao vivo da referência e da telemetria fica pendente até trocar a chave Gemini de produção por uma conta com crédito e fazer um novo deploy.
+
 ## Próximas tarefas da Fase 2A
 
 1. Versionar o corpus e testar invalidação após alteração documental.
