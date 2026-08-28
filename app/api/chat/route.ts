@@ -248,6 +248,7 @@ function retrievalCacheKey(params: {
   query: string;
   threshold: number;
   sourcePattern?: string;
+  mode: string;
   corpusVersion: string;
 }): string {
   return [
@@ -255,6 +256,7 @@ function retrievalCacheKey(params: {
     normalizeCachePart(params.query),
     normalizeCachePart(params.threshold),
     normalizeCachePart(params.sourcePattern),
+    normalizeCachePart(params.mode),
   ].join('|');
 }
 
@@ -314,9 +316,10 @@ async function retrieveDocs(
   sourcePattern?: string,
   queryText?: string,
   corpusVersion?: string | null,
+  mode = 'livre',
 ): Promise<{ docs: Document[]; cacheHit: boolean }> {
   const cacheKey = RETRIEVAL_CACHE_ENABLED && corpusVersion && queryText
-    ? retrievalCacheKey({ query: queryText, threshold, sourcePattern, corpusVersion })
+    ? retrievalCacheKey({ query: queryText, threshold, sourcePattern, mode, corpusVersion })
     : null;
   if (cacheKey) {
     const cached = getCachedRetrieval(cacheKey);
@@ -760,6 +763,7 @@ export async function POST(req: NextRequest) {
         decision.generationMode === 'info' ? ACTIVE_PLAN_SOURCE : undefined,
         searchQuery,
         corpusVersion,
+        decision.generationMode ?? 'livre',
       );
       docs = retrieval.docs;
       retrievalCacheHit = retrieval.cacheHit;
