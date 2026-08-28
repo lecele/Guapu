@@ -119,6 +119,16 @@ type MatchDocumentsRpc = (
   },
 ) => Promise<{ data: MatchDocumentRow[] | null; error: { message: string } | null }>;
 
+function mapRetrievedDocuments(rows: MatchDocumentRow[] | null): Document[] {
+  return (rows || []).map((row) => ({
+    id: String(row.id ?? ''),
+    content: row.content,
+    source: row.source || 'desconhecido',
+    similarity: row.similarity || 0,
+    metadata: row.metadata || {},
+  }));
+}
+
 type ResponseKind = 'navigation' | 'summary' | 'quiz_question' | 'quiz_feedback' | 'info' | 'free' | 'fallback';
 
 // ── Roteamento por intenção (sem LLM) ────────────────────────────────────────
@@ -199,27 +209,37 @@ async function retrieveDocs(
     ...(!sourcePattern && queryText ? { query_text: queryText } : {}),
   };
 
-  // Falhas breves de rede/compute não devem virar uma resposta de "sem
-  // contexto". A segunda tentativa só ocorre quando a primeira falha e tem
-  // espera curta, portanto não altera a latência do caminho normal.
+  // O híbrido combina busca semântica e lexical, mas pode exceder o limite do
+  // PostgREST quando a base está sob carga. Nesse caso, a busca semântica
+  // continua sendo uma fonte válida de contexto e evita expor erro técnico ao
+  // estudante. Ela é usada apenas depois de uma falha do híbrido.
   let lastError = 'erro desconhecido';
-  for (let attempt = 1; attempt <= 3; attempt += 1) {
+  const maxAttempts = functionName === 'match_documents_hybrid' ? 1 : 3;
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
     try {
       const { data, error } = await matchDocuments(functionName, rpcArgs);
       if (!error) {
-        return (data || []).map((row) => ({
-          id: String(row.id ?? ''),
-          content: row.content,
-          source: row.source || 'desconhecido',
-          similarity: row.similarity || 0,
-          metadata: row.metadata || {},
-        }));
+        return mapRetrievedDocuments(data);
       }
       lastError = error.message;
     } catch (error) {
       lastError = error instanceof Error ? error.message : String(error);
     }
-    if (attempt < 3) {
+    if (functionName === 'match_documents_hybrid') {
+      try {
+        const { data, error } = await matchDocuments('match_documents', {
+          query_embedding: embedding,
+          match_threshold: threshold,
+          match_count: rpcArgs.match_count,
+        });
+        if (!error) return mapRetrievedDocuments(data);
+        lastError = `${lastError}; fallback semântico: ${error.message}`;
+      } catch (error) {
+        const fallbackError = error instanceof Error ? error.message : String(error);
+        lastError = `${lastError}; fallback semântico: ${fallbackError}`;
+      }
+    }
+    if (attempt < maxAttempts) {
       await new Promise((resolve) => setTimeout(resolve, 350 * attempt));
     }
   }
