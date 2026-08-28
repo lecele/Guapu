@@ -39,6 +39,7 @@ O baseline atende à meta provisória do plano: P50 abaixo de 8 s, P95 abaixo de
 - A chave de produção foi substituída pela chave paga disponível em `Tutor/.env.simulacao`, sem expor o segredo, e um novo deploy foi concluído com status `Ready`.
 - A validação ao vivo pós-troca confirmou resposta fundamentada e rastreável. A bateria crítica repetida passou em 3/3: plano vigente, glossário e bloqueio de plano antigo. Latências da repetição: 8,5 s, 9,2 s e 1,8 s; o único fallback foi o cenário sem evidência, conforme esperado.
 - Em uma bateria anterior, o modelo primário recebeu 503 temporário por alta demanda e o fallback respondeu corretamente em 23,9 s. A ocorrência foi registrada como instabilidade transitória do provedor, não como erro de fonte/RAG; a repetição posterior não reproduziu o 503.
+- Comparação controlada de geração com o mesmo contexto: `gemini-3.5-flash-lite` respondeu corretamente em aproximadamente 0,9 s; `gemini-3.1-flash-lite` respondeu corretamente em aproximadamente 5,1 s; `gemini-3.5-flash` sofreu indisponibilidade temporária; `gemini-3.6-flash` não respeitou o formato curto do teste. A ordem de produção foi ajustada para priorizar `gemini-3.5-flash-lite`, com fallback para `gemini-3.1-flash-lite` e depois `gemini-3.5-flash`.
 
 ## Próximas tarefas da Fase 2A
 

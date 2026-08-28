@@ -268,14 +268,14 @@ async function generateResponse(
     history: formatHistory(history),
   })}\n\n${buildFlowPrompt({ state: sessionState, mode: activeMode, topic: inlineTheme || '', quizQuestion })}`;
 
-  const requestedModel = process.env.GEMINI_CHAT_MODEL ?? 'gemini-3.5-flash';
+  // Flash Lite foi comparado com os candidatos disponíveis e apresentou o
+  // melhor equilíbrio entre correção do conteúdo e latência. O fallback fica
+  // restrito a modelos conhecidos para não perder tempo em nomes instáveis.
+  const requestedModel = process.env.GEMINI_CHAT_MODEL ?? 'gemini-3.5-flash-lite';
   const candidateModels = [...new Set([
     requestedModel,
-    'gemini-3.5-flash',
     'gemini-3.1-flash-lite',
-    'gemini-3.5-flash-lite',
-    'gemini-3.6-flash',
-    'gemini-3.7-flash',
+    'gemini-3.5-flash',
   ])];
 
   const prompt = `${buildModePrompt({
