@@ -28,6 +28,7 @@ Este documento é o controle de evidências para a liberação. Uma fase só pod
 - As três consultas ao documento antigo retornaram `NO_RELEVANT_CONTEXT` e não geraram resposta fundamentada em fonte genérica.
 - Lint, build e 31 testes automatizados locais: aprovados.
 - Cache de recuperação: somente chunks, chave com `corpus_version`, TTL e limite de memória; 9 versões de corpus registradas e 5 cache hits na bateria pós-deploy.
+- Inventário ao vivo: 119 arquivos no Drive, 119 manifestos ativos e nenhum ID faltante ou excedente.
 
 ## Regra de liberação
 

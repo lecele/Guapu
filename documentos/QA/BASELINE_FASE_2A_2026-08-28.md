@@ -59,6 +59,7 @@ O baseline atende à meta provisória do plano: P50 abaixo de 8 s, P95 abaixo de
 - O refinamento que separa a chave por modalidade foi publicado no commit `246be64`, deploy `dpl_2kGWgbKXwgieGd4YHhVqqUfjcwWH`. O smoke test exato desse deploy passou em 3/3, com latências de 1.872–8.575 ms, e o health check retornou HTTP 200.
 - O ensaio controlado no manifesto, sem criar chunks e com limpeza garantida, passou: a versão mudou ao adicionar uma entrada ativa, mudou novamente ao retirar essa entrada, voltou ao hash original após a exclusão e os 119 ativos foram restaurados.
 - O benchmark real final da recuperação passou em correção e orçamento de 3 s para os três casos, tanto na busca semântica quanto na híbrida: todas as fontes esperadas foram encontradas; a semântica ficou entre 606 ms e 1.980 ms e a híbrida entre 260 ms e 306 ms.
+- A leitura ao vivo do Drive na VPS encontrou 119 arquivos; o manifesto do Supabase também possui 119 registros, todos `active`, sem arquivo faltante ou registro sobrando. A identidade do conjunto consultável permanece alinhada ao inventário oficial.
 
 ## Próximas tarefas da Fase 2A
 
