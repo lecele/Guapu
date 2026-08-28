@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useRef, type ComponentType } from 'react';
-import Image from 'next/image';
 import {
   BookOpen,
   CircleHelp,
@@ -175,7 +174,12 @@ export default function HomePage() {
               aria-label="Conheça a Agentes na Saúde (abre em uma nova aba)"
               title="Desenvolvido por Agentes na Saúde"
             >
-              <Image src="/agentes-na-saude.png" alt="Agentes na Saúde" width={130} height={45} />
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M9 2h6v6h6v8h-6v6H9v-6H3V8h6z" />
+                <path d="M8.5 12h7M12 8.5v7" />
+                <circle cx="12" cy="12" r="2.1" />
+              </svg>
+              <span>Agentes na Saúde</span>
             </a>
           </div>
         </footer>
