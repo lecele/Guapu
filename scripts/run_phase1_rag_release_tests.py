@@ -53,6 +53,17 @@ SCENARIOS = (
 )
 
 
+def source_matches(source: str, expected: str | None) -> bool:
+    """Compara a fonte sem penalizar a troca PDF/DOCX do mesmo documento."""
+    if expected is None:
+        return True
+
+    def normalize(value: str) -> str:
+        return value.strip().lower().removesuffix(".pdf").removesuffix(".docx")
+
+    return normalize(source) == normalize(expected)
+
+
 def request_json(url: str, body: dict) -> dict:
     request = Request(
         url,
@@ -133,7 +144,7 @@ def main() -> None:
                 and error_code_ok
                 and has_context is scenario["expects_context"]
                 and bool(metadata.get("fallback_used")) is scenario["expects_fallback"]
-                and (required is None or required in sources)
+                and (required is None or any(source_matches(source, required) for source in sources))
                 and forbidden not in sources
                 and forbidden not in answer
                 and has_references is scenario["requires_references"]

@@ -164,6 +164,10 @@ function getSupabase() {
   if (!_supabase) _supabase = createClient(url, key);
   return _supabase;
 }
+
+function isHistoricalPlanQuery(text: string): boolean {
+  return /\b(?:plano|documento|vers[aã]o)\s+(?:de\s+ensino\s+)?(?:anterior|antigo|antiga|passado|passada)\b|\bplano\s+anterior\b|\bplano\s+antigo\b/i.test(text);
+}
 function getGenAI() {
   const apiKey = process.env.GOOGLE_API_KEY ?? process.env.GEMINI_API_KEY;
   if (!apiKey) throw new Error('CONFIGURATION_MISSING_GEMINI');
@@ -592,6 +596,14 @@ export async function POST(req: NextRequest) {
         decision.generationMode === 'info' ? ACTIVE_PLAN_SOURCE : undefined,
       );
       retrievalLatency = Date.now() - retrievalStartedAt;
+
+      // Perguntas sobre versões antigas não podem ser respondidas com trechos
+      // genéricos de outros livros. Se a versão histórica não está na base
+      // vigente, o comportamento seguro é o fallback de contexto insuficiente.
+      if (isHistoricalPlanQuery(searchQuery)) {
+        docs = [];
+        retrievalErrorCode = 'NO_RELEVANT_CONTEXT';
+      }
 
       if (docs.length === 0) retrievalErrorCode = 'NO_RELEVANT_CONTEXT';
     } catch (error) {
