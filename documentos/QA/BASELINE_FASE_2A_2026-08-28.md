@@ -42,6 +42,7 @@ O baseline atende à meta provisória do plano: P50 abaixo de 8 s, P95 abaixo de
 - Comparação controlada de geração com o mesmo contexto: `gemini-3.5-flash-lite` respondeu corretamente em aproximadamente 0,9 s; `gemini-3.1-flash-lite` respondeu corretamente em aproximadamente 5,1 s; `gemini-3.5-flash` sofreu indisponibilidade temporária; `gemini-3.6-flash` não respeitou o formato curto do teste. A ordem de produção foi ajustada para priorizar `gemini-3.5-flash-lite`, com fallback para `gemini-3.1-flash-lite` e depois `gemini-3.5-flash`.
 - Após a configuração, a bateria real no deploy de produção passou em 3/3: plano vigente e glossário usaram `gemini-3.5-flash-lite` sem fallback, em 4,4 s e 7,2 s; o bloqueio de plano antigo retornou `NO_RELEVANT_CONTEXT` em 2,0 s.
 - A repetição prevista de 3 vezes por cenário passou em 9/9. As 6 respostas com evidência usaram o modelo principal sem fallback; os 3 casos de plano antigo foram bloqueados antes da geração. P50 total: 7,38 s; P95: 8,73 s; mínimo: 0,90 s; máximo: 8,73 s.
+- A migração `024_add_rag_corpus_version.sql` cria uma versão determinística do manifesto ativo para auditoria e futura invalidação de cache. O cache permanece desligado até a versão ser validada em produção.
 
 ## Próximas tarefas da Fase 2A
 

@@ -47,6 +47,7 @@ export interface TurnMetadata {
     total: number;
   };
   error_code: string | null;
+  corpus_version: string | null;
 }
 
 interface StoredSessionState {

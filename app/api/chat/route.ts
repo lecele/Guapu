@@ -172,6 +172,22 @@ function getSupabase() {
   return _supabase;
 }
 
+async function getCorpusVersion(
+  supabase: ReturnType<typeof createClient>,
+): Promise<string | null> {
+  try {
+    const { data, error } = await supabase.rpc('get_rag_corpus_version' as never);
+    if (error || typeof data !== 'string' || !data) {
+      if (error) console.warn('[chat] Não foi possível obter a versão do corpus:', error.message);
+      return null;
+    }
+    return data;
+  } catch (error) {
+    console.warn('[chat] Falha não bloqueante ao obter a versão do corpus:', error);
+    return null;
+  }
+}
+
 function isHistoricalPlanQuery(text: string): boolean {
   return /\b(?:plano|documento|vers[aã]o)\s+(?:de\s+ensino\s+)?(?:anterior|antigo|antiga|passado|passada)\b|\bplano\s+anterior\b|\bplano\s+antigo\b/i.test(text);
 }
@@ -403,6 +419,7 @@ function buildTurnMetadata(params: {
   generationLatency: number;
   totalLatency: number;
   errorCode: string | null;
+  corpusVersion: string | null;
 }): TurnMetadata {
   return {
     request_id: params.requestId,
@@ -439,6 +456,7 @@ function buildTurnMetadata(params: {
       total: params.totalLatency,
     },
     error_code: params.errorCode,
+    corpus_version: params.corpusVersion,
   };
 }
 
@@ -565,6 +583,7 @@ export async function POST(req: NextRequest) {
         generationLatency: 0,
         totalLatency,
         errorCode: null,
+        corpusVersion: null,
       });
 
       await saveTurnBounded(supabase, {
@@ -591,6 +610,7 @@ export async function POST(req: NextRequest) {
     let embeddingLatency = 0;
     let retrievalLatency = 0;
     let retrievalErrorCode: string | null = null;
+    let corpusVersion: string | null = null;
     const searchQuery = decision.topic || question;
 
     try {
@@ -622,6 +642,10 @@ export async function POST(req: NextRequest) {
       retrievalErrorCode = embeddingLatency === 0 ? 'EMBEDDING_FAILED' : 'RETRIEVAL_FAILED';
       console.warn(`[chat] ${retrievalErrorCode} para request_id=${requestId}`, error);
     }
+
+    // A versão é usada para auditoria e futura invalidação de cache. Se a
+    // função ainda não existir em uma implantação, a resposta continua válida.
+    corpusVersion = await getCorpusVersion(supabase);
 
     let answer: string;
     let finalState = decision.stateAfter;
@@ -705,6 +729,7 @@ export async function POST(req: NextRequest) {
       generationLatency,
       totalLatency,
       errorCode: generationErrorCode ?? retrievalErrorCode,
+      corpusVersion,
     });
 
     await saveTurnBounded(supabase, {
