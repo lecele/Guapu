@@ -172,6 +172,19 @@ button {
   line-height: 1.2;
 }
 
+.guapu-context-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: var(--azul-tinta);
+  color: var(--texto-suave);
+  font-size: var(--text-body-xs);
+  font-weight: 500;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+
 .guapu-header-actions {
   display: flex;
   align-items: center;
@@ -1038,6 +1051,11 @@ button {
   .guapu-header-eyebrow span {
     width: 4px;
     height: 4px;
+  }
+
+  .guapu-context-pill {
+    padding: 4px 9px;
+    font-size: 11.5px;
   }
 
   .guapu-course-label {
