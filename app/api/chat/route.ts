@@ -223,34 +223,56 @@ async function retrieveDocs(
   embedding: number[],
   threshold = 0.35,
   sourcePattern?: string,
+  queryText?: string,
 ): Promise<Document[]> {
   const supabase = getSupabase();
   const matchDocuments = supabase.rpc.bind(supabase) as unknown as MatchDocumentsRpc;
-  // O RPC híbrido permanece disponível para uma futura otimização, mas não
-  // fica no caminho crítico do aluno: em documentos grandes o ranking lexical
-  // pode atingir o limite de 10 s do endpoint hospedado. A busca semântica
-  // usa o índice vetorial ativo e é a opção estável para produção.
-  const functionName = sourcePattern ? 'match_documents_filtered' : 'match_documents';
-  const rpcArgs = {
-    query_embedding: embedding,
-    match_threshold: threshold,
-    match_count: parseInt(process.env.RAG_MATCH_COUNT || '5'),
-    ...(sourcePattern ? { source_pattern: sourcePattern } : {}),
-  };
+  const matchCount = parseInt(process.env.RAG_MATCH_COUNT || '5');
+  const hybridEnabled = process.env.RAG_HYBRID_ENABLED === 'true';
+  const strategies: Array<{
+    functionName: 'match_documents' | 'match_documents_filtered' | 'match_documents_hybrid';
+    args: Parameters<MatchDocumentsRpc>[1];
+    attempts: number;
+  }> = sourcePattern
+    ? [{
+      functionName: 'match_documents_filtered',
+      args: { query_embedding: embedding, match_threshold: threshold, match_count: matchCount, source_pattern: sourcePattern },
+      attempts: 2,
+    }]
+    : [
+      ...(hybridEnabled && queryText
+        ? [{
+          functionName: 'match_documents_hybrid' as const,
+          args: { query_embedding: embedding, match_threshold: threshold, match_count: matchCount, query_text: queryText },
+          attempts: 1,
+        }]
+        : []),
+      {
+        functionName: 'match_documents' as const,
+        args: { query_embedding: embedding, match_threshold: threshold, match_count: matchCount },
+        attempts: 2,
+      },
+    ];
 
   let lastError = 'erro desconhecido';
-  for (let attempt = 1; attempt <= 2; attempt += 1) {
-    try {
-      const { data, error } = await matchDocuments(functionName, rpcArgs);
-      if (!error) {
-        return mapRetrievedDocuments(data);
+  for (const strategy of strategies) {
+    for (let attempt = 1; attempt <= strategy.attempts; attempt += 1) {
+      try {
+        const { data, error } = await matchDocuments(strategy.functionName, strategy.args);
+        if (!error) {
+          const documents = mapRetrievedDocuments(data);
+          // Um híbrido sem candidatos não deve bloquear uma resposta que a
+          // busca semântica ainda consegue fundamentar.
+          if (documents.length || strategy.functionName !== 'match_documents_hybrid') return documents;
+        } else {
+          lastError = error.message;
+        }
+      } catch (error) {
+        lastError = error instanceof Error ? error.message : String(error);
       }
-      lastError = error.message;
-    } catch (error) {
-      lastError = error instanceof Error ? error.message : String(error);
-    }
-    if (attempt < 2) {
-      await new Promise((resolve) => setTimeout(resolve, 250));
+      if (attempt < strategy.attempts) {
+        await new Promise((resolve) => setTimeout(resolve, 250));
+      }
     }
   }
   throw new Error(`RETRIEVAL_FAILED: ${lastError}`);
@@ -629,6 +651,7 @@ export async function POST(req: NextRequest) {
         embedding,
         decision.generationMode === 'info' ? -1 : isCourseQuery ? 0.25 : 0.35,
         decision.generationMode === 'info' ? ACTIVE_PLAN_SOURCE : undefined,
+        searchQuery,
       );
       retrievalLatency = Date.now() - retrievalStartedAt;
 
