@@ -431,12 +431,17 @@ async function generateResponse(
     'gemini-3.5-flash',
   ])];
 
+  const effectiveCompletionRequirement = [
+    completionRequirement,
+    isPostoperativeImmediateQuestion(question) ? POSTOPERATIVE_COVERAGE_REQUIREMENT : '',
+  ].filter(Boolean).join('\n\n');
+
   const prompt = `${buildModePrompt({
     mode: sessionMode,
     question,
     topic: inlineTheme || question,
     quizQuestion,
-  })}${completionRequirement ? `\n\n[VALIDAÇÃO OBRIGATÓRIA]\n${completionRequirement}` : ''}`;
+  })}${effectiveCompletionRequirement ? `\n\n[VALIDAÇÃO OBRIGATÓRIA]\n${effectiveCompletionRequirement}` : ''}`;
 
   let text = '';
   let lastErrorMessage = '';
@@ -507,10 +512,13 @@ function requiresNextQuizQuestion(decision: ReturnType<typeof resolveTurn>, answ
   return !new RegExp(`quest[aã]o\\s*${currentQuestion + 1}\\s*:`, 'i').test(answer);
 }
 
-function needsClinicalCoverageRepair(question: string, answer: string): boolean {
+function isPostoperativeImmediateQuestion(question: string): boolean {
   const normalizedQuestion = question.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-  const isPostoperativeImmediate = /principais cuidados.*pos-?operatorio imediato/i.test(normalizedQuestion);
-  if (!isPostoperativeImmediate) return false;
+  return /principais cuidados.*pos-?operatorio imediato/i.test(normalizedQuestion);
+}
+
+function needsClinicalCoverageRepair(question: string, answer: string): boolean {
+  if (!isPostoperativeImmediateQuestion(question)) return false;
 
   // O RAG já fornece estes eixos nos materiais recuperados. A verificação
   // evita que uma resposta correta, porém incompleta, omita um cuidado central.
