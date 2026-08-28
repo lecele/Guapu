@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import socket
 import sys
 import time
@@ -61,11 +62,50 @@ def load_context(client: Any, metadata: dict[str, Any]) -> list[dict[str, str]]:
     ]
 
 
+def _model_candidates() -> list[str]:
+    configured = os.environ.get("RAG_EVALUATOR_MODELS") or os.environ.get("RAG_EVALUATOR_MODEL")
+    values = configured.split(",") if configured else [
+        "gemini-3.5-flash-lite",
+        "gemini-3.1-flash-lite",
+        "gemini-3.5-flash",
+    ]
+    return list(dict.fromkeys(item.strip() for item in values if item.strip()))
+
+
+def _is_quota_error(error: Exception) -> bool:
+    message = str(error).upper()
+    return "429" in message or "RESOURCE_EXHAUSTED" in message or "QUOTA" in message
+
+
+def _is_transient_model_error(error: Exception) -> bool:
+    message = str(error).upper()
+    return any(marker in message for marker in ("503", "UNAVAILABLE", "429", "RESOURCE_EXHAUSTED", "500"))
+
+
+def _parse_evaluator_response(raw: str) -> dict[str, Any]:
+    candidate = raw.strip()
+    if candidate.startswith("```"):
+        candidate = re.sub(r"^```(?:json)?\s*|\s*```$", "", candidate, flags=re.IGNORECASE | re.DOTALL).strip()
+    start, end = candidate.find("{"), candidate.rfind("}")
+    if start >= 0 and end > start:
+        candidate = candidate[start : end + 1]
+    try:
+        parsed = json.loads(candidate)
+    except json.JSONDecodeError:
+        # Alguns retornos trazem \u inválido dentro da justificativa. Preservamos
+        # o texto, escapando apenas sequências que não são válidas em JSON.
+        repaired = re.sub(r"\\u(?![0-9a-fA-F]{4})", r"\\\\u", candidate)
+        repaired = re.sub(r"\\(?![\"\\/bfnrtu])", r"\\\\", repaired)
+        parsed = json.loads(repaired)
+    if not isinstance(parsed, dict):
+        raise RuntimeError("INVALID_EVALUATOR_JSON_OBJECT")
+    return parsed
+
+
 def evaluate(question: str, answer: str, context: list[dict[str, str]]) -> tuple[dict[str, Any], str]:
     api_key = os.environ.get("GOOGLE_API_KEY")
     if not api_key:
         raise RuntimeError("GOOGLE_API_KEY_NOT_CONFIGURED")
-    model = os.environ.get("RAG_EVALUATOR_MODEL", "gemini-3.1-flash-lite")
     material = "\n\n---\n\n".join(
         f"[Fonte: {entry['source']}]\n{entry['content'][:6000]}" for entry in context
     )
@@ -82,20 +122,34 @@ Retorne JSON válido, sem markdown, com:
 {{"score":0-100,"verdict":"correct|incomplete|incorrect|unverifiable","grounding_score":0-100,"completeness_score":0-100,"relevance_score":0-100,"rationale":"até 400 caracteres"}}
 
 Use "unverifiable" quando o contexto não permitir julgar. "incorrect" exige contradição ou afirmação não sustentada. "incomplete" é uma resposta parcialmente sustentada mas insuficiente."""
-    client = genai.Client(api_key=api_key)
-    response = client.models.generate_content(
-        model=model,
-        contents=prompt,
-        config=types.GenerateContentConfig(response_mime_type="application/json", temperature=0),
-    )
-    raw = response.text or ""
-    result = json.loads(raw)
-    if result.get("verdict") not in {"correct", "incomplete", "incorrect", "unverifiable"}:
-        raise RuntimeError("INVALID_EVALUATOR_VERDICT")
-    for key in ("score", "grounding_score", "completeness_score", "relevance_score"):
-        result[key] = max(0, min(100, int(result.get(key, 0))))
-    result["rationale"] = str(result.get("rationale", ""))[:400]
-    return result, model
+    timeout_ms = max(1000, int(os.environ.get("RAG_EVALUATOR_TIMEOUT_MS", "60000")))
+    client = genai.Client(api_key=api_key, http_options=types.HttpOptions(timeout=timeout_ms))
+    last_error: Exception | None = None
+    retry_count = max(0, int(os.environ.get("RAG_EVALUATOR_RETRIES", "2")))
+    for model in _model_candidates():
+        for attempt in range(retry_count + 1):
+            try:
+                response = client.models.generate_content(
+                    model=model,
+                    contents=prompt,
+                    config=types.GenerateContentConfig(response_mime_type="application/json", temperature=0),
+                )
+                raw = response.text or ""
+                result = _parse_evaluator_response(raw)
+                if result.get("verdict") not in {"correct", "incomplete", "incorrect", "unverifiable"}:
+                    raise RuntimeError("INVALID_EVALUATOR_VERDICT")
+                for key in ("score", "grounding_score", "completeness_score", "relevance_score"):
+                    result[key] = max(0, min(100, int(result.get(key, 0))))
+                result["rationale"] = str(result.get("rationale", ""))[:400]
+                return result, model
+            except Exception as error:
+                last_error = error
+                if _is_quota_error(error):
+                    raise RuntimeError(f"GEMINI_QUOTA_EXHAUSTED: {error}") from error
+                if not _is_transient_model_error(error) or attempt >= retry_count:
+                    break
+                time.sleep(min(8, 2 ** attempt))
+    raise RuntimeError(f"GEMINI_EVALUATION_FAILED: {last_error}") from last_error
 
 
 def complete(client: Any, job: dict[str, Any], result: dict[str, Any], model: str, source_count: int) -> None:
@@ -114,8 +168,9 @@ def complete(client: Any, job: dict[str, Any], result: dict[str, Any], model: st
 
 def fail(client: Any, job: dict[str, Any], error: Exception) -> None:
     attempts, maximum = int(job.get("attempts", 0)), int(job.get("max_attempts", 3))
+    permanent = _is_quota_error(error) or "GOOGLE_API_KEY_NOT_CONFIGURED" in str(error)
     response = client.table("response_quality_evaluations").update({
-        "status": "failed" if attempts >= maximum else "queued", "lease_expires_at": None,
+        "status": "failed" if permanent or attempts >= maximum else "queued", "lease_expires_at": None,
         "last_error": str(error)[:1000], "updated_at": datetime.now(timezone.utc).isoformat(),
     }).eq("id", job["id"]).execute()
     if getattr(response, "error", None):
