@@ -1,6 +1,6 @@
 # Baseline da Fase 2A — 28/08/2026
 
-Status: **baseline aprovado; primeira melhoria de rastreabilidade implementada e aguardando publicação/verificação real**.
+Status: **rastreabilidade, seleção do modelo, proteção de latência e painel operacional publicados e verificados; cache seguro permanece pendente**.
 
 ## Medição real
 
@@ -45,6 +45,7 @@ O baseline atende à meta provisória do plano: P50 abaixo de 8 s, P95 abaixo de
 - A migração `024_add_rag_corpus_version.sql` cria uma versão determinística do manifesto ativo para auditoria e futura invalidação de cache. A consulta dessa versão foi mantida fora do caminho crítico do aluno após uma medição serverless mostrar que uma chamada REST adicional pode ficar pendurada; o cache permanece desligado até existir timeout/telemetria próprios.
 - Para proteger o tempo de resposta, as chamadas Supabase do app e do health têm timeout explícito de 6 s e a busca vetorial usa no máximo duas tentativas. Em instabilidade externa, a resposta cai em fallback controlado em vez de aguardar o limite de 120 s.
 - Após o deploy `dpl_HYvbAWkPyjzRNwJjEX4bwSSWAUiu`, a bateria real de fumaça passou em 3/3: plano vigente com fonte atual (9,45 s), glossário com fontes recuperadas (8,30 s) e bloqueio do plano antigo (2,15 s, `NO_RELEVANT_CONTEXT`). Os logs posteriores registraram as três chamadas e o health check sem novo timeout; o timeout de 120 s registrado antes do deploy permanece apenas como evidência do problema corrigido.
+- O endpoint administrativo foi validado com autenticação e passou a exibir o modelo efetivamente usado e a taxa de fallback a partir da telemetria real, mantendo as sessões de regressão fora dos indicadores operacionais. Na leitura atual: 162 turnos instrumentados, P50 de 7,78 s, P95 de 27,34 s e fallback em 22% do histórico, com predominância histórica do modelo `gemini-3.5-flash`; as chamadas novas de homologação já usam `gemini-3.5-flash-lite`.
 
 ## Próximas tarefas da Fase 2A
 
