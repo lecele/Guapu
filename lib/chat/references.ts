@@ -13,7 +13,11 @@ function needsReferences(mode: GenerationMode): boolean {
   return ['resumo', 'resumo_aprofundar', 'resumo_reformular', 'info', 'livre'].includes(mode);
 }
 
-function referenceFromContent(content?: string, metadata?: Record<string, unknown>): string {
+function referenceFromContent(
+  content?: string,
+  metadata?: Record<string, unknown>,
+  source?: string,
+): string {
   const storedTitle = typeof metadata?.reference_title === 'string' ? metadata.reference_title.trim() : '';
   const storedAuthor = typeof metadata?.reference_author === 'string' ? metadata.reference_author.trim() : '';
   const storedYear = typeof metadata?.reference_year === 'string' ? metadata.reference_year.trim() : '';
@@ -60,7 +64,14 @@ function referenceFromContent(content?: string, metadata?: Record<string, unknow
     }
   }
 
-  return 'Informação não disponível no artigo, consultar o Plano de Ensino ou docentes.';
+  // O identificador de fonte é a última camada, mas continua sendo uma
+  // referência real: ele vem do arquivo que originou o chunk recuperado.
+  // Assim, PDFs administrativos e documentos sem bibliografia extraída não
+  // desaparecem da prestação de contas do RAG.
+  const sourceLabel = source?.trim();
+  return sourceLabel && sourceLabel !== 'desconhecido'
+    ? sourceLabel
+    : 'Informação não disponível no artigo, consultar o Plano de Ensino ou docentes.';
 }
 
 function removeModelReferences(text: string): string {
@@ -93,7 +104,7 @@ export function finalizeReferences(
   if (!needsReferences(mode)) return withoutModelReferences;
 
   const fallback = 'Informação não disponível no artigo, consultar o Plano de Ensino ou docentes.';
-  const extracted = [...new Set(docs.map((doc) => referenceFromContent(doc.content, doc.metadata)))];
+  const extracted = [...new Set(docs.map((doc) => referenceFromContent(doc.content, doc.metadata, doc.source)))];
   // A camada 3 só é permitida quando nenhum dos trechos trouxe pista útil.
   // Nunca misture uma referência identificada com uma linha de fallback.
   const sources = extracted.some((source) => source !== fallback)
