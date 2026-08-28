@@ -351,6 +351,19 @@ const EMBEDDING_MODEL = 'gemini-embedding-2';
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const SESSION_ID_PATTERN = /^[A-Za-z0-9._:-]{1,128}$/;
 
+async function saveTurnBounded(
+  supabase: ReturnType<typeof createClient>,
+  params: Parameters<typeof saveTurn>[1],
+): Promise<void> {
+  const persistence = saveTurn(supabase, params).catch((error) => {
+    console.warn('[chat] Falha ao persistir telemetria:', error);
+  });
+  await Promise.race([
+    persistence,
+    new Promise<void>((resolve) => setTimeout(resolve, 1_500)),
+  ]);
+}
+
 const FAST_RESPONSES: Record<FastResponseKey, string> = {
   greeting: GREETING_RESPONSE,
   menu: MENU_RETURN_RESPONSE,
@@ -538,7 +551,7 @@ export async function POST(req: NextRequest) {
         errorCode: null,
       });
 
-      await saveTurn(supabase, {
+      await saveTurnBounded(supabase, {
         sessionId,
         requestId,
         userMessage: question,
@@ -670,7 +683,7 @@ export async function POST(req: NextRequest) {
       errorCode: generationErrorCode ?? retrievalErrorCode,
     });
 
-    await saveTurn(supabase, {
+    await saveTurnBounded(supabase, {
       sessionId,
       requestId,
       userMessage: question,
