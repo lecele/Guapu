@@ -186,24 +186,44 @@ async function retrieveDocs(
 ): Promise<Document[]> {
   const supabase = getSupabase();
   const matchDocuments = supabase.rpc.bind(supabase) as unknown as MatchDocumentsRpc;
-  const { data, error } = await matchDocuments(
-    sourcePattern ? 'match_documents_filtered' : queryText ? 'match_documents_hybrid' : 'match_documents',
-    {
+  const functionName = sourcePattern
+    ? 'match_documents_filtered'
+    : queryText
+      ? 'match_documents_hybrid'
+      : 'match_documents';
+  const rpcArgs = {
     query_embedding: embedding,
     match_threshold: threshold,
     match_count: parseInt(process.env.RAG_MATCH_COUNT || '5'),
-      ...(sourcePattern ? { source_pattern: sourcePattern } : {}),
-      ...(!sourcePattern && queryText ? { query_text: queryText } : {}),
-    },
-  );
-  if (error) throw new Error(`RETRIEVAL_FAILED: ${error.message}`);
-  return (data || []).map((row) => ({
-    id: String(row.id ?? ''),
-    content: row.content,
-    source: row.source || 'desconhecido',
-    similarity: row.similarity || 0,
-    metadata: row.metadata || {},
-  }));
+    ...(sourcePattern ? { source_pattern: sourcePattern } : {}),
+    ...(!sourcePattern && queryText ? { query_text: queryText } : {}),
+  };
+
+  // Falhas breves de rede/compute não devem virar uma resposta de "sem
+  // contexto". A segunda tentativa só ocorre quando a primeira falha e tem
+  // espera curta, portanto não altera a latência do caminho normal.
+  let lastError = 'erro desconhecido';
+  for (let attempt = 1; attempt <= 3; attempt += 1) {
+    try {
+      const { data, error } = await matchDocuments(functionName, rpcArgs);
+      if (!error) {
+        return (data || []).map((row) => ({
+          id: String(row.id ?? ''),
+          content: row.content,
+          source: row.source || 'desconhecido',
+          similarity: row.similarity || 0,
+          metadata: row.metadata || {},
+        }));
+      }
+      lastError = error.message;
+    } catch (error) {
+      lastError = error instanceof Error ? error.message : String(error);
+    }
+    if (attempt < 3) {
+      await new Promise((resolve) => setTimeout(resolve, 350 * attempt));
+    }
+  }
+  throw new Error(`RETRIEVAL_FAILED: ${lastError}`);
 }
 
 // ── System Prompt Mestre (Prompt 20Aug2026 — 15 seções) ──────────────────────
