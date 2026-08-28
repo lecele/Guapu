@@ -81,6 +81,7 @@ O baseline atende à meta provisória do plano: P50 abaixo de 8 s, P95 abaixo de
 - A correção foi coberta por 37 testes automatizados, lint e build de produção aprovados, e publicada no deploy `dpl_67AjEcYPVMjzQvuL9yprx3iHYStS` (`Ready`).
 - Testes reais finais: bateria publicada 8/8; auditoria formal da Fase 1 com três repetições por cenário 9/9; pergunta clínica retornou apenas títulos reconhecíveis com página/trecho; pergunta sobre aulas em 16/09 e pergunta sobre a fórmula incompleta não exibiram referências; pergunta sobre o plano antigo permaneceu bloqueada com zero fontes.
 - As respostas testadas retornaram HTTP 200. As respostas fundamentadas ficaram aproximadamente entre 4,7 s e 12,5 s nos ensaios finais; as respostas sem contexto ficaram aproximadamente entre 3,9 s e 11,0 s. A latência variou por geração do modelo, mas não houve timeout nem falha HTTP.
+- Uma amostra independente de 10 perguntas reais passou em 10/10: cinco respostas fundamentadas exibiram referências com fonte, página e trecho; cinco casos de recusa, dado incompleto, plano antigo, fora do escopo e menu não exibiram referências. A validação encontrou zero linha com fallback, nome isolado de arquivo ou ruído OCR.
 
 Com essa auditoria, a pendência de referências da Fase 3 fica tecnicamente corrigida e testada. A liberação final ainda depende das fases de interface, painel, homologação do cliente e comparação de runtime Vercel/VPS descritas no gate.
 

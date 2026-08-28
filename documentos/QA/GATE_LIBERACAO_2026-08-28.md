@@ -32,6 +32,7 @@ Este documento é o controle de evidências para a liberação. Uma fase só pod
 - Ciclo end-to-end da Fase 2A: inclusão, recuperação, remoção e não recuperação do `Teste.docx` aprovadas; a bateria publicada adicional passou em 8/8.
 - Fase 3: bateria formal de referências e rastreabilidade passou em 9/9 após sincronizar o script de QA da VPS com a versão atual; nenhum cenário falhou.
 - Auditoria posterior das reclamações do cliente: referências de resposta fundamentada mantidas somente quando há pista verificável e relação textual; recusas, informação incompleta e fragmentos OCR ficaram sem seção de referências; 9/9 cenários formais e 8/8 fluxos publicados aprovados após o último deploy.
+- Amostra independente posterior: 10/10 perguntas reais aprovadas; cinco referências fundamentadas com `Fonte`, página e trecho; cinco respostas que não deveriam citar fonte sem referências; zero fallback, arquivo isolado ou ruído OCR detectado.
 
 ## Regra de liberação
 
