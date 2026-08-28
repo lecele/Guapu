@@ -13,11 +13,16 @@ function needsReferences(mode: GenerationMode): boolean {
   return ['resumo', 'resumo_aprofundar', 'resumo_reformular', 'info', 'livre'].includes(mode);
 }
 
+function isSourceOnlyReference(reference: string): boolean {
+  return /\([^\n]+\.(?:pdf|docx?)\)$/i.test(reference);
+}
+
 function referenceFromContent(
   content?: string,
   metadata?: Record<string, unknown>,
   source?: string,
 ): string {
+  const sourceLabel = source?.trim();
   const storedTitle = typeof metadata?.reference_title === 'string' ? metadata.reference_title.trim() : '';
   const storedAuthor = typeof metadata?.reference_author === 'string' ? metadata.reference_author.trim() : '';
   const storedYear = typeof metadata?.reference_year === 'string' ? metadata.reference_year.trim() : '';
@@ -58,6 +63,7 @@ function referenceFromContent(
   for (let index = 0; index < lines.length - 1; index += 1) {
     const candidate = lines[index].replace(/^\[P[aá]g\.\s*\d+\]\s*/i, '').trim();
     const authorLine = lines[index + 1];
+    if (/^(?:nome do estudante|nome do aluno|matr[ií]cula)$/i.test(candidate) || authorLine.includes('@')) continue;
     const looksLikeAuthor = /^[A-ZÀ-Ý][A-Za-zÀ-ÿ'’.-]+(?:\s+[A-ZÀ-Ý]{1,4}[A-Za-zÀ-ÿ'’.-]*)*(?:\s*,\s*|\s+e\s+|\s+[A-ZÀ-Ý][A-Za-zÀ-ÿ'’.-]+){1,}/.test(authorLine);
     if (candidate.length >= 12 && candidate.length <= 180 && looksLikeAuthor) {
       return `${candidate.replace(/[.:;]+$/, '')}.`;
@@ -68,9 +74,13 @@ function referenceFromContent(
   // referência real: ele vem do arquivo que originou o chunk recuperado.
   // Assim, PDFs administrativos e documentos sem bibliografia extraída não
   // desaparecem da prestação de contas do RAG.
-  const sourceLabel = source?.trim();
   return sourceLabel && sourceLabel !== 'desconhecido'
-    ? sourceLabel
+    ? (() => {
+        const readableSource = sourceLabel.replace(/_/g, ' ').replace(/\s+/g, ' ').trim();
+        return readableSource === sourceLabel
+          ? sourceLabel
+          : `${readableSource} (${sourceLabel})`;
+      })()
     : 'Informação não disponível no artigo, consultar o Plano de Ensino ou docentes.';
 }
 
@@ -105,10 +115,12 @@ export function finalizeReferences(
 
   const fallback = 'Informação não disponível no artigo, consultar o Plano de Ensino ou docentes.';
   const extracted = [...new Set(docs.map((doc) => referenceFromContent(doc.content, doc.metadata, doc.source)))];
-  // A camada 3 só é permitida quando nenhum dos trechos trouxe pista útil.
-  // Nunca misture uma referência identificada com uma linha de fallback.
-  const sources = extracted.some((source) => source !== fallback)
-    ? extracted.filter((source) => source !== fallback).slice(0, 5)
+  // A camada 3 só é permitida quando nenhum dos trechos trouxe pista
+  // bibliográfica melhor. Nunca misture uma referência identificada com
+  // rótulos de arquivo ou uma linha de fallback.
+  const identified = extracted.filter((source) => source !== fallback && !isSourceOnlyReference(source));
+  const sources = identified.length > 0
+    ? identified.slice(0, 5)
     : extracted.slice(0, 1);
   const lines = sources.length > 0
     ? sources.map((source) => `- ${source}`)
