@@ -43,6 +43,10 @@ class Settings(BaseSettings):
         description="Chave service_role usada somente pelos processos server-side",
     )
     supabase_db_url: str = Field(default="", description="URL de conexão direta ao PostgreSQL")
+    supabase_direct_ingestion: bool = Field(
+        default=False,
+        description="Usa a conexão PostgreSQL direta para a ingestão server-side",
+    )
 
     # ─── Google Drive ──────────────────────────────────────────────────────────
     drive_webhook_secret: str = Field(default="", description="Token secreto para validar webhooks do Drive")

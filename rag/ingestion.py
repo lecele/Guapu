@@ -551,7 +551,10 @@ def upsert_chunks_to_supabase(
         current_ids.update(record["id"] for record in records)
 
         try:
-            if getattr(settings, "supabase_db_url", ""):
+            if (
+                getattr(settings, "supabase_direct_ingestion", False)
+                and getattr(settings, "supabase_db_url", "")
+            ):
                 with _open_direct_database_connection(settings) as direct_connection:
                     batch_inserted = _upsert_records_direct(
                         direct_connection,
@@ -561,10 +564,15 @@ def upsert_chunks_to_supabase(
             else:
                 result = (
                     client.table(settings.rag_table_name)
-                    .upsert(records, on_conflict="id", ignore_duplicates=False)
+                    .upsert(
+                        records,
+                        on_conflict="id",
+                        ignore_duplicates=False,
+                        returning="minimal",
+                    )
                     .execute()
                 )
-                batch_inserted = len(result.data) if result.data else 0
+                batch_inserted = len(records)
             inserted += batch_inserted
 
             logger.info(
@@ -605,7 +613,14 @@ def upsert_chunk_stream_to_supabase(
     total_chunks = 0
     iterator = iter(chunks)
     batch_number = 0
-    direct_connection = _open_direct_database_connection(settings)
+    direct_connection = (
+        _open_direct_database_connection(settings)
+        if (
+            getattr(settings, "supabase_direct_ingestion", False)
+            and getattr(settings, "supabase_db_url", "")
+        )
+        else None
+    )
 
     while True:
         batch = list(islice(iterator, batch_size))
@@ -658,7 +673,7 @@ def upsert_chunk_stream_to_supabase(
                 write_path = "postgres_direct"
             else:
                 response = _upsert_records_with_retry(client, settings.rag_table_name, records)
-                written = len(response.data) if response.data else 0
+                written = len(records)
                 write_path = "supabase_rest"
             upsert_elapsed_ms = round((time.perf_counter() - upsert_started_at) * 1000)
             inserted += written
@@ -700,7 +715,12 @@ def _upsert_records_with_retry(client, table_name: str, records: list[dict], att
         try:
             return (
                 client.table(table_name)
-                .upsert(records, on_conflict="id", ignore_duplicates=False)
+                .upsert(
+                    records,
+                    on_conflict="id",
+                    ignore_duplicates=False,
+                    returning="minimal",
+                )
                 .execute()
             )
         except Exception as error:
