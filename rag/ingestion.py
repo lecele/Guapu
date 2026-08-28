@@ -50,6 +50,8 @@ from datetime import datetime, timezone
 from typing import Iterable, Iterator, Optional
 
 import pdfplumber
+import psycopg
+from psycopg import sql as psycopg_sql
 import structlog
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.embeddings import Embeddings
@@ -62,6 +64,58 @@ from reference_metadata import extract_reference_metadata
 from rag.sync_plan import chunk_record_id, plan_drive_sync, select_file_batch
 
 logger = structlog.get_logger(__name__)
+
+
+def _open_direct_database_connection(settings):
+    """Abre a conexão direta apenas no processo server-side de ingestão.
+
+    O upsert via PostgREST serializa vetores grandes e, no Supabase, pode
+    permanecer preso até o statement_timeout. O worker já possui a URL direta
+    do PostgreSQL; usá-la aqui reduz a ponte HTTP sem alterar o caminho do app
+    público, que continua usando o Supabase REST/RPC.
+    """
+    database_url = str(getattr(settings, "supabase_db_url", "") or "").strip()
+    if not database_url:
+        return None
+    return psycopg.connect(database_url, connect_timeout=15)
+
+
+def _vector_literal(values: list[float]) -> str:
+    """Converte um vetor Gemini para o formato aceito pelo tipo pgvector."""
+    return "[" + ",".join(format(float(value), ".10g") for value in values) + "]"
+
+
+def _upsert_records_direct(connection, table_name: str, records: list[dict]) -> int:
+    """Grava um lote idempotente diretamente no PostgreSQL e confirma o lote."""
+    statement = psycopg_sql.SQL(
+        """
+        INSERT INTO {table} (id, content, embedding, source, metadata)
+        VALUES (%s::uuid, %s, %s::vector, %s, %s::jsonb)
+        ON CONFLICT (id) DO UPDATE SET
+            content = EXCLUDED.content,
+            embedding = EXCLUDED.embedding,
+            source = EXCLUDED.source,
+            metadata = EXCLUDED.metadata
+        """
+    ).format(table=psycopg_sql.Identifier(table_name))
+    values = [
+        (
+            record["id"],
+            record["content"],
+            _vector_literal(record["embedding"]),
+            record.get("source"),
+            json.dumps(record.get("metadata") or {}, ensure_ascii=False),
+        )
+        for record in records
+    ]
+    try:
+        with connection.cursor() as cursor:
+            cursor.executemany(statement, values)
+        connection.commit()
+    except Exception:
+        connection.rollback()
+        raise
+    return len(records)
 
 
 # ==============================================================================
@@ -497,12 +551,20 @@ def upsert_chunks_to_supabase(
         current_ids.update(record["id"] for record in records)
 
         try:
-            result = (
-                client.table(settings.rag_table_name)
-                .upsert(records, on_conflict="id", ignore_duplicates=False)
-                .execute()
-            )
-            batch_inserted = len(result.data) if result.data else 0
+            if getattr(settings, "supabase_db_url", ""):
+                with _open_direct_database_connection(settings) as direct_connection:
+                    batch_inserted = _upsert_records_direct(
+                        direct_connection,
+                        settings.rag_table_name,
+                        records,
+                    )
+            else:
+                result = (
+                    client.table(settings.rag_table_name)
+                    .upsert(records, on_conflict="id", ignore_duplicates=False)
+                    .execute()
+                )
+                batch_inserted = len(result.data) if result.data else 0
             inserted += batch_inserted
 
             logger.info(
@@ -543,6 +605,7 @@ def upsert_chunk_stream_to_supabase(
     total_chunks = 0
     iterator = iter(chunks)
     batch_number = 0
+    direct_connection = _open_direct_database_connection(settings)
 
     while True:
         batch = list(islice(iterator, batch_size))
@@ -586,9 +649,18 @@ def upsert_chunk_stream_to_supabase(
                 })
             current_ids.update(record["id"] for record in records)
             upsert_started_at = time.perf_counter()
-            response = _upsert_records_with_retry(client, settings.rag_table_name, records)
+            if direct_connection is not None:
+                written = _upsert_records_direct(
+                    direct_connection,
+                    settings.rag_table_name,
+                    records,
+                )
+                write_path = "postgres_direct"
+            else:
+                response = _upsert_records_with_retry(client, settings.rag_table_name, records)
+                written = len(response.data) if response.data else 0
+                write_path = "supabase_rest"
             upsert_elapsed_ms = round((time.perf_counter() - upsert_started_at) * 1000)
-            written = len(response.data) if response.data else 0
             inserted += written
             logger.info(
                 "ingestion_batch_done",
@@ -597,9 +669,13 @@ def upsert_chunk_stream_to_supabase(
                 duration_ms=round((time.perf_counter() - batch_started_at) * 1000),
                 embedding_ms=embedding_elapsed_ms,
                 upsert_ms=upsert_elapsed_ms,
+                write_path=write_path,
             )
         except Exception as exc:
             logger.error("ingestion_stream_batch_error", batch=batch_number, error=str(exc))
+            if direct_connection is not None:
+                direct_connection.close()
+                direct_connection = None
             try:
                 _delete_document_rows(sorted(current_ids - existing_active_ids_before))
             except Exception as cleanup_exc:
@@ -608,6 +684,8 @@ def upsert_chunk_stream_to_supabase(
         finally:
             del batch, texts
 
+    if direct_connection is not None:
+        direct_connection.close()
     return inserted, current_ids, total_chunks
 
 
