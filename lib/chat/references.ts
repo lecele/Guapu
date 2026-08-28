@@ -17,6 +17,17 @@ function isSourceOnlyReference(reference: string): boolean {
   return /\([^\n]+\.(?:pdf|docx?)\)$/i.test(reference);
 }
 
+function formatSourceReference(source?: string): string {
+  const sourceLabel = source?.trim();
+  if (!sourceLabel || sourceLabel === 'desconhecido') {
+    return 'Informação não disponível no artigo, consultar o Plano de Ensino ou docentes.';
+  }
+  const readableSource = sourceLabel.replace(/_/g, ' ').replace(/\s+/g, ' ').trim();
+  return readableSource === sourceLabel
+    ? sourceLabel
+    : `${readableSource} (${sourceLabel})`;
+}
+
 function referenceFromContent(
   content?: string,
   metadata?: Record<string, unknown>,
@@ -79,14 +90,7 @@ function referenceFromContent(
   // referência real: ele vem do arquivo que originou o chunk recuperado.
   // Assim, PDFs administrativos e documentos sem bibliografia extraída não
   // desaparecem da prestação de contas do RAG.
-  return sourceLabel && sourceLabel !== 'desconhecido'
-    ? (() => {
-        const readableSource = sourceLabel.replace(/_/g, ' ').replace(/\s+/g, ' ').trim();
-        return readableSource === sourceLabel
-          ? sourceLabel
-          : `${readableSource} (${sourceLabel})`;
-      })()
-    : 'Informação não disponível no artigo, consultar o Plano de Ensino ou docentes.';
+  return formatSourceReference(sourceLabel);
 }
 
 function removeModelReferences(text: string): string {
@@ -119,7 +123,9 @@ export function finalizeReferences(
   if (!needsReferences(mode)) return withoutModelReferences;
 
   const fallback = 'Informação não disponível no artigo, consultar o Plano de Ensino ou docentes.';
-  const extracted = [...new Set(docs.map((doc) => referenceFromContent(doc.content, doc.metadata, doc.source)))];
+  const extracted = mode === 'info'
+    ? [...new Set(docs.map((doc) => formatSourceReference(doc.source)))]
+    : [...new Set(docs.map((doc) => referenceFromContent(doc.content, doc.metadata, doc.source)))];
   // A camada 3 só é permitida quando nenhum dos trechos trouxe pista
   // bibliográfica melhor. Nunca misture uma referência identificada com
   // rótulos de arquivo ou uma linha de fallback.
