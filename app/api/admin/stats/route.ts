@@ -600,7 +600,6 @@ export async function GET(request: NextRequest) {
       summary: {
         totalConversations,
         totalMessages,
-        uniqueUsers: totalConversations,
         avgResponseTimeMs: latencies.length > 0
           ? average(latencies)
           : 0,

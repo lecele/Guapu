@@ -43,7 +43,6 @@ interface StatsData {
   summary: {
     totalConversations: number;
     totalMessages: number;
-    uniqueUsers: number;
     avgResponseTimeMs: number;
     ragAccuracyRate: number;
     quizAccuracyRate: number;
