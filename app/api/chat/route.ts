@@ -329,7 +329,9 @@ async function retrieveDocs(
   const supabase = getSupabase();
   const matchDocuments = supabase.rpc.bind(supabase) as unknown as MatchDocumentsRpc;
   const matchCount = parseInt(process.env.RAG_MATCH_COUNT || '5');
-  const hybridEnabled = process.env.RAG_HYBRID_ENABLED === 'true';
+  // A recuperação híbrida é o caminho padrão de produção: a variável só
+  // pode desligá-la explicitamente para diagnóstico controlado.
+  const hybridEnabled = process.env.RAG_HYBRID_ENABLED !== 'false';
   const strategies: Array<{
     functionName: 'match_documents' | 'match_documents_filtered' | 'match_documents_hybrid';
     args: Parameters<MatchDocumentsRpc>[1];
