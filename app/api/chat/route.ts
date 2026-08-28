@@ -164,11 +164,30 @@ function formatHistory(history: Array<{ role: string; content: string }>): strin
 let _supabase: ReturnType<typeof createClient> | null = null;
 let _genai: GoogleGenAI | null = null;
 
+const SUPABASE_REQUEST_TIMEOUT_MS = 6_000;
+
+async function fetchSupabaseWithTimeout(
+  input: RequestInfo | URL,
+  init?: RequestInit,
+): Promise<Response> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), SUPABASE_REQUEST_TIMEOUT_MS);
+  try {
+    return await fetch(input, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 function getSupabase() {
   const url = process.env.SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.SUPABASE_KEY;
   if (!url || !key) throw new Error('CONFIGURATION_MISSING_SUPABASE');
-  if (!_supabase) _supabase = createClient(url, key);
+  if (!_supabase) {
+    _supabase = createClient(url, key, {
+      global: { fetch: fetchSupabaseWithTimeout },
+    });
+  }
   return _supabase;
 }
 
@@ -220,7 +239,7 @@ async function retrieveDocs(
   };
 
   let lastError = 'erro desconhecido';
-  for (let attempt = 1; attempt <= 3; attempt += 1) {
+  for (let attempt = 1; attempt <= 2; attempt += 1) {
     try {
       const { data, error } = await matchDocuments(functionName, rpcArgs);
       if (!error) {
@@ -230,8 +249,8 @@ async function retrieveDocs(
     } catch (error) {
       lastError = error instanceof Error ? error.message : String(error);
     }
-    if (attempt < 3) {
-      await new Promise((resolve) => setTimeout(resolve, 350 * attempt));
+    if (attempt < 2) {
+      await new Promise((resolve) => setTimeout(resolve, 250));
     }
   }
   throw new Error(`RETRIEVAL_FAILED: ${lastError}`);

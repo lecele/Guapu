@@ -43,6 +43,7 @@ O baseline atende à meta provisória do plano: P50 abaixo de 8 s, P95 abaixo de
 - Após a configuração, a bateria real no deploy de produção passou em 3/3: plano vigente e glossário usaram `gemini-3.5-flash-lite` sem fallback, em 4,4 s e 7,2 s; o bloqueio de plano antigo retornou `NO_RELEVANT_CONTEXT` em 2,0 s.
 - A repetição prevista de 3 vezes por cenário passou em 9/9. As 6 respostas com evidência usaram o modelo principal sem fallback; os 3 casos de plano antigo foram bloqueados antes da geração. P50 total: 7,38 s; P95: 8,73 s; mínimo: 0,90 s; máximo: 8,73 s.
 - A migração `024_add_rag_corpus_version.sql` cria uma versão determinística do manifesto ativo para auditoria e futura invalidação de cache. A consulta dessa versão foi mantida fora do caminho crítico do aluno após uma medição serverless mostrar que uma chamada REST adicional pode ficar pendurada; o cache permanece desligado até existir timeout/telemetria próprios.
+- Para proteger o tempo de resposta, as chamadas Supabase do app e do health têm timeout explícito de 6 s e a busca vetorial usa no máximo duas tentativas. Em instabilidade externa, a resposta cai em fallback controlado em vez de aguardar o limite de 120 s.
 
 ## Próximas tarefas da Fase 2A
 
