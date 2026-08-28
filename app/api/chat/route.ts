@@ -670,8 +670,8 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json().catch(() => null) as Partial<ChatRequest> | null;
-    const sessionId = body?.session_id?.trim() ?? '';
-    const question = body?.message?.trim() ?? '';
+    const sessionId = typeof body?.session_id === 'string' ? body.session_id.trim() : '';
+    const question = typeof body?.message === 'string' ? body.message.trim() : '';
     const activeMode = body?.active_mode;
 
     if (body?.request_id) {

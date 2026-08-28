@@ -65,6 +65,10 @@ async function chat(message) {
 const authorization = `Basic ${Buffer.from(`${panelUser}:${panelPassword}`).toString('base64')}`;
 const grounded = await chat('Quais são os principais cuidados de enfermagem no pós-operatório imediato?');
 const noEvidence = await chat('Qual é a receita de bolo preferida do professor da disciplina INT 5224?');
+const invalidRequest = await requestJson(appHost, '/api/chat', {
+  method: 'POST',
+  body: { session_id: `phase6-invalid-${randomUUID()}`, message: 17 },
+});
 let evaluation = null;
 
 for (let attempt = 0; attempt < 10; attempt += 1) {
@@ -97,6 +101,10 @@ const result = {
     sources: noEvidence.sources,
     transparent: /(não encontrei|não há base|não dispon|não posso|não tenho|fora do escopo)/i.test(noEvidence.answer),
   },
+  invalidRequest: {
+    status: invalidRequest.status,
+    errorCode: invalidRequest.body.error_code,
+  },
   asyncEvaluation: evaluation,
 };
 console.log(JSON.stringify(result));
@@ -106,5 +114,7 @@ const passed = grounded.status === 200
   && /Referências:/i.test(grounded.answer)
   && noEvidence.status === 200
   && /(não encontrei|não há base|não dispon|não posso|não tenho|fora do escopo)/i.test(noEvidence.answer)
+  && invalidRequest.status === 400
+  && invalidRequest.body.error_code === 'INVALID_REQUEST'
   && evaluation?.status === 'succeeded';
 if (!passed) process.exitCode = 1;
