@@ -192,30 +192,23 @@ async function retrieveDocs(
   embedding: number[],
   threshold = 0.35,
   sourcePattern?: string,
-  queryText?: string,
 ): Promise<Document[]> {
   const supabase = getSupabase();
   const matchDocuments = supabase.rpc.bind(supabase) as unknown as MatchDocumentsRpc;
-  const functionName = sourcePattern
-    ? 'match_documents_filtered'
-    : queryText
-      ? 'match_documents_hybrid'
-      : 'match_documents';
+  // O RPC híbrido permanece disponível para uma futura otimização, mas não
+  // fica no caminho crítico do aluno: em documentos grandes o ranking lexical
+  // pode atingir o limite de 10 s do endpoint hospedado. A busca semântica
+  // usa o índice vetorial ativo e é a opção estável para produção.
+  const functionName = sourcePattern ? 'match_documents_filtered' : 'match_documents';
   const rpcArgs = {
     query_embedding: embedding,
     match_threshold: threshold,
     match_count: parseInt(process.env.RAG_MATCH_COUNT || '5'),
     ...(sourcePattern ? { source_pattern: sourcePattern } : {}),
-    ...(!sourcePattern && queryText ? { query_text: queryText } : {}),
   };
 
-  // O híbrido combina busca semântica e lexical, mas pode exceder o limite do
-  // PostgREST quando a base está sob carga. Nesse caso, a busca semântica
-  // continua sendo uma fonte válida de contexto e evita expor erro técnico ao
-  // estudante. Ela é usada apenas depois de uma falha do híbrido.
   let lastError = 'erro desconhecido';
-  const maxAttempts = functionName === 'match_documents_hybrid' ? 1 : 3;
-  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+  for (let attempt = 1; attempt <= 3; attempt += 1) {
     try {
       const { data, error } = await matchDocuments(functionName, rpcArgs);
       if (!error) {
@@ -225,21 +218,7 @@ async function retrieveDocs(
     } catch (error) {
       lastError = error instanceof Error ? error.message : String(error);
     }
-    if (functionName === 'match_documents_hybrid') {
-      try {
-        const { data, error } = await matchDocuments('match_documents', {
-          query_embedding: embedding,
-          match_threshold: threshold,
-          match_count: rpcArgs.match_count,
-        });
-        if (!error) return mapRetrievedDocuments(data);
-        lastError = `${lastError}; fallback semântico: ${error.message}`;
-      } catch (error) {
-        const fallbackError = error instanceof Error ? error.message : String(error);
-        lastError = `${lastError}; fallback semântico: ${fallbackError}`;
-      }
-    }
-    if (attempt < maxAttempts) {
+    if (attempt < 3) {
       await new Promise((resolve) => setTimeout(resolve, 350 * attempt));
     }
   }
@@ -597,7 +576,6 @@ export async function POST(req: NextRequest) {
         embedding,
         decision.generationMode === 'info' ? -1 : isCourseQuery ? 0.25 : 0.35,
         decision.generationMode === 'info' ? ACTIVE_PLAN_SOURCE : undefined,
-        searchQuery,
       );
       retrievalLatency = Date.now() - retrievalStartedAt;
 
