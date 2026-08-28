@@ -36,7 +36,9 @@ O baseline atende à meta provisória do plano: P50 abaixo de 8 s, P95 abaixo de
 - Build local, lint e 31 testes automatizados passaram antes da publicação.
 - A versão foi publicada na Vercel e está `Ready`, com os aliases de produção preservados.
 - A primeira consulta real pós-publicação foi registrada com `EMBEDDING_FAILED` porque a chave `GOOGLE_API_KEY` de produção recebeu `429 RESOURCE_EXHAUSTED` (créditos pré-pagos esgotados). Isso é uma indisponibilidade da conta Gemini, não uma falha do código de rastreabilidade.
-- A validação ao vivo da referência e da telemetria fica pendente até trocar a chave Gemini de produção por uma conta com crédito e fazer um novo deploy.
+- A chave de produção foi substituída pela chave paga disponível em `Tutor/.env.simulacao`, sem expor o segredo, e um novo deploy foi concluído com status `Ready`.
+- A validação ao vivo pós-troca confirmou resposta fundamentada e rastreável. A bateria crítica repetida passou em 3/3: plano vigente, glossário e bloqueio de plano antigo. Latências da repetição: 8,5 s, 9,2 s e 1,8 s; o único fallback foi o cenário sem evidência, conforme esperado.
+- Em uma bateria anterior, o modelo primário recebeu 503 temporário por alta demanda e o fallback respondeu corretamente em 23,9 s. A ocorrência foi registrada como instabilidade transitória do provedor, não como erro de fonte/RAG; a repetição posterior não reproduziu o 503.
 
 ## Próximas tarefas da Fase 2A
 
