@@ -63,7 +63,12 @@ function referenceFromContent(
   for (let index = 0; index < lines.length - 1; index += 1) {
     const candidate = lines[index].replace(/^\[P[aá]g\.\s*\d+\]\s*/i, '').trim();
     const authorLine = lines[index + 1];
-    if (/^(?:nome do estudante|nome do aluno|matr[ií]cula)$/i.test(candidate) || authorLine.includes('@')) continue;
+    const normalizedCandidate = candidate.replace(/[.:;]+$/, '').trim();
+    if (
+      /^(?:nome do estudante|nome do aluno|matr[ií]cula)$/i.test(normalizedCandidate) ||
+      /^\d+\s*[-.)]/.test(normalizedCandidate) ||
+      authorLine.includes('@')
+    ) continue;
     const looksLikeAuthor = /^[A-ZÀ-Ý][A-Za-zÀ-ÿ'’.-]+(?:\s+[A-ZÀ-Ý]{1,4}[A-Za-zÀ-ÿ'’.-]*)*(?:\s*,\s*|\s+e\s+|\s+[A-ZÀ-Ý][A-Za-zÀ-ÿ'’.-]+){1,}/.test(authorLine);
     if (candidate.length >= 12 && candidate.length <= 180 && looksLikeAuthor) {
       return `${candidate.replace(/[.:;]+$/, '')}.`;
