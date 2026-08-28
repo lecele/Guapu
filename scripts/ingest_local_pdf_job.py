@@ -35,7 +35,7 @@ def main() -> None:
         modified_time=args.modified_time,
         drive_path=args.drive_path,
     )
-    if not result.success:
+    if not result.success or result.status != "active" or result.total_chunks <= 0:
         raise RuntimeError("; ".join(result.errors) or "INGESTION_FAILED")
 
     save_drive_manifest_result(
