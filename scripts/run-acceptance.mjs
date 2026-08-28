@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
 
-const baseUrl = (process.env.GUAPU_ACCEPTANCE_URL || 'https://guapu.vercel.app').replace(/\/$/, '');
+const baseUrl = (process.env.GUAPU_ACCEPTANCE_URL || 'https://guapu.agentesnasaude.com.br').replace(/\/$/, '');
 const cases = JSON.parse(await readFile(new URL('../qa/acceptance-cases.json', import.meta.url), 'utf8'));
 
 async function send(sessionId, message) {
