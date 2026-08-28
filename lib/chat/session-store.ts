@@ -29,6 +29,7 @@ export interface TurnMetadata {
   embedding_model: string | null;
   has_context: boolean;
   sources_found: number;
+  retrieval_cache_hit: boolean;
   retrieval: Array<{
     document_id: string;
     source: string;

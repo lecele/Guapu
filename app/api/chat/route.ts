@@ -101,6 +101,11 @@ interface Document {
   metadata: Record<string, unknown>;
 }
 
+interface RetrievalCacheEntry {
+  docs: Document[];
+  expiresAt: number;
+}
+
 interface MatchDocumentRow {
   id?: string;
   content: string;
@@ -165,6 +170,11 @@ let _supabase: ReturnType<typeof createClient> | null = null;
 let _genai: GoogleGenAI | null = null;
 
 const SUPABASE_REQUEST_TIMEOUT_MS = 6_000;
+const CORPUS_VERSION_TIMEOUT_MS = 800;
+const RETRIEVAL_CACHE_TTL_MS = 5 * 60 * 1_000;
+const RETRIEVAL_CACHE_MAX_ENTRIES = 128;
+const RETRIEVAL_CACHE_ENABLED = process.env.RAG_RETRIEVAL_CACHE_ENABLED === 'true';
+const retrievalCache = new Map<string, RetrievalCacheEntry>();
 
 async function fetchSupabaseWithTimeout(
   input: RequestInfo | URL,
@@ -189,6 +199,85 @@ function getSupabase() {
     });
   }
   return _supabase;
+}
+
+let _corpusVersionSupabase: ReturnType<typeof createClient> | null = null;
+
+async function fetchCorpusVersionWithTimeout(
+  input: RequestInfo | URL,
+  init?: RequestInit,
+): Promise<Response> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), CORPUS_VERSION_TIMEOUT_MS);
+  try {
+    return await fetch(input, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+function getCorpusVersionSupabase() {
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.SUPABASE_KEY;
+  if (!url || !key) throw new Error('CONFIGURATION_MISSING_SUPABASE');
+  if (!_corpusVersionSupabase) {
+    _corpusVersionSupabase = createClient(url, key, {
+      global: { fetch: fetchCorpusVersionWithTimeout },
+    });
+  }
+  return _corpusVersionSupabase;
+}
+
+async function readCorpusVersion(): Promise<string | null> {
+  if (!RETRIEVAL_CACHE_ENABLED) return null;
+  try {
+    const { data, error } = await getCorpusVersionSupabase().rpc('get_rag_corpus_version');
+    if (error || typeof data !== 'string' || !data) return null;
+    return data;
+  } catch (error) {
+    console.warn('[chat] versão do corpus indisponível; seguindo sem cache:', error);
+    return null;
+  }
+}
+
+function normalizeCachePart(value: string | number | null | undefined): string {
+  return String(value ?? '').trim().toLocaleLowerCase('pt-BR').replace(/\s+/g, ' ');
+}
+
+function retrievalCacheKey(params: {
+  query: string;
+  threshold: number;
+  sourcePattern?: string;
+  corpusVersion: string;
+}): string {
+  return [
+    params.corpusVersion,
+    normalizeCachePart(params.query),
+    normalizeCachePart(params.threshold),
+    normalizeCachePart(params.sourcePattern),
+  ].join('|');
+}
+
+function getCachedRetrieval(key: string): Document[] | null {
+  const entry = retrievalCache.get(key);
+  if (!entry) return null;
+  if (entry.expiresAt <= Date.now()) {
+    retrievalCache.delete(key);
+    return null;
+  }
+  retrievalCache.delete(key);
+  retrievalCache.set(key, entry);
+  return entry.docs;
+}
+
+function setCachedRetrieval(key: string, docs: Document[]): void {
+  retrievalCache.delete(key);
+  retrievalCache.set(key, { docs, expiresAt: Date.now() + RETRIEVAL_CACHE_TTL_MS });
+  while (retrievalCache.size > RETRIEVAL_CACHE_MAX_ENTRIES) {
+    const oldestKey = retrievalCache.keys().next().value;
+    if (typeof oldestKey !== 'string') break;
+    retrievalCache.delete(oldestKey);
+  }
 }
 
 function isHistoricalPlanQuery(text: string): boolean {
@@ -224,7 +313,16 @@ async function retrieveDocs(
   threshold = 0.35,
   sourcePattern?: string,
   queryText?: string,
-): Promise<Document[]> {
+  corpusVersion?: string | null,
+): Promise<{ docs: Document[]; cacheHit: boolean }> {
+  const cacheKey = RETRIEVAL_CACHE_ENABLED && corpusVersion && queryText
+    ? retrievalCacheKey({ query: queryText, threshold, sourcePattern, corpusVersion })
+    : null;
+  if (cacheKey) {
+    const cached = getCachedRetrieval(cacheKey);
+    if (cached) return { docs: cached, cacheHit: true };
+  }
+
   const supabase = getSupabase();
   const matchDocuments = supabase.rpc.bind(supabase) as unknown as MatchDocumentsRpc;
   const matchCount = parseInt(process.env.RAG_MATCH_COUNT || '5');
@@ -263,7 +361,10 @@ async function retrieveDocs(
           const documents = mapRetrievedDocuments(data);
           // Um híbrido sem candidatos não deve bloquear uma resposta que a
           // busca semântica ainda consegue fundamentar.
-          if (documents.length || strategy.functionName !== 'match_documents_hybrid') return documents;
+          if (documents.length || strategy.functionName !== 'match_documents_hybrid') {
+            if (cacheKey && documents.length) setCachedRetrieval(cacheKey, documents);
+            return { docs: documents, cacheHit: false };
+          }
         } else {
           lastError = error.message;
         }
@@ -435,6 +536,7 @@ function buildTurnMetadata(params: {
   quizQuestion: number;
   quizAttempt: number;
   docs: Document[];
+  retrievalCacheHit: boolean;
   modelRequested: string | null;
   modelUsed: string | null;
   fallbackUsed: boolean;
@@ -463,6 +565,7 @@ function buildTurnMetadata(params: {
     embedding_model: params.docs.length > 0 ? EMBEDDING_MODEL : null,
     has_context: params.docs.length > 0,
     sources_found: params.docs.length,
+    retrieval_cache_hit: params.retrievalCacheHit,
     retrieval: params.docs.map((doc, index) => ({
       document_id: doc.id || `source:${doc.source}:${index + 1}`,
       source: doc.source,
@@ -599,6 +702,7 @@ export async function POST(req: NextRequest) {
         quizQuestion: decision.stateAfter.quizQuestion,
         quizAttempt: decision.stateAfter.quizAttempt,
         docs: [],
+        retrievalCacheHit: false,
         modelRequested: null,
         modelUsed: null,
         fallbackUsed: false,
@@ -635,24 +739,30 @@ export async function POST(req: NextRequest) {
     let embeddingLatency = 0;
     let retrievalLatency = 0;
     let retrievalErrorCode: string | null = null;
-    const corpusVersion: string | null = null;
+    let retrievalCacheHit = false;
+    const corpusVersionPromise = readCorpusVersion();
+    let corpusVersion: string | null = null;
     const searchQuery = decision.topic || question;
 
     try {
       const embeddingStartedAt = Date.now();
       const embedding = await embedQuery(searchQuery);
       embeddingLatency = Date.now() - embeddingStartedAt;
+      corpusVersion = await corpusVersionPromise;
 
       const retrievalStartedAt = Date.now();
       const isCourseQuery =
         decision.generationMode === 'info' ||
         /prof|hor[aá]r|atend|cron|calend|nota|avali|plano|trabalho|conte[uú]do|carga|disciplin|ementa|frequ[eê]nc|moodle|email|contato|m[eé]dia|prova/i.test(searchQuery);
-      docs = await retrieveDocs(
+      const retrieval = await retrieveDocs(
         embedding,
         decision.generationMode === 'info' ? -1 : isCourseQuery ? 0.25 : 0.35,
         decision.generationMode === 'info' ? ACTIVE_PLAN_SOURCE : undefined,
         searchQuery,
+        corpusVersion,
       );
+      docs = retrieval.docs;
+      retrievalCacheHit = retrieval.cacheHit;
       retrievalLatency = Date.now() - retrievalStartedAt;
 
       // Perguntas sobre versões antigas não podem ser respondidas com trechos
@@ -756,6 +866,7 @@ export async function POST(req: NextRequest) {
       totalLatency,
       errorCode: generationErrorCode ?? retrievalErrorCode,
       corpusVersion,
+      retrievalCacheHit,
     });
 
     await saveTurnBounded(supabase, {
