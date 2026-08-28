@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import fcntl
 import os
 import re
 from datetime import datetime, timezone
@@ -35,9 +36,44 @@ def main() -> None:
     parser.add_argument("--drive-path", required=True)
     parser.add_argument("--modified-time", default="")
     parser.add_argument("--job-id", required=True)
+    parser.add_argument("--expected-pages", type=int, default=0)
     args = parser.parse_args()
 
-    total_pages, pages = read_pages(args.markdown)
+    client = create_client(os.environ["SUPABASE_URL"], os.environ["SUPABASE_SERVICE_ROLE_KEY"])
+    job_rows = client.table("drive_sync_jobs").select("status").eq("id", args.job_id).limit(1).execute().data
+    if job_rows and job_rows[0].get("status") == "succeeded":
+        print(f"markdown_ingestion_skipped=1 reason=job_already_succeeded job={args.job_id}")
+        return
+
+    lock_path = args.markdown.with_suffix(args.markdown.suffix + ".ingest.lock")
+    with lock_path.open("w", encoding="utf-8") as lock_file:
+        try:
+            fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            print("markdown_ingestion_skipped=1 reason=ingestion_already_running")
+            return
+
+        job_rows = client.table("drive_sync_jobs").select("status").eq("id", args.job_id).limit(1).execute().data
+        if job_rows and job_rows[0].get("status") == "succeeded":
+            print(f"markdown_ingestion_skipped=1 reason=job_already_succeeded job={args.job_id}")
+            return
+
+        total_pages, pages = read_pages(args.markdown)
+        if args.expected_pages and total_pages != args.expected_pages:
+            raise RuntimeError(
+                f"Markdown incompleto: encontrou {total_pages} páginas; "
+                f"esperava {args.expected_pages}"
+            )
+
+        _ingest(
+            client=client,
+            args=args,
+            total_pages=total_pages,
+            pages=pages,
+        )
+
+
+def _ingest(*, client, args, total_pages: int, pages: list[dict]) -> None:
     result = IngestionResult(file_name=args.file_name, file_id=args.file_id)
     result.total_pages = total_pages
 
@@ -76,7 +112,6 @@ def main() -> None:
         result,
     )
 
-    client = create_client(os.environ["SUPABASE_URL"], os.environ["SUPABASE_SERVICE_ROLE_KEY"])
     now = datetime.now(timezone.utc).isoformat()
     client.table("drive_sync_jobs").update(
         {
