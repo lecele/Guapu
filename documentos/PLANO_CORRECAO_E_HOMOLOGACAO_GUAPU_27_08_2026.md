@@ -2,7 +2,7 @@
 
 **Data de abertura:** 27/08/2026  
 **Status geral:** em execução  
-**Fase atual:** Fase 1 — reconciliação Google Drive ↔ Supabase, com a migração do runtime preparada em paralelo
+**Fase atual:** Fase 2A — qualidade do RAG e velocidade antes da troca de runtime
 **Documento de referência:** este arquivo é o controle oficial das próximas etapas.
 
 ## 1. Objetivo
@@ -559,9 +559,9 @@ As evidências de cada fase serão salvas em `documentos/QA/Fase_<numero>/`, sep
 | Fase | Status | Data de aprovação | Evidência | Aprovado por |
 |---|---|---|---|---|
 | 0. Contenção e ambiente seguro | Em execução | — | — | — |
-| 1. Comparação documental, remoção de antigos e reconciliação Drive ↔ Supabase | Em execução | — | `documentos/QA/Fase_1/` | — |
+| 1. Comparação documental, remoção de antigos e reconciliação Drive ↔ Supabase | Aprovada | 28/08/2026 | `documentos/QA/Fase_1/VERIFICACAO_FINAL_FASE_1_2026-08-28.md` | Leonardo |
 | 2. Recuperação e desempenho | Aguardando | — | — | — |
-| 2A. Qualidade do RAG e velocidade | Aguardando | — | — | — |
+| 2A. Qualidade do RAG e velocidade | Em execução | 28/08/2026 | baseline real em preparação | Leonardo |
 | 3. Referências verificadas | Aguardando | — | — | — |
 | 4. Prompts v1.3 e fluxos | Aguardando | — | — | — |
 | 5. Interface nova | Aguardando | — | — | — |
@@ -588,4 +588,4 @@ A versão não será considerada pronta se ocorrer qualquer uma das situações 
 
 ## 11. Próxima ação
 
-Concluir a **Fase 1** sem interromper os jobs em andamento. Em seguida, executar a **Fase 2A** para medir e corrigir qualidade, referências e latência. A preparação do runtime da VPS poderá avançar em homologação, mas nenhuma troca de DNS ou retirada da Vercel ocorrerá antes de a Fase 2A e a própria Fase 8 serem aprovadas com testes reais e rollback comprovado.
+Executar a **Fase 2A** para medir e corrigir qualidade, referências e latência antes da troca de runtime. A preparação do runtime da VPS poderá avançar em homologação, mas nenhuma troca de DNS ou retirada da Vercel ocorrerá antes de a Fase 2A e a própria Fase 8 serem aprovadas com testes reais e rollback comprovado.
