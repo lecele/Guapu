@@ -507,6 +507,20 @@ function requiresNextQuizQuestion(decision: ReturnType<typeof resolveTurn>, answ
   return !new RegExp(`quest[aã]o\\s*${currentQuestion + 1}\\s*:`, 'i').test(answer);
 }
 
+function needsClinicalCoverageRepair(question: string, answer: string): boolean {
+  const normalizedQuestion = question.normalize('NFD').replace(/[\\u0300-\\u036f]/g, '');
+  const isPostoperativeImmediate = /principais cuidados.*pos-?operatorio imediato/i.test(normalizedQuestion);
+  if (!isPostoperativeImmediate) return false;
+
+  // O RAG já fornece estes eixos nos materiais recuperados. A verificação
+  // evita que uma resposta correta, porém incompleta, omita um cuidado central.
+  return !/sinais vitais/i.test(answer)
+    || !/respirat/i.test(answer)
+    || !/(?:dor|conforto|analges)/i.test(answer);
+}
+
+const POSTOPERATIVE_COVERAGE_REQUIREMENT = `Revise a resposta antes de finalizá-la. Como a pergunta pede os principais cuidados no pós-operatório imediato, cubra explicitamente, quando sustentados pelos trechos RAG, os eixos de sinais vitais, avaliação respiratória e avaliação da dor/conforto, além dos demais cuidados relevantes encontrados no contexto. Não invente condutas nem informações ausentes; se algum eixo não estiver sustentado, declare essa limitação.`;
+
 // ── Histórico e Cache de Estado ───────────────────────────────────────────────
 
 // ── HANDLER ───────────────────────────────────────────────────────────────────
@@ -829,6 +843,26 @@ export async function POST(req: NextRequest) {
       fallbackReason = generation.fallbackReason;
       generationLatency = generation.latencyMs;
       generationErrorCode = generation.errorCode;
+      if (!generation.errorCode && needsClinicalCoverageRepair(question, answer)) {
+        const repair = await generateResponse(
+          question,
+          docs,
+          history.slice(-12) as ChatHistoryItem[],
+          decision.generationMode ?? 'livre',
+          decision.topic,
+          decision.quizQuestion,
+          decision.stateBefore.state,
+          decision.stateBefore.mode,
+          POSTOPERATIVE_COVERAGE_REQUIREMENT,
+        );
+        if (!repair.errorCode && !needsClinicalCoverageRepair(question, repair.text)) {
+          answer = repair.text;
+          modelUsed = repair.modelUsed;
+          fallbackUsed = fallbackUsed || repair.fallbackUsed;
+          fallbackReason = repair.fallbackReason ?? fallbackReason;
+          generationLatency += repair.latencyMs;
+        }
+      }
       if (!generation.errorCode && requiresNextQuizQuestion(decision, answer)) {
         const expectedQuestion = Math.max(1, decision.quizQuestion) + 1;
         const repair = await generateResponse(
