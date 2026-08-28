@@ -560,7 +560,7 @@ As evidências de cada fase serão salvas em `documentos/QA/Fase_<numero>/`, sep
 |---|---|---|---|---|
 | 0. Contenção e ambiente seguro | Em execução | — | — | — |
 | 1. Comparação documental, remoção de antigos e reconciliação Drive ↔ Supabase | Aprovada | 28/08/2026 | `documentos/QA/Fase_1/VERIFICACAO_FINAL_FASE_1_2026-08-28.md` | Leonardo |
-| 2. Recuperação e desempenho | Aguardando | — | — | — |
+| 2. Recuperação e desempenho | Aprovada | `documentos/QA/BASELINE_FASE_2A_2026-08-28.md` e `documentos/QA/GATE_LIBERACAO_2026-08-28.md` | 28/08/2026 | Leonardo |
 | 2A. Qualidade do RAG e velocidade | Em execução | 28/08/2026 | baseline real em preparação | Leonardo |
 | 3. Referências verificadas | Aguardando | — | — | — |
 | 4. Prompts v1.3 e fluxos | Aguardando | — | — | — |

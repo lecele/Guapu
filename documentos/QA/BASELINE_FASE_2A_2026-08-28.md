@@ -1,6 +1,6 @@
 # Baseline da Fase 2A — 28/08/2026
 
-Status: **rastreabilidade, seleção do modelo, proteção de latência, busca híbrida e cache seguro publicados e verificados; falta o teste controlado de invalidação após alteração documental**.
+Status: **rastreabilidade, seleção do modelo, proteção de latência, busca híbrida e cache seguro publicados e verificados; falta apenas repetir o ciclo end-to-end no Drive com o cache já ativo**.
 
 ## Medição real
 
@@ -57,9 +57,11 @@ O baseline atende à meta provisória do plano: P50 abaixo de 8 s, P95 abaixo de
 - Nessa mesma bateria pós-cache, as latências totais ficaram entre 790 ms e 8.901 ms; P50 de 7.505 ms e P95 de 8.159 ms. O cache reduz a recuperação, enquanto a geração do modelo continua sendo a maior parcela do tempo nos casos com resposta fundamentada.
 - A leitura repetida da versão do corpus retornou o mesmo hash nas duas consultas, com 119 itens ativos no manifesto. Ainda não foi feita uma alteração controlada no Drive para provar a troca do hash e a invalidação; esse é o único teste pendente antes de considerar a Fase 2A aprovada.
 - O refinamento que separa a chave por modalidade foi publicado no commit `246be64`, deploy `dpl_2kGWgbKXwgieGd4YHhVqqUfjcwWH`. O smoke test exato desse deploy passou em 3/3, com latências de 1.872–8.575 ms, e o health check retornou HTTP 200.
+- O ensaio controlado no manifesto, sem criar chunks e com limpeza garantida, passou: a versão mudou ao adicionar uma entrada ativa, mudou novamente ao retirar essa entrada, voltou ao hash original após a exclusão e os 119 ativos foram restaurados.
+- O benchmark real final da recuperação passou em correção e orçamento de 3 s para os três casos, tanto na busca semântica quanto na híbrida: todas as fontes esperadas foram encontradas; a semântica ficou entre 606 ms e 1.980 ms e a híbrida entre 260 ms e 306 ms.
 
 ## Próximas tarefas da Fase 2A
 
-1. Executar alteração controlada de um documento de teste no Drive, aguardar a reconciliação, confirmar nova `corpus_version`, ausência dos chunks antigos e nova resposta baseada no arquivo atualizado; restaurar o estado aprovado ao final.
+1. Executar alteração controlada de um documento de teste no Drive, aguardar a reconciliação com o cache já ativo, confirmar nova `corpus_version`, ausência dos chunks antigos e nova resposta baseada no arquivo atualizado; restaurar o estado aprovado ao final.
 2. Repetir a bateria após o teste de invalidação e manter este baseline como comparação.
 3. Aprovar a Fase 2A somente se a atualização/remoção não servir conteúdo antigo e os critérios de latência e fundamentação continuarem passando.
