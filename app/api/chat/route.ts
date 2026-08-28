@@ -35,9 +35,10 @@ const ACTIVE_PLAN_SOURCE = (
   process.env.ACTIVE_PLAN_SOURCE ||
   'administrativo__plano_ensino_INT55224__plano__ufsc__2026_2.pdf'
 ).trim();
-// Referências são parte do contrato v1.3.0. Só ficam desligadas quando o
-// ambiente declarar explicitamente RAG_REFERENCES_ENABLED=false.
-const RAG_REFERENCES_ENABLED = process.env.RAG_REFERENCES_ENABLED !== 'false';
+// Referências são parte obrigatória do contrato v1.3.0 e são montadas pela
+// aplicação a partir dos chunks recuperados. Não dependem de configuração de
+// ambiente para não desaparecerem por erro de implantação.
+const RAG_REFERENCES_ENABLED = true;
 
 // ── Respostas fixas (zero tokens de LLM para navegação rápida) ───────────────
 
