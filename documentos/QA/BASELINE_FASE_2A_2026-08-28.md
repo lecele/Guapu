@@ -61,6 +61,7 @@ O baseline atende à meta provisória do plano: P50 abaixo de 8 s, P95 abaixo de
 - O benchmark real final da recuperação passou em correção e orçamento de 3 s para os três casos, tanto na busca semântica quanto na híbrida: todas as fontes esperadas foram encontradas; a semântica ficou entre 606 ms e 1.980 ms e a híbrida entre 260 ms e 306 ms.
 - A leitura ao vivo do Drive na VPS encontrou 119 arquivos; o manifesto do Supabase também possui 119 registros, todos `active`, sem arquivo faltante ou registro sobrando. A identidade do conjunto consultável permanece alinhada ao inventário oficial.
 - O ensaio end-to-end de alteração no Drive foi iniciado com limpeza automática, mas a conta de serviço não possui quota de armazenamento para criar o DOCX temporário (`storageQuotaExceeded`). A falha ocorreu antes da ingestão; a verificação posterior confirmou zero pasta temporária e zero manifesto temporário restante, com o worker ativo.
+- O ensaio end-to-end real com o arquivo `Teste.docx` foi detectado pelo Drive e entrou na fila, mas o worker esgotou as três tentativas na etapa de embedding por `429 RESOURCE_EXHAUSTED` da conta Gemini. O manifesto ficou `error` e os chunks permaneceram em zero; isso é bloqueio de crédito externo, não aprovação da ingestão. A conta de serviço não tem permissão para remover o arquivo criado pelo usuário, que precisa ser retirado manualmente antes da retomada.
 
 ## Próximas tarefas da Fase 2A
 
