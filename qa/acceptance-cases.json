@@ -33,7 +33,7 @@
     "id": "FLOW-009",
     "description": "Informações da disciplina consultam o plano",
     "messages": ["Informações da Disciplina: qual é a fórmula da média final?"],
-    "expect": { "includes": ["Referências", "plano de ensino", "administrativo plano ensino", "Moodle"], "excludes": ["cardiologia", "Essas atividades avaliativas somam um peso total de 7,0"], "sourcesMin": 1, "maxLatencyMs": 45000 }
+    "expect": { "includes": ["plano de ensino", "Moodle"], "excludes": ["cardiologia", "Essas atividades avaliativas somam um peso total de 7,0"], "sourcesMin": 1, "maxLatencyMs": 45000 }
   },
   {
     "id": "FLOW-011",

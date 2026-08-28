@@ -82,6 +82,70 @@ test('não mistura fallback com uma referência identificada', () => {
   assert.doesNotMatch(answer, /Informação não disponível no artigo/);
 });
 
+test('omite a seção quando só existe o nome técnico do arquivo', () => {
+  const answer = finalizeReferences(
+    'Resposta baseada nos materiais disponíveis.',
+    [{ source: 'plano__ensino__2026.pdf', content: 'Trecho administrativo sem título bibliográfico ou autoria.' }],
+    'info',
+  );
+
+  assert.equal(answer, 'Resposta baseada nos materiais disponíveis.');
+  assert.doesNotMatch(answer, /plano ensino|Referências|Informação não disponível/i);
+});
+
+test('não exibe referências quando a resposta é uma recusa ou fallback', () => {
+  const answer = finalizeReferences(
+    'Não posso responder a essa solicitação porque está fora do escopo da disciplina.\n\n**Referências:**\n- trecho irrelevante',
+    [{ source: 'livro.pdf', content: 'Trecho sem relação com a pergunta.', metadata: { drive_file_id: 'drive-1', page_number: 10 } }],
+    'info',
+  );
+
+  assert.doesNotMatch(answer, /Referências|trecho irrelevante|livro\.pdf/i);
+});
+
+test('não exibe referências quando a resposta informa que o dado não está detalhado', () => {
+  const answer = finalizeReferences(
+    'A fórmula matemática completa não está detalhada nos documentos recuperados. Consulte o plano de ensino completo.',
+    [{ source: 'plano.pdf', content: 'PROFESSOR HORÁRIO LOCAL', metadata: { drive_file_id: 'drive-1', page_number: 1 } }],
+    'info',
+  );
+
+  assert.doesNotMatch(answer, /Referências|PROFESSOR|plano\.pdf/i);
+});
+
+test('em informações, mantém apenas referência com relação textual à resposta', () => {
+  const answer = finalizeReferences(
+    'A fórmula da média final não está detalhada no material recuperado. Consulte o plano de ensino completo.',
+    [
+      { source: 'plano.pdf', content: 'O cuidado de enfermagem ao adulto e idoso nas intercorrências cirúrgicas.' },
+      { source: 'plano.pdf', content: 'Fórmula da média final: média ponderada das avaliações.', metadata: { reference_title: 'Plano de ensino INT 5224' } },
+    ],
+    'info',
+  );
+
+  assert.doesNotMatch(answer, /Referências|intercorrências cirúrgicas|plano\.pdf/i);
+});
+
+test('ignora fragmentos de frases como se fossem referências', () => {
+  const answer = finalizeReferences(
+    'Resposta clínica baseada nos trechos recuperados.',
+    [{ source: 'artigo.pdf', content: 'domicílio, conforme as orientações de enfermagem. O cuidado deve ser contínuo. Após a alta, a equipe acompanha o paciente.' }],
+    'livre',
+  );
+
+  assert.doesNotMatch(answer, /Referências|domicílio|Após a alta|artigo\.pdf/i);
+});
+
+test('ignora cabeçalho OCR de referências como se fosse capítulo', () => {
+  const answer = finalizeReferences(
+    'Resposta clínica baseada nos trechos recuperados.',
+    [{ source: 'artigo.pdf', content: 'Capítulo 5 — 10 91 Referências 5. Texto do conteúdo.' }],
+    'livre',
+  );
+
+  assert.doesNotMatch(answer, /Referências|10 91|artigo\.pdf/i);
+});
+
 test('remove referências do modelo e não adiciona novas quando a exibição está desativada', () => {
   const answer = finalizeReferences(
     'Resposta segura.\n\nReferências:\n- fragmento inválido',

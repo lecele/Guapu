@@ -17,15 +17,30 @@ function isSourceOnlyReference(reference: string): boolean {
   return /\([^\n]+\.(?:pdf|docx?)\)$/i.test(reference);
 }
 
-function formatSourceReference(source?: string): string {
-  const sourceLabel = source?.trim();
-  if (!sourceLabel || sourceLabel === 'desconhecido') {
-    return 'Informação não disponível no artigo, consultar o Plano de Ensino ou docentes.';
-  }
-  const readableSource = sourceLabel.replace(/_/g, ' ').replace(/\s+/g, ' ').trim();
-  return readableSource === sourceLabel
-    ? sourceLabel
-    : `${readableSource} (${sourceLabel})`;
+function isInsufficientOrRefusal(text: string): boolean {
+  const normalized = text.replace(/\s+/g, ' ');
+  return /(?:^|\s)(?:n[aã]o posso responder|n[aã]o encontrei.*(?:materiais|conte[uú]do|informa[cç][aã]o)|fora do escopo|informa[cç][aã]o n[aã]o dispon[ií]vel no artigo|n[aã]o (?:est[aá]|foi) detalhad[ao]|n[aã]o h[aá] informa[cç][aã]o suficiente)/i.test(normalized)
+    || /(?:f[oó]rmula|informa[cç][aã]o).{0,120}(?:n[aã]o|sem).{0,120}(?:detalhad|dispon[ií]vel|encontrad)/i.test(normalized)
+    || /n[aã]o (?:apresentam?|trazem?|cont[eê]m|possuem?).{0,120}(?:f[oó]rmula|tabela|dado|informa[cç][aã]o)/i.test(normalized)
+    || /n[aã]o [eé] poss[ií]vel deduzir|dados? recuperados n[aã]o trazem/i.test(normalized);
+}
+
+const REFERENCE_STOPWORDS = new Set([
+  'a', 'as', 'ao', 'aos', 'com', 'da', 'das', 'de', 'do', 'dos', 'e', 'em',
+  'essa', 'esse', 'esta', 'este', 'na', 'nas', 'no', 'nos', 'o', 'os', 'para',
+  'por', 'que', 'se', 'sem', 'sua', 'suas', 'um', 'uma', 'umas', 'uns', 'sobre',
+]);
+
+function hasMeaningfulOverlap(answer: string, reference: string): boolean {
+  const words = (value: string) => new Set(
+    value.toLocaleLowerCase('pt-BR')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .match(/[a-z]{4,}/g) ?? [],
+  );
+  const answerWords = words(answer);
+  const referenceWords = [...words(reference)].filter((word) => !REFERENCE_STOPWORDS.has(word));
+  return referenceWords.some((word) => answerWords.has(word));
 }
 
 function traceLocation(source?: string, metadata?: Record<string, unknown>): string {
@@ -52,9 +67,7 @@ function traceLocation(source?: string, metadata?: Record<string, unknown>): str
 function referenceFromContent(
   content?: string,
   metadata?: Record<string, unknown>,
-  source?: string,
 ): string {
-  const sourceLabel = source?.trim();
   const storedTitle = typeof metadata?.reference_title === 'string' ? metadata.reference_title.trim() : '';
   const storedAuthor = typeof metadata?.reference_author === 'string' ? metadata.reference_author.trim() : '';
   const storedYear = typeof metadata?.reference_year === 'string' ? metadata.reference_year.trim() : '';
@@ -64,7 +77,7 @@ function referenceFromContent(
       .filter(Boolean).join(' ');
   }
   const text = (content || '').replace(/\s+/g, ' ').trim();
-  if (!text) return 'Informação não disponível no artigo, consultar o Plano de Ensino ou docentes.';
+  if (!text) return '';
 
   const bibliographic = text.match(/\b([A-ZÀ-Ý][A-Za-zÀ-ÿ'’.-]+(?:\s+(?:[A-ZÀ-Ý][A-Za-zÀ-ÿ'’.-]+|de|da|do|dos|das)){0,5})\s*\(?((?:19|20)\d{2})\)?\.\s*([^.!?]{12,160})(?:\.|$)/);
   const page = text.match(/\b(?:p\.?|p[aá]gina(?:s)?)\s*(\d+(?:\s*(?:-|–|a)\s*\d+)?)/i);
@@ -84,8 +97,12 @@ function referenceFromContent(
   // Camada 2: uma seção ou capítulo identificado no próprio trecho ainda é
   // uma referência útil. Nunca recorremos ao nome do arquivo.
   if (chapter?.[2]) {
-    const number = chapter[1] ? ` (Cap. ${chapter[1]})` : '';
-    return `${chapter[2].trim().replace(/[.:;]+$/, '')}${number}.`;
+    const chapterTitle = chapter[2].trim().replace(/[.:;]+$/, '');
+    const ocrNoise = /\b(?:refer[eê]ncias|sum[aá]rio|[íi]ndice)\b/i.test(chapterTitle) || /^\d/.test(chapterTitle);
+    if (!ocrNoise) {
+      const number = chapter[1] ? ` (Cap. ${chapter[1]})` : '';
+      return `${chapterTitle}${number}.`;
+    }
   }
 
   // Alguns PDFs extraem título e autores em linhas separadas. Quando a linha
@@ -101,17 +118,29 @@ function referenceFromContent(
       /^\d+\s*[-.)]/.test(normalizedCandidate) ||
       authorLine.includes('@')
     ) continue;
-    const looksLikeAuthor = /^[A-ZÀ-Ý][A-Za-zÀ-ÿ'’.-]+(?:\s+[A-ZÀ-Ý]{1,4}[A-Za-zÀ-ÿ'’.-]*)*(?:\s*,\s*|\s+e\s+|\s+[A-ZÀ-Ý][A-Za-zÀ-ÿ'’.-]+){1,}/.test(authorLine);
-    if (candidate.length >= 12 && candidate.length <= 180 && looksLikeAuthor) {
+    const administrativeHeading = /\b(?:professor|hor[aá]rio|local|cronograma|avalia[cç][aã]o|m[oó]dulo|semestre|carga hor[aá]ria)\b/i.test(normalizedCandidate);
+    const sentenceFragment = /\b(?:conforme|portanto|poder[aã]o|deve|devem|quando|durante|atrav[eé]s|consiste|compreende)\b/i.test(normalizedCandidate);
+    const startsLikeTitle = /^[A-ZÀ-Ý]/.test(candidate);
+    const looksLikeAuthor =
+      authorLine.length <= 120 &&
+      !/[.!?]/.test(authorLine) &&
+      (/,/.test(authorLine) || /\b[A-ZÀ-Ý]{1,3}\b/.test(authorLine));
+    if (
+      candidate.length >= 12 &&
+      candidate.length <= 180 &&
+      startsLikeTitle &&
+      !administrativeHeading &&
+      !sentenceFragment &&
+      looksLikeAuthor
+    ) {
       return `${candidate.replace(/[.:;]+$/, '')}.`;
     }
   }
 
-  // O identificador de fonte é a última camada, mas continua sendo uma
-  // referência real: ele vem do arquivo que originou o chunk recuperado.
-  // Assim, PDFs administrativos e documentos sem bibliografia extraída não
-  // desaparecem da prestação de contas do RAG.
-  return formatSourceReference(sourceLabel);
+  // O nome do arquivo identifica a origem técnica do chunk, mas não é uma
+  // referência bibliográfica. Se o trecho não trouxe uma pista verificável,
+  // não exibimos uma bibliografia que o estudante não possa conferir.
+  return '';
 }
 
 function removeModelReferences(text: string): string {
@@ -142,12 +171,12 @@ export function finalizeReferences(
     .trim();
   if (!enabled) return withoutModelReferences;
   if (!needsReferences(mode)) return withoutModelReferences;
+  // Uma recusa ou fallback de conteúdo insuficiente não deve carregar
+  // referências de trechos que só foram recuperados por aproximação.
+  if (isInsufficientOrRefusal(text)) return withoutModelReferences;
 
-  const fallback = 'Informação não disponível no artigo, consultar o Plano de Ensino ou docentes.';
   const extracted = docs.map((doc) => {
-    const reference = mode === 'info'
-      ? formatSourceReference(doc.source)
-      : referenceFromContent(doc.content, doc.metadata, doc.source);
+    const reference = referenceFromContent(doc.content, doc.metadata);
     return {
       reference,
       traced: `${reference}${traceLocation(doc.source, doc.metadata)}`,
@@ -156,12 +185,13 @@ export function finalizeReferences(
   // A camada 3 só é permitida quando nenhum dos trechos trouxe pista
   // bibliográfica melhor. Nunca misture uma referência identificada com
   // rótulos de arquivo ou uma linha de fallback.
-  const identified = extracted.filter((item) => item.reference !== fallback && !isSourceOnlyReference(item.reference));
-  const candidates = identified.length > 0 ? identified : extracted.slice(0, 1);
-  const sources = [...new Map(candidates.map((item) => [item.traced, item])).values()].slice(0, 5);
-  const lines = sources.length > 0
-    ? sources.map((item) => `- ${item.traced}`)
-    : [`- ${fallback}`];
+  const identified = extracted.filter((item) => item.reference && !isSourceOnlyReference(item.reference));
+  const relevant = mode === 'info'
+    ? identified.filter((item) => hasMeaningfulOverlap(withoutModelReferences, item.reference))
+    : identified;
+  if (relevant.length === 0) return withoutModelReferences;
+  const sources = [...new Map(relevant.map((item) => [item.traced, item])).values()].slice(0, 5);
+  const lines = sources.map((item) => `- ${item.traced}`);
 
   return `${withoutModelReferences}\n\n**Referências:**\n${lines.join('\n')}`.trim();
 }

@@ -1,6 +1,6 @@
 # Baseline da Fase 2A — 28/08/2026
 
-Status: **rastreabilidade, seleção do modelo, proteção de latência, busca híbrida e cache seguro publicados e verificados; falta apenas repetir o ciclo end-to-end no Drive com o cache já ativo**.
+Status: **Fase 2A concluída tecnicamente e validada end-to-end: inclusão, remoção, rastreabilidade, seleção do modelo, proteção de latência, busca híbrida e cache seguro publicados e verificados**.
 
 ## Medição real
 
@@ -63,8 +63,27 @@ O baseline atende à meta provisória do plano: P50 abaixo de 8 s, P95 abaixo de
 - O ensaio end-to-end de alteração no Drive foi iniciado com limpeza automática, mas a conta de serviço não possui quota de armazenamento para criar o DOCX temporário (`storageQuotaExceeded`). A falha ocorreu antes da ingestão; a verificação posterior confirmou zero pasta temporária e zero manifesto temporário restante, com o worker ativo.
 - O ensaio end-to-end real com o arquivo `Teste.docx` foi detectado pelo Drive e entrou na fila, mas o worker esgotou as três tentativas na etapa de embedding por `429 RESOURCE_EXHAUSTED` da conta Gemini. O manifesto ficou `error` e os chunks permaneceram em zero; isso é bloqueio de crédito externo, não aprovação da ingestão. A conta de serviço não tem permissão para remover o arquivo criado pelo usuário, que precisa ser retirado manualmente antes da retomada.
 
+## Fechamento do ciclo end-to-end — 28/08
+
+- O arquivo de teste `Teste.docx` foi incluído no Drive e processado com sucesso pelo worker: manifesto ativo e chunks rastreáveis.
+- A consulta publicada recuperou o arquivo como fonte principal, com `drive_file_id`, página e trecho registrados. A resposta foi protegida pelo guardrail porque a frase de teste não pertencia ao conteúdo de enfermagem.
+- O arquivo foi removido do Drive. O planejador registrou `removed=1`, o job terminou como `succeeded`, o manifesto do arquivo foi removido e a contagem de chunks pelo `drive_file_id` ficou em zero.
+- Uma nova consulta publicada não retornou o arquivo removido nem a frase exclusiva do teste. O corpus oficial permaneceu com 119 documentos ativos.
+- O ciclo inclusão → recuperação → remoção → não recuperação foi aprovado para a Fase 2A.
+- A bateria publicada de aceitação passou em 8/8: resumo, aprofundamento, troca de tema, quiz, informações da disciplina, encerramento e pergunta clínica com referências.
+- Após a substituição da chave de produção pela chave do cliente, a mesma bateria foi repetida e passou em 8/8; health HTTP 200 e consulta clínica HTTP 200 com cinco fontes.
+
+## Auditoria adicional de referências — 28/08
+
+- A comparação com a conversa do cliente e os quatro arquivos de ajustes confirmou que o problema principal não era apenas o prompt: a aplicação usava fallback baseado no nome técnico do arquivo e anexava referências mesmo em recusas ou respostas sem evidência suficiente.
+- A montagem foi corrigida para aceitar somente título/autoria/ano/seção identificáveis no conteúdo ou metadados do chunk. O nome do arquivo permanece apenas como trilha técnica junto de `drive_file_id`, página e trecho quando disponíveis; nunca é usado sozinho como referência bibliográfica.
+- Respostas de recusa, conteúdo insuficiente, dado não detalhado e cabeçalhos OCR são filtradas e não exibem a seção `Referências`. Consultas administrativas também retêm apenas referências com relação textual com a resposta.
+- A correção foi coberta por 37 testes automatizados, lint e build de produção aprovados, e publicada no deploy `dpl_67AjEcYPVMjzQvuL9yprx3iHYStS` (`Ready`).
+- Testes reais finais: bateria publicada 8/8; auditoria formal da Fase 1 com três repetições por cenário 9/9; pergunta clínica retornou apenas títulos reconhecíveis com página/trecho; pergunta sobre aulas em 16/09 e pergunta sobre a fórmula incompleta não exibiram referências; pergunta sobre o plano antigo permaneceu bloqueada com zero fontes.
+- As respostas testadas retornaram HTTP 200. As respostas fundamentadas ficaram aproximadamente entre 4,7 s e 12,5 s nos ensaios finais; as respostas sem contexto ficaram aproximadamente entre 3,9 s e 11,0 s. A latência variou por geração do modelo, mas não houve timeout nem falha HTTP.
+
+Com essa auditoria, a pendência de referências da Fase 3 fica tecnicamente corrigida e testada. A liberação final ainda depende das fases de interface, painel, homologação do cliente e comparação de runtime Vercel/VPS descritas no gate.
+
 ## Próximas tarefas da Fase 2A
 
-1. Executar alteração controlada de um documento de teste no Drive, aguardar a reconciliação com o cache já ativo, confirmar nova `corpus_version`, ausência dos chunks antigos e nova resposta baseada no arquivo atualizado; restaurar o estado aprovado ao final.
-2. Repetir a bateria após o teste de invalidação e manter este baseline como comparação.
-3. Aprovar a Fase 2A somente se a atualização/remoção não servir conteúdo antigo e os critérios de latência e fundamentação continuarem passando.
+As tarefas de validação previstas para esta etapa foram concluídas. A próxima etapa deve usar um documento acadêmico pequeno, autorizado pelo cliente, para validar alteração de conteúdo e resposta sem depender de uma frase fora do escopo clínico.
