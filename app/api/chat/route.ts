@@ -35,6 +35,7 @@ const ACTIVE_PLAN_SOURCE = (
   process.env.ACTIVE_PLAN_SOURCE ||
   'administrativo__plano_ensino_INT55224__plano__ufsc__2026_2.pdf'
 ).trim();
+const ACTIVE_PLAN_YEAR = ACTIVE_PLAN_SOURCE.match(/\b(20\d{2})\b/)?.[1] || String(new Date().getFullYear());
 // Referências são parte obrigatória do contrato v1.3.0 e são montadas pela
 // aplicação a partir dos chunks recuperados. Não dependem de configuração de
 // ambiente para não desaparecerem por erro de implantação.
@@ -283,7 +284,12 @@ function setCachedRetrieval(key: string, docs: Document[]): void {
 }
 
 function isHistoricalPlanQuery(text: string): boolean {
-  return /\b(?:plano|documento|vers[aã]o)\s+(?:de\s+ensino\s+)?(?:anterior|antigo|antiga|passado|passada)\b|\bplano\s+anterior\b|\bplano\s+antigo\b/i.test(text);
+  if (/\b(?:plano|documento|vers[aã]o)\s+(?:de\s+ensino\s+)?(?:anterior|antigo|antiga|passado|passada)\b|\bplano\s+anterior\b|\bplano\s+antigo\b/i.test(text)) {
+    return true;
+  }
+  const refersToOfficialMaterial = /\b(?:plano(?:\s+de\s+ensino)?|documento|vers[aã]o)\b/i.test(text);
+  if (!refersToOfficialMaterial) return false;
+  return [...text.matchAll(/\b(20\d{2})\b/g)].some((match) => match[1] !== ACTIVE_PLAN_YEAR);
 }
 function getGenAI() {
   const apiKey = process.env.GOOGLE_API_KEY ?? process.env.GEMINI_API_KEY;
