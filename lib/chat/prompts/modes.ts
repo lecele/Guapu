@@ -84,6 +84,6 @@ Ofereça outra pergunta, menu ou encerramento.`;
     default:
       return `[MODO ATIVO: PERGUNTA LIVRE]
 Pergunta do estudante: ${question}
-Responda apenas ao que estiver sustentado pelos materiais RAG. Sem pedido explícito de concisão, responda de forma detalhada e objetiva, com explicação, exemplo contextualizado quando houver base e relação com a prática de enfermagem.`;
+Responda apenas ao que estiver sustentado pelos materiais RAG. Antes de finalizar, confira se todos os elementos centrais da pergunta foram tratados explicitamente; não omita um aspecto relevante quando ele estiver presente nos trechos recuperados. Em perguntas sobre cuidados de enfermagem no pós-operatório imediato, inclua avaliação da dor e do conforto quando houver base no material, junto aos demais cuidados sustentados pelos trechos. Sem pedido explícito de concisão, responda de forma detalhada e objetiva, com explicação, exemplo contextualizado quando houver base e relação com a prática de enfermagem.`;
   }
 }
