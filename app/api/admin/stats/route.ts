@@ -15,6 +15,7 @@ type ChatTelemetry = {
   quiz_attempt?: number | null;
   has_context?: boolean;
   model_requested?: string | null;
+  model_used?: string | null;
   fallback_used?: boolean;
   error_code?: string | null;
   sources_found?: number;
@@ -480,6 +481,18 @@ export async function GET(request: NextRequest) {
     const retrievalLatencies = valuesFor('retrieval');
     const generationLatencies = valuesFor('generation');
     const fallbackTurns = pipelineTurns.filter((message) => message.metadata?.fallback_used).length;
+    const modelCounts = new Map<string, number>();
+    telemetryMessages.forEach((message) => {
+      const model = message.metadata?.model_used?.trim();
+      if (model) modelCounts.set(model, (modelCounts.get(model) ?? 0) + 1);
+    });
+    const modelUsage = Array.from(modelCounts.entries())
+      .sort(([, countA], [, countB]) => countB - countA)
+      .map(([model, count]) => ({
+        model,
+        count,
+        percent: telemetryMessages.length > 0 ? Math.round((count / telemetryMessages.length) * 100) : 0,
+      }));
     const noContextTurns = pipelineTurns.filter((message) => message.metadata?.has_context === false).length;
     const retrievalFailures = pipelineTurns.filter((message) =>
       ['EMBEDDING_FAILED', 'RETRIEVAL_FAILED', 'NO_RELEVANT_CONTEXT'].includes(message.metadata?.error_code ?? ''),
@@ -616,6 +629,8 @@ export async function GET(request: NextRequest) {
         avgRetrievalTimeMs: average(retrievalLatencies),
         avgGenerationTimeMs: average(generationLatencies),
         fallbackTurns,
+        fallbackRatePercent: pipelineTurns.length > 0 ? Math.round((fallbackTurns / pipelineTurns.length) * 100) : 0,
+        modelUsage,
         noContextTurns,
         retrievalFailures,
         modelFailures,

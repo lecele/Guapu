@@ -66,6 +66,8 @@ interface StatsData {
     avgRetrievalTimeMs: number;
     avgGenerationTimeMs: number;
     fallbackTurns: number;
+    fallbackRatePercent: number;
+    modelUsage: Array<{ model: string; count: number; percent: number }>;
     noContextTurns: number;
     retrievalFailures: number;
     modelFailures: number;
@@ -1225,7 +1227,7 @@ export default function AdminDashboardPage() {
               <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
                 <div className="relative flex min-h-44 flex-col justify-between overflow-hidden rounded-2xl border border-violet-500/25 bg-gradient-to-br from-[#10264a] to-[#0b203c] p-5 shadow-lg transition hover:border-violet-400/60">
                   <div className="flex items-center justify-between"><span className="flex h-10 w-10 items-center justify-center rounded-xl border border-violet-400/30 bg-violet-500/10 text-violet-200"><span className="material-symbols-outlined text-[22px]">timer</span></span><span className="rounded-full border border-violet-400/20 bg-violet-500/10 px-2 py-1 text-[10px] font-bold text-violet-200">P50</span></div>
-                  <div><p className="text-3xl font-black tracking-tight text-white">{isLoading ? '…' : `${((stats?.telemetry.p50ResponseTimeMs ?? 0) / 1000).toFixed(1)}s`}</p><p className="text-xs font-semibold text-slate-300">Tempo de resposta RAG</p><p className="mt-1 text-[11px] text-slate-400">P95: {((stats?.telemetry.p95ResponseTimeMs ?? 0) / 1000).toFixed(1)}s · {stats?.telemetry.latencySamples ?? 0} amostras</p></div>
+                  <div><p className="text-3xl font-black tracking-tight text-white">{isLoading ? '…' : `${((stats?.telemetry.p50ResponseTimeMs ?? 0) / 1000).toFixed(1)}s`}</p><p className="text-xs font-semibold text-slate-300">Tempo de resposta RAG</p><p className="mt-1 text-[11px] text-slate-400">P95: {((stats?.telemetry.p95ResponseTimeMs ?? 0) / 1000).toFixed(1)}s · {stats?.telemetry.latencySamples ?? 0} amostras</p><p className="mt-1 truncate text-[11px] text-slate-500">Modelo: {stats?.telemetry.modelUsage?.[0]?.model ?? 'sem amostra'} · fallback: {stats?.telemetry.fallbackRatePercent ?? 0}%</p></div>
                   <div className="absolute inset-x-0 bottom-0 h-1 bg-violet-400/70" />
                 </div>
                 <div className="relative flex min-h-44 flex-col justify-between overflow-hidden rounded-2xl border border-emerald-500/25 bg-gradient-to-br from-[#0b2c37] to-[#0b203c] p-5 shadow-lg transition hover:border-emerald-400/60">
