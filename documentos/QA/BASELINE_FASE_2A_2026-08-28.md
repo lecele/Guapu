@@ -44,6 +44,7 @@ O baseline atende à meta provisória do plano: P50 abaixo de 8 s, P95 abaixo de
 - A repetição prevista de 3 vezes por cenário passou em 9/9. As 6 respostas com evidência usaram o modelo principal sem fallback; os 3 casos de plano antigo foram bloqueados antes da geração. P50 total: 7,38 s; P95: 8,73 s; mínimo: 0,90 s; máximo: 8,73 s.
 - A migração `024_add_rag_corpus_version.sql` cria uma versão determinística do manifesto ativo para auditoria e futura invalidação de cache. A consulta dessa versão foi mantida fora do caminho crítico do aluno após uma medição serverless mostrar que uma chamada REST adicional pode ficar pendurada; o cache permanece desligado até existir timeout/telemetria próprios.
 - Para proteger o tempo de resposta, as chamadas Supabase do app e do health têm timeout explícito de 6 s e a busca vetorial usa no máximo duas tentativas. Em instabilidade externa, a resposta cai em fallback controlado em vez de aguardar o limite de 120 s.
+- Após o deploy `dpl_HYvbAWkPyjzRNwJjEX4bwSSWAUiu`, a bateria real de fumaça passou em 3/3: plano vigente com fonte atual (9,45 s), glossário com fontes recuperadas (8,30 s) e bloqueio do plano antigo (2,15 s, `NO_RELEVANT_CONTEXT`). Os logs posteriores registraram as três chamadas e o health check sem novo timeout; o timeout de 120 s registrado antes do deploy permanece apenas como evidência do problema corrigido.
 
 ## Próximas tarefas da Fase 2A
 
