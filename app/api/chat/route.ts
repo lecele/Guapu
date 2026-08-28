@@ -172,22 +172,6 @@ function getSupabase() {
   return _supabase;
 }
 
-async function getCorpusVersion(
-  supabase: ReturnType<typeof createClient>,
-): Promise<string | null> {
-  try {
-    const { data, error } = await supabase.rpc('get_rag_corpus_version' as never);
-    if (error || typeof data !== 'string' || !data) {
-      if (error) console.warn('[chat] Não foi possível obter a versão do corpus:', error.message);
-      return null;
-    }
-    return data;
-  } catch (error) {
-    console.warn('[chat] Falha não bloqueante ao obter a versão do corpus:', error);
-    return null;
-  }
-}
-
 function isHistoricalPlanQuery(text: string): boolean {
   return /\b(?:plano|documento|vers[aã]o)\s+(?:de\s+ensino\s+)?(?:anterior|antigo|antiga|passado|passada)\b|\bplano\s+anterior\b|\bplano\s+antigo\b/i.test(text);
 }
@@ -610,7 +594,7 @@ export async function POST(req: NextRequest) {
     let embeddingLatency = 0;
     let retrievalLatency = 0;
     let retrievalErrorCode: string | null = null;
-    let corpusVersion: string | null = null;
+    const corpusVersion: string | null = null;
     const searchQuery = decision.topic || question;
 
     try {
@@ -643,9 +627,9 @@ export async function POST(req: NextRequest) {
       console.warn(`[chat] ${retrievalErrorCode} para request_id=${requestId}`, error);
     }
 
-    // A versão é usada para auditoria e futura invalidação de cache. Se a
-    // função ainda não existir em uma implantação, a resposta continua válida.
-    corpusVersion = await getCorpusVersion(supabase);
+    // A versão do corpus existe no banco para auditoria e futura invalidação
+    // de cache, mas não é consultada no caminho crítico do aluno. A leitura
+    // será ativada somente com timeout/telemetria próprios.
 
     let answer: string;
     let finalState = decision.stateAfter;
