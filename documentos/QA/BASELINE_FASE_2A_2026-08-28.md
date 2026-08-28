@@ -50,6 +50,7 @@ O baseline atende à meta provisória do plano: P50 abaixo de 8 s, P95 abaixo de
 - A primeira versão da busca híbrida foi corrigida e testada diretamente no Supabase real com três perguntas. Ela preservou as fontes esperadas, mas a latência variou de 0,25 s a 5,26 s, acima do orçamento de 3 s em pergunta ampla da Biblioteca. A busca semântica equivalente ficou entre 0,23 s e 1,04 s; essa versão inicial não foi ativada.
 - A otimização adicional limitou os candidatos lexicais e eliminou a ordenação cara. O benchmark real passou em correção e orçamento: semântica entre 0,26–1,60 s e híbrida entre 0,12–1,99 s, com as fontes esperadas nos três cenários. A flag `RAG_HYBRID_ENABLED=true` foi ativada na produção com fallback semântico automático.
 - Após essa ativação, a bateria crítica de produção passou em 9/9: seis respostas com evidência usaram `gemini-3.5-flash-lite`, todas as referências ficaram rastreáveis, e os três pedidos sobre o plano antigo foram bloqueados. P50: 4,50 s; P95: 8,41 s; máximo: 8,49 s. Health HTTP 200 e nove chamadas sem erro nos logs da Vercel.
+- O mesmo código foi republicado a partir do commit `e9322c4` no deploy `dpl_YJ84sBgz5NQL2MUBpSZDkBRhqLu2`. O smoke test pós-publicação passou em 3/3 e o health check retornou HTTP 200; os logs posteriores não registraram timeout.
 
 ## Próximas tarefas da Fase 2A
 
