@@ -424,7 +424,11 @@ async function generateResponse(
   // Flash Lite foi comparado com os candidatos disponíveis e apresentou o
   // melhor equilíbrio entre correção do conteúdo e latência. O fallback fica
   // restrito a modelos conhecidos para não perder tempo em nomes instáveis.
-  const requestedModel = process.env.GEMINI_CHAT_MODEL ?? 'gemini-3.5-flash-lite';
+  // O 3.5 Flash Lite apresentou 503 intermitente por alta demanda na cota
+  // atual. O 3.1 Flash Lite é o modelo que respondeu de forma estável nos
+  // testes de aceite e passa a ser o padrão; o override por ambiente continua
+  // disponível para uma futura troca controlada.
+  const requestedModel = process.env.GEMINI_CHAT_MODEL ?? 'gemini-3.1-flash-lite';
   const candidateModels = [...new Set([
     requestedModel,
     'gemini-3.1-flash-lite',
