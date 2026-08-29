@@ -57,6 +57,7 @@ O primeiro exportador usava `OFFSET` e recebeu `57014 / statement timeout` na fa
 - Ainda não foi feito restore em produção, corretamente; não será feito restore destrutivo como teste.
 - Os snapshots de manifesto e fila foram exportados e guardados junto da cópia externa do corpus.
 - É necessário definir alerta operacional para quota Gemini/embeddings, timeout do Supabase, falha do worker, fila parada e divergência Drive–manifesto.
+- A stack Prometheus/Grafana/Uptime Kuma existe na VPS, mas ainda não possui monitor do Guapu nem canal de notificação configurado.
 
 ## Critério de encerramento
 

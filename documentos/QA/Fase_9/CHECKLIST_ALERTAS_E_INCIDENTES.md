@@ -1,6 +1,6 @@
 # Fase 9 — Alertas e incidentes
 
-Este documento define os critérios objetivos para monitorar o Guapu em produção. Ele não envia notificações sozinho; o canal de notificação deve ser escolhido e configurado depois.
+Este documento define os critérios objetivos para monitorar o Guapu em produção. A VPS já possui Prometheus, Grafana e Uptime Kuma, mas a verificação de 29/08/2026 não encontrou monitor do Guapu cadastrado no Uptime Kuma nem alvo do Guapu no Prometheus. Também não há cliente local de envio de e-mail instalado. Portanto, os critérios abaixo ainda não estão gerando alertas para o Guapu.
 
 ## Alertas críticos
 
