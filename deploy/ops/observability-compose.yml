@@ -1,0 +1,88 @@
+services:
+  prometheus:
+    image: ${OBS_PROMETHEUS_IMAGE:-prom/prometheus:v2.54.1}
+    container_name: obs-prometheus
+    restart: unless-stopped
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.retention.time=7d"
+      - "--web.listen-address=:9090"
+    ports:
+      - "${OBS_BIND_HOST:-127.0.0.1}:${OBS_PROMETHEUS_PORT:-9090}:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./guapu-alerts.yml:/etc/prometheus/guapu-alerts.yml:ro
+      - prometheus_data:/prometheus
+    networks:
+      - observability
+
+  node-exporter:
+    image: ${OBS_NODE_EXPORTER_IMAGE:-prom/node-exporter:v1.8.2}
+    container_name: obs-node-exporter
+    restart: unless-stopped
+    command:
+      - "--path.rootfs=/host"
+      - "--collector.textfile.directory=/host/var/lib/guapu-health"
+    pid: host
+    ports:
+      - "${OBS_BIND_HOST:-127.0.0.1}:${OBS_NODE_EXPORTER_PORT:-9100}:9100"
+    volumes:
+      - "/:/host:ro,rslave"
+    networks:
+      - observability
+
+  cadvisor:
+    image: ${OBS_CADVISOR_IMAGE:-gcr.io/cadvisor/cadvisor:v0.49.1}
+    container_name: obs-cadvisor
+    restart: unless-stopped
+    ports:
+      - "${OBS_BIND_HOST:-127.0.0.1}:${OBS_CADVISOR_PORT:-8088}:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker:/var/lib/docker:ro
+      - /var/lib/containerd:/var/lib/containerd:ro
+    privileged: true
+    devices:
+      - /dev/kmsg
+    networks:
+      - observability
+
+  grafana:
+    image: ${OBS_GRAFANA_IMAGE:-grafana/grafana:11.1.4}
+    container_name: obs-grafana
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER: ${OBS_GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${OBS_GRAFANA_ADMIN_PASSWORD:?set OBS_GRAFANA_ADMIN_PASSWORD}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_SERVER_HTTP_PORT: "3000"
+    ports:
+      - "${OBS_BIND_HOST:-127.0.0.1}:${OBS_GRAFANA_PORT:-3009}:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    networks:
+      - observability
+
+  uptime-kuma:
+    image: ${OBS_UPTIME_KUMA_IMAGE:-louislam/uptime-kuma:1.23.16}
+    container_name: obs-uptime-kuma
+    restart: unless-stopped
+    ports:
+      - "${OBS_BIND_HOST:-127.0.0.1}:${OBS_UPTIME_KUMA_PORT:-3008}:3001"
+    volumes:
+      - uptime_kuma_data:/app/data
+    networks:
+      - observability
+
+networks:
+  observability:
+    driver: bridge
+
+volumes:
+  prometheus_data:
+  grafana_data:
+  uptime_kuma_data:

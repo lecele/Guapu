@@ -1,0 +1,11 @@
+[Unit]
+Description=Run Guapu operational health snapshot every five minutes
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=5min
+Unit=guapu-healthcheck.service
+Persistent=true
+
+[Install]
+WantedBy=timers.target

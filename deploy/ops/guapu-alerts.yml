@@ -1,0 +1,32 @@
+groups:
+  - name: guapu-operational
+    rules:
+      - alert: GuapuHealthCheckFailed
+        expr: guapu_health_status == 0
+        for: 5m
+        labels:
+          severity: critical
+          service: guapu
+        annotations:
+          summary: Guapu com falha operacional
+          description: A checagem do app, painel, Nginx, worker ou fila está falhando.
+
+      - alert: GuapuDiskUsageHigh
+        expr: guapu_root_disk_used_percent >= 80
+        for: 10m
+        labels:
+          severity: warning
+          service: guapu
+        annotations:
+          summary: Disco da VPS acima de 80%
+          description: O uso do disco raiz da VPS atingiu {{ $value }}%.
+
+      - alert: GuapuDiskUsageCritical
+        expr: guapu_root_disk_used_percent >= 90
+        for: 5m
+        labels:
+          severity: critical
+          service: guapu
+        annotations:
+          summary: Disco da VPS acima de 90%
+          description: O uso do disco raiz da VPS atingiu {{ $value }}%.

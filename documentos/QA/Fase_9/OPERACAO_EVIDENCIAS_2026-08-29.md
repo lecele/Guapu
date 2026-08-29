@@ -59,6 +59,20 @@ O primeiro exportador usava `OFFSET` e recebeu `57014 / statement timeout` na fa
 - É necessário definir alerta operacional para quota Gemini/embeddings, timeout do Supabase, falha do worker, fila parada e divergência Drive–manifesto.
 - A stack Prometheus/Grafana/Uptime Kuma existe na VPS, mas ainda não possui monitor do Guapu nem canal de notificação configurado.
 
+## Verificação periódica instalada
+
+Foi preparado um verificador operacional idempotente em `deploy/ops/guapu-healthcheck.sh`, executado pelo par `guapu-healthcheck.service`/`guapu-healthcheck.timer` a cada cinco minutos. Ele registra, sem dados sensíveis:
+
+- saúde do endpoint público e autenticação esperada do painel;
+- validade da configuração do Nginx que efetivamente atende os domínios;
+- estado do worker e do timer de sincronização;
+- uso do disco raiz;
+- snapshot JSON e métricas locais para integração posterior com Prometheus.
+
+Essa checagem reduz o tempo de detecção, mas não substitui um canal de notificação: a configuração de e-mail/API e a integração visual no Prometheus/Grafana ainda dependem da credencial do provedor.
+
+Em 29/08/2026, a checagem foi integrada ao `obs-node-exporter` e o Prometheus foi atualizado com regras do Guapu. A validação confirmou os indicadores `guapu_health_status=1`, `guapu_app_up=1`, `guapu_panel_auth_up=1`, `guapu_nginx_config_valid=1`, worker e timer ativos, disco em 70%, Prometheus pronto e regras carregadas. O alerta passa a existir no Prometheus; a entrega por e-mail ou outro canal ainda depende da credencial do provedor.
+
 ## Critério de encerramento
 
 A Fase 9 só pode ser marcada como concluída quando houver cópia externa verificável, procedimento de recuperação documentado e um ensaio de restauração não destrutivo/isolado com evidência de contagem, checksum e integridade. Até lá, a operação permanece aprovada para observação, mas não declarada como plenamente recuperável.

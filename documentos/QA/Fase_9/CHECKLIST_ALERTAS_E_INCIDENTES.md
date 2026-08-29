@@ -46,6 +46,10 @@ journalctl -u guapu-drive-sync-worker.service --since '30 minutes ago' --no-page
 df -h /opt/guapu
 ```
 
+## Verificador local
+
+O verificador `deploy/ops/guapu-healthcheck.sh` gera um snapshot a cada cinco minutos, cobrindo app, painel, Nginx, worker, fila e disco. Os indicadores foram integrados ao `obs-node-exporter` e há regras do Guapu carregadas no Prometheus. Ele ainda não envia notificações por conta própria; os estados ficam registrados para integração com o canal escolhido.
+
 ## Critério de encerramento
 
 Para fechar esta parte da Fase 9, é necessário escolher um canal de alerta, configurar o verificador nesse canal e executar um teste controlado de cada alerta sem expor segredos. O restore em banco continua dependendo de um projeto/branch isolado do Supabase ou de um recurso oficial de recuperação.
