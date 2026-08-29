@@ -15,13 +15,14 @@ Este documento é o controle de evidências para a liberação. Uma fase só pod
 | 5. Interface | Parcial | Build e deploy aprovados; ajustes responsivos aplicados | QA visual formal em tamanhos móveis e desktop, sem rolagem ou corte |
 | 6. Painel e avaliação | Parcial | `/api/admin/stats` autenticada em HTTP 200; métricas reais e modelo efetivo exibidos | Confirmar cobertura/qualidade em amostra operacional e critérios visuais finais |
 | 7. Homologação e liberação | Bloqueada | Ainda não há aceite final do cliente na versão atual | Requer fases 2A–6 aprovadas e roteiro de aceite executado |
-| 8. Runtime VPS/DNS | Preparada, não aprovada | Container, healthcheck e serviço VPS preparados em homologação | Comparar VPS/Vercel com o mesmo corpus, testar rollback e só depois alterar DNS |
+| 8. Runtime VPS/DNS | Aprovada — VPS-only | Runtime, domínios, serviços críticos, bateria real 8/8 e ponto de recuperação da própria VPS validados em 29/08/2026 | Manter a Vercel preservada, sem tráfego operacional; não é dependência da produção |
 
 ## Evidências reais mais recentes
 
-- Produção: `https://guapu.vercel.app`.
-- Deploy atual do código: `dpl_67AjEcYPVMjzQvuL9yprx3iHYStS`, estado `Ready`.
-- Health check: `healthy`.
+- Produção: `https://guapu.agentesnasaude.com.br` e `https://guapu-painel.agentesnasaude.com.br`, atendidas pela VPS `129.121.33.171`.
+- Runtime VPS: `guapu-app` e `guapu-panel` saudáveis; Nginx válido; worker e timer ativos.
+- Bateria publicada no runtime VPS: 8/8 aprovados; bateria equivalente na Vercel: 8/8 aprovados após o deploy `dpl_4afJCQ2LxtQ1buc9Zrwciv6aHDGH`.
+- Rollback VPS: imagem `guapu-app:rollback-phase8-20260829` e compose preservado; cópia isolada validada em `/api/health` com Supabase conectado.
 - Bateria crítica atual: 9/9 aprovados em três repetições por cenário.
 - Modelo efetivo nas seis respostas com contexto: `gemini-3.5-flash-lite`.
 - Cada uma das seis respostas com contexto possui `drive_file_id`, `content_hash` e `chunk_index`.
@@ -36,4 +37,4 @@ Este documento é o controle de evidências para a liberação. Uma fase só pod
 
 ## Regra de liberação
 
-O cliente só deve receber a versão para teste controlado depois que os itens marcados como parcial forem validados conforme seus critérios e a Fase 8 tiver comparação real com a VPS. A Fase 2A não é mais um bloqueio técnico; permanecem pendentes as fases 3–8. Até a comparação de runtime, a Vercel permanece como ambiente publicado e rollback; não alterar DNS nem declarar o projeto encerrado.
+O cliente só deve receber a versão para teste controlado depois que os itens marcados como parcial forem validados conforme seus critérios e a homologação final for registrada. A Fase 8 está aprovada no escopo VPS-only; a Vercel permanece apenas preservada no projeto, sem tráfego operacional. Permanecem os critérios das fases 7 e 9.

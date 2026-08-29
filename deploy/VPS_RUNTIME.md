@@ -10,7 +10,7 @@ Os endereços públicos são `https://guapu.agentesnasaude.com.br` e `https://gu
 - Supabase continua como banco do RAG, vetores, fila e telemetria.
 - A VPS executa o app, o painel, o worker e a fila.
 - O Google Drive é a origem dos documentos; o Supabase mantém fila, manifesto, vetores e telemetria.
-- A Vercel não é o caminho de tráfego de produção. Pode ser preservada como rollback independente, sem participar da sincronização normal.
+- A Vercel não é o caminho de tráfego de produção. O runtime oficial é VPS-only; o projeto Vercel fica preservado sem tráfego operacional e sem participar da sincronização normal.
 - Segredos ficam em `/etc/guapu/app.env`, com permissões restritas; não entram no repositório nem na imagem.
 - As credenciais do painel ficam separadas em `/etc/guapu/panel.env`; sem elas, o painel permanece bloqueado com resposta 503.
 
@@ -25,7 +25,7 @@ docker inspect --format '{{.State.Health.Status}}' guapu-app
 
 O painel só deve ser iniciado depois de preencher `/etc/guapu/panel.env` e validar a autenticação Basic; não reutilizar a senha temporária em produção pública.
 
-O domínio público deve apontar para a VPS somente enquanto os healthchecks e a bateria de aceite estiverem aprovados. Em caso de falha, o rollback é feito removendo a rota da VPS do DNS/proxy e reativando a Vercel, sem apagar dados do Supabase.
+O domínio público aponta para a VPS após os healthchecks e a bateria de aceite aprovados. O rollback operacional usa a imagem nomeada `guapu-app:rollback-phase8-20260829` e o compose preservado no diretório do app, sem apagar dados do Supabase. A Vercel permanece como cópia histórica, não como dependência do rollback.
 
 ## Checklist de operação
 
