@@ -44,6 +44,8 @@ Os hashes SHA-256 dos arquivos comprimidos conferem entre a VPS e o computador l
 - `drive_sync_manifest-20260829.json.gz`: `dc801808b6fa4590620a4d70749a59ff3d443ac7520d8455e615aa9fde3be9ca`.
 - `drive_sync_jobs-20260829.json.gz`: `5e200f656792d70a5ce0b663c9c6eb52f11a6356c92b782d6b37ade2f734ca3f`.
 
+A cópia externa também foi descompactada e lida pelo verificador: 87.040 linhas do corpus, 119 do manifesto e 112 da fila, com os checksums de conteúdo correspondentes aos registrados na origem.
+
 O primeiro exportador usava `OFFSET` e recebeu `57014 / statement timeout` na faixa 65.500–65.999. A paginação foi corrigida para cursor/ID; a segunda exportação terminou sem repetir o erro. O arquivo parcial foi descartado automaticamente.
 
 ## Pendências que impedem o encerramento
