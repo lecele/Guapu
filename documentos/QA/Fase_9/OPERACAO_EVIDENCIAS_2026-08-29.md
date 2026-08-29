@@ -2,7 +2,7 @@
 
 **Data:** 29/08/2026  
 **Ambiente:** VPS de produção do Guapu  
-**Status:** em andamento; a fase não está encerrada.
+**Status:** concluída em 29/08/2026; operação aprovada para a próxima fase.
 
 ## O que foi confirmado
 
@@ -83,6 +83,19 @@ O painel do cliente exibe somente informações do projeto na aba lateral **Stat
 
 O monitoramento de App, Painel, Nginx, Worker, Fila e disco continua separado, em infraestrutura interna, sem rota ou volume exposto no painel do cliente. Após a publicação, a validação retornou 200 no app, 401 esperado no painel sem autenticação e configuração Nginx válida; a bateria externa de aceite permaneceu em 8/8 casos aprovados.
 
+## Canal de alertas e monitores ativos
+
+O canal **Guapu - Alertas** foi configurado no Uptime Kuma como Telegram e está ativo. A configuração foi conferida sem exibir credenciais; o teste interno retornou `Sent Successfully.` e a mensagem de teste foi recebida no Telegram em 29/08/2026 às 15:08.
+
+Foram cadastrados e vinculados ao canal os monitores:
+
+- **Guapu - App** — `https://guapu.agentesnasaude.com.br/api/health`, intervalo de 60 s, sucesso esperado `200-299`.
+- **Guapu - Painel** — `https://guapu-painel.agentesnasaude.com.br/`, intervalo de 60 s, `401` esperado sem sessão.
+
+A verificação direta no banco do Uptime Kuma confirmou os monitores 22 e 23 ativos e os vínculos com a notificação 1. Na mesma janela, o endpoint do app respondeu 200, o painel respondeu 401 esperado e o contêiner do Uptime Kuma permaneceu saudável.
+
+As regras Prometheus continuam cobrindo falha operacional e uso crítico do disco. Os procedimentos para quota Gemini, timeout do Supabase, divergência Drive–manifesto, staging/orfãos e referências sem rastreabilidade permanecem documentados no checklist de incidentes para investigação controlada, sem repetir ingestões ou reinícios automaticamente.
+
 ## Critério de encerramento
 
-A Fase 9 só pode ser marcada como concluída quando houver cópia externa verificável, procedimento de recuperação documentado, ensaio de restauração isolado com evidência de contagem/checksum/integridade e canal de alertas testado. Os três primeiros critérios estão atendidos; a operação permanece em andamento até o canal de alertas ser configurado e testado.
+A Fase 9 foi encerrada porque os quatro critérios foram atendidos: cópia externa verificável, procedimento de recuperação documentado, ensaio de restauração isolado com evidência de contagem/checksum/integridade e canal de alertas configurado e testado. A Fase 8 permanece aprovada e o projeto pode seguir para a próxima fase, preservando o monitoramento contínuo.

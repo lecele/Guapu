@@ -1,6 +1,6 @@
 # Fase 9 — Alertas e incidentes
 
-Este documento define os critérios objetivos para monitorar o Guapu em produção. A VPS já possui Prometheus, Grafana e Uptime Kuma, mas a verificação de 29/08/2026 não encontrou monitor do Guapu cadastrado no Uptime Kuma nem alvo do Guapu no Prometheus. Também não há cliente local de envio de e-mail instalado. Portanto, os critérios abaixo ainda não estão gerando alertas para o Guapu.
+Este documento define os critérios objetivos para monitorar o Guapu em produção. A VPS possui Prometheus, Grafana e Uptime Kuma. Em 29/08/2026 foram cadastrados no Uptime Kuma os monitores do App e do Painel, vinculados ao canal Telegram **Guapu - Alertas**. O teste interno retornou sucesso e a mensagem de teste foi recebida no Telegram. Não há cliente local de envio de e-mail instalado, e o Telegram é o canal operacional escolhido.
 
 ## Alertas críticos
 
@@ -52,6 +52,14 @@ df -h /opt/guapu
 
 O verificador `deploy/ops/guapu-healthcheck.sh` gera um snapshot a cada cinco minutos, cobrindo app, painel, Nginx, worker, fila e disco. Os indicadores foram integrados ao `obs-node-exporter` e há regras do Guapu carregadas no Prometheus. Ele ainda não envia notificações por conta própria; os estados ficam registrados para integração com o canal escolhido.
 
+## Evidência de configuração
+
+- Canal ativo: **Guapu - Alertas** (Telegram, Uptime Kuma).
+- Monitor ativo: **Guapu - App**, sucesso `200-299`.
+- Monitor ativo: **Guapu - Painel**, `401` esperado sem autenticação.
+- Vínculos conferidos no Uptime Kuma: ambos os monitores associados ao canal.
+- Teste controlado: retorno `Sent Successfully.` e recebimento confirmado no Telegram em 29/08/2026 às 15:08.
+
 ## Critério de encerramento
 
-Para fechar esta parte da Fase 9, é necessário escolher um canal de alerta, configurar o verificador nesse canal e executar um teste controlado de cada alerta sem expor segredos. O ensaio de restauração isolado local já foi concluído; não há necessidade de tocar no Supabase de produção para esse teste.
+Para fechar esta parte da Fase 9, foi escolhido o Telegram, o canal foi configurado sem expor segredos, os monitores foram vinculados e o teste controlado passou. O ensaio de restauração isolado já foi concluído; não houve necessidade de tocar no Supabase de produção para esse teste.
