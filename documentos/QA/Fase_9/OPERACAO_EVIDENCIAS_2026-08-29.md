@@ -77,6 +77,12 @@ Essa checagem reduz o tempo de detecção, mas não substitui um canal de notifi
 
 Em 29/08/2026, a checagem foi integrada ao `obs-node-exporter` e o Prometheus foi atualizado com regras do Guapu. A validação confirmou os indicadores `guapu_health_status=1`, `guapu_app_up=1`, `guapu_panel_auth_up=1`, `guapu_nginx_config_valid=1`, worker e timer ativos, disco em 70%, Prometheus pronto e regras carregadas. O alerta passa a existir no Prometheus; a entrega por e-mail ou outro canal ainda depende da credencial do provedor.
 
+## Monitoramento dentro do painel
+
+O painel passou a exibir uma seção **Saúde da infraestrutura**, alimentada pelo snapshot da VPS em modo somente leitura. Ela mostra App, Painel, Nginx, Worker, Fila, uso do disco e horário da última coleta, com atualização automática a cada 30 segundos. A rota é protegida pelo mesmo acesso administrativo do painel.
+
+Após a publicação, a rota autenticada respondeu `healthy` com todos os cinco componentes operacionais e a bateria externa de aceite permaneceu em 8/8 casos aprovados. Durante a recriação dos contêineres houve um 502 transitório porque o Nginx manteve o IP antigo em cache; o reload do proxy resolveu o caso, e a validação seguinte retornou 200 no app, 401 esperado no painel sem autenticação e configuração Nginx válida.
+
 ## Critério de encerramento
 
 A Fase 9 só pode ser marcada como concluída quando houver cópia externa verificável, procedimento de recuperação documentado, ensaio de restauração isolado com evidência de contagem/checksum/integridade e canal de alertas testado. Os três primeiros critérios estão atendidos; a operação permanece em andamento até o canal de alertas ser configurado e testado.
