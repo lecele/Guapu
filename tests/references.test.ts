@@ -86,7 +86,8 @@ Limpeza`,
   );
 
   assert.doesNotMatch(answer, /Enxágue Enxágue Enxágue/i);
-  assert.doesNotMatch(answer, /\*\*Referências:\*\*/i);
+  assert.match(answer, /\*\*Referências:\*\*/i);
+  assert.match(answer, /- Informação não disponível no artigo, consultar o Plano de Ensino ou docentes\./i);
   assert.doesNotMatch(answer, /biblioteca__praticas|\.pdf|\[Fonte:/i);
 });
 
@@ -167,7 +168,7 @@ test('não mistura fallback com uma referência identificada', () => {
   assert.doesNotMatch(answer, /Informação não disponível no artigo/);
 });
 
-test('omite a seção quando só existe o nome técnico do arquivo', () => {
+test('mantém a seção ausente em Informações quando só existe o nome técnico do arquivo', () => {
   const answer = finalizeReferences(
     'Resposta baseada nos materiais disponíveis.',
     [{ source: 'plano__ensino__2026.pdf', content: 'Trecho administrativo sem título bibliográfico ou autoria.' }],
@@ -218,7 +219,20 @@ test('ignora fragmentos de frases como se fossem referências', () => {
     'livre',
   );
 
-  assert.doesNotMatch(answer, /Referências|domicílio|Após a alta|artigo\.pdf/i);
+  assert.match(answer, /\*\*Referências:\*\*/i);
+  assert.match(answer, /- Informação não disponível no artigo, consultar o Plano de Ensino ou docentes\./i);
+  assert.doesNotMatch(answer, /domicílio|Após a alta|artigo\.pdf/i);
+});
+
+test('usa fallback exato quando o material foi usado, mas não traz identificador bibliográfico', () => {
+  const answer = finalizeReferences(
+    'A resposta foi construída a partir do conteúdo recuperado sobre o procedimento.',
+    [{ source: 'manual-interno.pdf', content: 'O procedimento deve ser realizado conforme a rotina descrita no material.' }],
+    'livre',
+  );
+
+  assert.match(answer, /\*\*Referências:\*\*\n- Informação não disponível no artigo, consultar o Plano de Ensino ou docentes\./i);
+  assert.doesNotMatch(answer, /manual-interno\.pdf/i);
 });
 
 test('ignora cabeçalho OCR de referências como se fosse capítulo', () => {
@@ -228,7 +242,8 @@ test('ignora cabeçalho OCR de referências como se fosse capítulo', () => {
     'livre',
   );
 
-  assert.doesNotMatch(answer, /Referências|10 91|artigo\.pdf/i);
+  assert.match(answer, /\*\*Referências:\*\*\n- Informação não disponível no artigo, consultar o Plano de Ensino ou docentes\./i);
+  assert.doesNotMatch(answer, /10 91|artigo\.pdf/i);
 });
 
 test('remove referências do modelo e não adiciona novas quando a exibição está desativada', () => {

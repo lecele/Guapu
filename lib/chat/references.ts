@@ -13,6 +13,10 @@ function needsReferences(mode: GenerationMode): boolean {
   return ['resumo', 'resumo_aprofundar', 'resumo_reformular', 'info', 'livre'].includes(mode);
 }
 
+function allowsReferenceFallback(mode: GenerationMode): boolean {
+  return ['resumo', 'resumo_aprofundar', 'resumo_reformular', 'livre'].includes(mode);
+}
+
 function isSourceOnlyReference(reference: string): boolean {
   return /\([^\n]+\.(?:pdf|docx?)\)$/i.test(reference);
 }
@@ -261,7 +265,16 @@ export function finalizeReferences(
   const relevant = mode === 'info'
     ? identified.filter((item) => hasMeaningfulOverlap(withoutModelReferences, item.reference))
     : identified;
-  if (relevant.length === 0) return withoutModelReferences;
+  if (relevant.length === 0) {
+    // O fallback é uma referência válida quando houve uso efetivo dos
+    // materiais, mas nenhum trecho trouxe título, capítulo, autoria ou outro
+    // identificador bibliográfico verificável. Ele não deve aparecer em
+    // recusa, conteúdo insuficiente, quiz ou Informações da disciplina.
+    if (allowsReferenceFallback(mode) && docs.some((doc) => Boolean(doc.content?.trim()))) {
+      return `${withoutModelReferences}\n\n**Referências:**\n- Informação não disponível no artigo, consultar o Plano de Ensino ou docentes.`.trim();
+    }
+    return withoutModelReferences;
+  }
   const sources = [...new Map(relevant.map((item) => [normalizeReferenceText(item.reference), item])).values()].slice(0, 5);
   const lines = sources.map((item) => `- ${item.reference}`);
 
