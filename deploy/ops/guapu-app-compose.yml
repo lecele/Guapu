@@ -10,8 +10,6 @@ services:
       - /etc/guapu/app.env
     ports:
       - "127.0.0.1:3212:3212"
-    volumes:
-      - /var/lib/guapu-health/last.json:/run/guapu-health/last.json:ro
     read_only: true
     tmpfs:
       - /tmp:size=128m,noexec,nosuid
@@ -44,8 +42,6 @@ services:
       HOSTNAME: 0.0.0.0
     ports:
       - "127.0.0.1:3213:3213"
-    volumes:
-      - /var/lib/guapu-health/last.json:/run/guapu-health/last.json:ro
     read_only: true
     tmpfs:
       - /tmp:size=128m,noexec,nosuid

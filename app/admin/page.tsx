@@ -124,14 +124,6 @@ interface StatsData {
   timestamp: string;
 }
 
-interface OpsHealthData {
-  status: 'healthy' | 'warning' | 'unknown';
-  fresh: boolean;
-  checkedAt: string | null;
-  diskUsedPercent: number | null;
-  components: Array<{ key: string; label: string; healthy: boolean }>;
-}
-
 // ── COMPONENTE DE SPARKLINE DINÂMICO INTERATIVO EM SVG ────────────────────────
 // Mantidos apenas para a futura aba histórica; o painel principal não usa estimativas visuais.
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -733,7 +725,6 @@ function FeedbackDashboardWidget({
 export default function AdminDashboardPage() {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'conversas' | 'sistema'>('dashboard');
   const [stats, setStats] = useState<StatsData | null>(null);
-  const [opsHealth, setOpsHealth] = useState<OpsHealthData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -764,27 +755,11 @@ export default function AdminDashboardPage() {
     }
   };
 
-  const fetchOpsHealth = async () => {
-    try {
-      const res = await fetch('/api/admin/ops-health', { cache: 'no-store' });
-      const data = await res.json();
-      setOpsHealth(data);
-    } catch {
-      setOpsHealth({ status: 'unknown', fresh: false, checkedAt: null, diskUsedPercent: null, components: [] });
-    }
-  };
-
-
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
       void fetchStats();
-      void fetchOpsHealth();
     }, 0);
-    const intervalId = window.setInterval(() => void fetchOpsHealth(), 30_000);
-    return () => {
-      window.clearTimeout(timeoutId);
-      window.clearInterval(intervalId);
-    };
+    return () => window.clearTimeout(timeoutId);
   }, []);
 
   // Conversas filtradas (Ordenadas por mais recentes primeiro)
@@ -1087,7 +1062,7 @@ export default function AdminDashboardPage() {
             )}
           </button>
 
-          <span className="text-[10px] font-bold tracking-widest text-slate-500 uppercase px-3 mt-4 mb-1">Sistema</span>
+          <span className="text-[10px] font-bold tracking-widest text-slate-500 uppercase px-3 mt-4 mb-1">Projeto</span>
 
           <button
             onClick={() => setActiveTab('sistema')}
@@ -1097,7 +1072,7 @@ export default function AdminDashboardPage() {
                 : 'text-slate-400 hover:text-white hover:bg-blue-950/40'
             }`}
           >
-            <span className="material-symbols-outlined text-[18px]">dns</span>
+            <span className="material-symbols-outlined text-[18px]">monitoring</span>
             Status & Telemetria
           </button>
         </nav>
@@ -1106,7 +1081,7 @@ export default function AdminDashboardPage() {
         <div className="pt-3 border-t border-blue-900/40 flex flex-col gap-2">
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-950/30 border border-emerald-500/30 text-emerald-400 text-[11px] font-medium">
             <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
-            Sistema operacional
+            Projeto operacional
           </div>
           <Link
             href="/"
@@ -1124,7 +1099,7 @@ export default function AdminDashboardPage() {
         <header className="h-16 shrink-0 border-b border-blue-900/40 bg-[#020b18]/90 backdrop-blur-md px-6 flex items-center justify-between z-10">
           <div>
             <h1 className="text-base font-bold text-white tracking-wide">Painel Guapu</h1>
-            <p className="text-[11px] text-slate-400">Visão geral · Atualizado agora</p>
+            <p className="text-[11px] text-slate-400">Visão geral do projeto · Atualizado agora</p>
           </div>
 
           <div className="flex items-center gap-3">
@@ -1169,77 +1144,6 @@ export default function AdminDashboardPage() {
           {/* ── TAB 1: MONITORAMENTO OPERACIONAL ───────────────────────────── */}
           {activeTab === 'dashboard' && (
             <div className="flex flex-col gap-6">
-              <section className={`flex flex-col gap-2 rounded-2xl border p-4 sm:flex-row sm:items-center sm:justify-between ${
-                stats?.monitoring?.status === 'critical'
-                  ? 'border-red-500/40 bg-red-950/30'
-                  : stats?.monitoring?.status === 'warning'
-                    ? 'border-amber-500/40 bg-amber-950/20'
-                    : 'border-emerald-500/30 bg-emerald-950/15'
-              }`}>
-                <div className="flex items-center gap-3">
-                  <span className={`material-symbols-outlined ${stats?.monitoring?.status === 'critical' ? 'text-red-300' : stats?.monitoring?.status === 'warning' ? 'text-amber-300' : 'text-emerald-300'}`}>
-                    {stats?.monitoring?.status === 'critical' ? 'error' : stats?.monitoring?.status === 'warning' ? 'warning' : 'monitor_heart'}
-                  </span>
-                  <div>
-                    <p className="text-xs font-bold text-white">Monitoramento automático</p>
-                    <p className="text-[11px] text-slate-400">
-                      {stats?.monitoring?.status === 'unknown'
-                        ? 'Aguardando a primeira verificação diária.'
-                        : stats?.monitoring?.alerts?.length
-                          ? `${stats.monitoring.alerts.length} alerta(s) técnico(s) requerem atenção.`
-                          : 'Supabase, sincronização do Drive e worker de qualidade sem alertas.'}
-                    </p>
-                  </div>
-                </div>
-                <span className="text-[10px] text-slate-500">{stats?.monitoring?.lastCheckAt ? `Última verificação: ${new Date(stats.monitoring.lastCheckAt).toLocaleString('pt-BR')}` : 'Sem e-mails automáticos'}</span>
-              </section>
-              <section className={`rounded-2xl border p-5 shadow-lg ${
-                opsHealth?.status === 'healthy'
-                  ? 'border-emerald-500/30 bg-emerald-950/15'
-                  : opsHealth?.status === 'warning'
-                    ? 'border-amber-500/40 bg-amber-950/20'
-                    : 'border-slate-700 bg-[#071a31]'
-              }`}>
-                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-                  <div>
-                    <h2 className="text-base font-bold text-white">Saúde da infraestrutura</h2>
-                    <p className="text-xs text-slate-400">Leitura da VPS atualizada automaticamente, sem expor credenciais.</p>
-                  </div>
-                  <span className={`w-fit rounded-full border px-3 py-1 text-[11px] font-bold ${
-                    opsHealth?.status === 'healthy'
-                      ? 'border-emerald-700/50 bg-emerald-950/60 text-emerald-200'
-                      : opsHealth?.status === 'warning'
-                        ? 'border-amber-700/50 bg-amber-950/60 text-amber-200'
-                        : 'border-slate-700 bg-slate-900/60 text-slate-300'
-                  }`}>
-                    {opsHealth?.status === 'healthy' ? 'Operação normal' : opsHealth?.status === 'warning' ? 'Atenção necessária' : 'Sem leitura recente'}
-                  </span>
-                </div>
-                <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-                  {(opsHealth?.components ?? []).map((component) => (
-                    <div key={component.key} className="rounded-xl border border-white/5 bg-[#040e1f] p-3">
-                      <div className="flex items-center gap-2">
-                        <span className={`h-2.5 w-2.5 rounded-full ${component.healthy ? 'bg-emerald-400' : 'bg-red-400'}`} />
-                        <span className="text-xs font-semibold text-slate-200">{component.label}</span>
-                      </div>
-                      <p className={`mt-2 text-[11px] ${component.healthy ? 'text-emerald-300' : 'text-red-300'}`}>
-                        {component.healthy ? 'Operacional' : 'Verificar'}
-                      </p>
-                    </div>
-                  ))}
-                  <div className="rounded-xl border border-white/5 bg-[#040e1f] p-3">
-                    <span className="text-xs font-semibold text-slate-200">Disco da VPS</span>
-                    <p className={`mt-2 text-[11px] ${(opsHealth?.diskUsedPercent ?? 0) >= 80 ? 'text-amber-300' : 'text-cyan-300'}`}>
-                      {opsHealth?.diskUsedPercent == null ? 'Sem leitura' : `${opsHealth.diskUsedPercent}% usado`}
-                    </p>
-                  </div>
-                </div>
-                <p className="mt-4 text-[10px] text-slate-500">
-                  {opsHealth?.checkedAt && opsHealth.fresh
-                    ? `Última coleta: ${new Date(opsHealth.checkedAt).toLocaleString('pt-BR')}`
-                    : 'Aguardando uma coleta válida da VPS.'}
-                </p>
-              </section>
               <section className="rounded-2xl border border-cyan-900/50 bg-[#071a31] p-5 shadow-lg">
                 <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                   <div>
@@ -1514,9 +1418,34 @@ export default function AdminDashboardPage() {
             </div>
           )}
 
-          {/* ── TAB 3: SISTEMA & TELEMETRIA ───────────────────────────────────── */}
+          {/* ── TAB 3: STATUS & TELEMETRIA DO PROJETO ─────────────────────────── */}
           {activeTab === 'sistema' && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="flex flex-col gap-6">
+              <section className={`flex flex-col gap-2 rounded-2xl border p-4 sm:flex-row sm:items-center sm:justify-between ${
+                stats?.monitoring?.status === 'critical'
+                  ? 'border-red-500/40 bg-red-950/30'
+                  : stats?.monitoring?.status === 'warning'
+                    ? 'border-amber-500/40 bg-amber-950/20'
+                    : 'border-emerald-500/30 bg-emerald-950/15'
+              }`}>
+                <div className="flex items-center gap-3">
+                  <span className={`material-symbols-outlined ${stats?.monitoring?.status === 'critical' ? 'text-red-300' : stats?.monitoring?.status === 'warning' ? 'text-amber-300' : 'text-emerald-300'}`}>
+                    {stats?.monitoring?.status === 'critical' ? 'error' : stats?.monitoring?.status === 'warning' ? 'warning' : 'monitor_heart'}
+                  </span>
+                  <div>
+                    <p className="text-xs font-bold text-white">Monitoramento do projeto</p>
+                    <p className="text-[11px] text-slate-400">
+                      {stats?.monitoring?.status === 'unknown'
+                        ? 'Aguardando a primeira verificação do projeto.'
+                        : stats?.monitoring?.alerts?.length
+                          ? `${stats.monitoring.alerts.length} alerta(s) técnico(s) requerem atenção.`
+                          : 'Supabase, sincronização do Drive e avaliação de qualidade sem alertas.'}
+                    </p>
+                  </div>
+                </div>
+                <span className="text-[10px] text-slate-500">{stats?.monitoring?.lastCheckAt ? `Última verificação: ${new Date(stats.monitoring.lastCheckAt).toLocaleString('pt-BR')}` : 'Sem verificação registrada'}</span>
+              </section>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="bg-[#0b203c] border border-blue-900/40 p-5 rounded-2xl flex flex-col gap-4">
                 <h2 className="text-sm font-bold text-white">Status dos Componentes</h2>
                 <div className="space-y-3 text-xs">
@@ -1643,6 +1572,7 @@ export default function AdminDashboardPage() {
                     </tbody>
                   </table>
                 </div>
+              </div>
               </div>
             </div>
           )}

@@ -79,9 +79,9 @@ Em 29/08/2026, a checagem foi integrada ao `obs-node-exporter` e o Prometheus fo
 
 ## Monitoramento dentro do painel
 
-O painel passou a exibir uma seção **Saúde da infraestrutura**, alimentada pelo snapshot da VPS em modo somente leitura. Ela mostra App, Painel, Nginx, Worker, Fila, uso do disco e horário da última coleta, com atualização automática a cada 30 segundos. A rota é protegida pelo mesmo acesso administrativo do painel.
+O painel do cliente exibe somente informações do projeto na aba lateral **Status & Telemetria**: saúde observada do RAG, sincronização do Drive, latência, avaliações e inventário da biblioteca. Esses dados ficam fora da primeira tela e não misturam a operação da VPS com os indicadores do produto.
 
-Após a publicação, a rota autenticada respondeu `healthy` com todos os cinco componentes operacionais e a bateria externa de aceite permaneceu em 8/8 casos aprovados. Durante a recriação dos contêineres houve um 502 transitório porque o Nginx manteve o IP antigo em cache; o reload do proxy resolveu o caso, e a validação seguinte retornou 200 no app, 401 esperado no painel sem autenticação e configuração Nginx válida.
+O monitoramento de App, Painel, Nginx, Worker, Fila e disco continua separado, em infraestrutura interna, sem rota ou volume exposto no painel do cliente. Após a publicação, a validação retornou 200 no app, 401 esperado no painel sem autenticação e configuração Nginx válida; a bateria externa de aceite permaneceu em 8/8 casos aprovados.
 
 ## Critério de encerramento
 
