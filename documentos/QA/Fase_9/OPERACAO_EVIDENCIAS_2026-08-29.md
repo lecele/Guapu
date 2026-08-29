@@ -46,6 +46,8 @@ Os hashes SHA-256 dos arquivos comprimidos conferem entre a VPS e o computador l
 
 A cópia externa também foi descompactada e lida pelo verificador: 87.040 linhas do corpus, 119 do manifesto e 112 da fila, com os checksums de conteúdo correspondentes aos registrados na origem.
 
+O ensaio local de carga de recuperação também passou: 87.040 IDs únicos, 87.040 vetores com 768 dimensões, 185 fontes distintas e checksum do conteúdo conferido. Esse ensaio valida a integridade do arquivo, mas não substitui a restauração em um banco isolado.
+
 O primeiro exportador usava `OFFSET` e recebeu `57014 / statement timeout` na faixa 65.500–65.999. A paginação foi corrigida para cursor/ID; a segunda exportação terminou sem repetir o erro. O arquivo parcial foi descartado automaticamente.
 
 ## Pendências que impedem o encerramento
