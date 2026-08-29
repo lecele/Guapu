@@ -13,6 +13,7 @@
 - `guapu-drive-sync-worker.service`: ativo e habilitado.
 - `guapu-drive-sync-queue.timer`: ativo e habilitado.
 - Última bateria de aceite publicada: 8/8 casos aprovados.
+- Revalidação após a integração do monitoramento: 8/8 casos aprovados; latências observadas de 286 ms a 12,2 s, sem falhas.
 - Backup do corpus: 87.040 registros exportados por PostgREST, com contagem e checksum conferidos.
 
 ## Backup verificável criado
