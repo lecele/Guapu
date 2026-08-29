@@ -18,7 +18,7 @@
 - Cabeçalho, marca Guapu, título, texto introdutório e nota de transparência visíveis.
 - Divisor “escolha uma opção” separado do Hero.
 - Quatro cartões em grid 2×2 no desktop e uma coluna no celular.
-- Campo de conversa, limpar conversa, enviar, legenda institucional e marca d’água Agentes na Saúde presentes.
+- Campo de conversa, limpar conversa, enviar, legenda institucional e ícone da marca d’água Agentes na Saúde presentes; o slogan textual não é exibido.
 - Logo/rodapé posicionados sem corte no desktop.
 - No celular, o conteúdo usa rolagem vertical interna porque os quatro cartões não cabem simultaneamente na altura disponível; o compositor não encobre o último cartão quando o usuário chega ao fim.
 - Documento e viewport sem overflow horizontal.
@@ -26,4 +26,4 @@
 
 ## Resultado
 
-Build e lint já aprovados. O QA visual real nos quatro tamanhos passou sem necessidade de alteração de código. A interface está aprovada tecnicamente para a Fase 6; o aceite final do cliente continua sendo controlado pela Fase 7.
+Build e lint já aprovados. Após a solicitação de simplificação do rodapé, o texto “Agentes na Saúde” foi removido em desktop e celular, mantendo somente o ícone da cruzinha, seu link e a acessibilidade. O build de produção passou novamente; a interface segue aprovada tecnicamente para a Fase 6 e o aceite final do cliente continua sendo controlado pela Fase 7.

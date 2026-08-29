@@ -179,7 +179,6 @@ export default function HomePage() {
                 <path d="M8.5 12h7M12 8.5v7" />
                 <circle cx="12" cy="12" r="2.1" />
               </svg>
-              <span>Agentes na Saúde</span>
             </a>
           </div>
         </footer>
