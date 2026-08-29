@@ -27,3 +27,9 @@ Os critérios usados nesta rodada permanecem subordinados aos documentos do clie
 ## Pendência de otimização
 
 A latência clínica melhorou ao priorizar o modelo Flash Lite validado, mas ainda varia conforme a disponibilidade do provedor e o custo de geração. A próxima etapa deve medir P50/P95 em uma janela maior e somente então avaliar cache ou redução adicional de chamadas, sem alterar as regras de pertinência, rastreabilidade e bloqueio definidas pelo cliente.
+
+## Correção visual posterior
+
+- A área rolável da conversa recebeu `scroll-padding-top` e as respostas do tutor receberam `scroll-margin-top`, impedindo que o cabeçalho cubra o avatar ou a primeira linha da resposta.
+- A correção foi validada na interface publicada em viewport de desktop e em viewport móvel de 390 × 844 px.
+- Health pós-publicação: aplicação `running healthy`, HTTP 200 e Supabase conectado.
