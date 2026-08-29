@@ -105,6 +105,46 @@ test('mantém um cabeçalho real do trecho sem expor a origem técnica', () => {
   assert.doesNotMatch(answer, /brunner|\.pdf|\[Fonte:|trecho 3004/i);
 });
 
+test('reprodução real de pré-operatório não publica prosa, lista truncada ou tabela como referência', () => {
+  const answer = finalizeReferences(
+    'O cuidado pré-operatório organiza a avaliação, o preparo e a continuidade do cuidado.',
+    [
+      {
+        source: 'biblioteca__tratado_enfermagem_medico_cirurgico__livro__brunner_suddarth__2011__v2.pdf',
+        content: 'Quadro 18.1 — Exemplos de Atividades de Enfermagem nas Fases de Cuidado\nPerioperatório\nFase Pré-operatória\nExames Pré-admissionais (EPA)\n1. Iniciar a primeira fase da avaliação pré-operatória.',
+        metadata: { drive_file_id: 'brunner', page_number: 750, chunk_index: 3003 },
+      },
+      {
+        source: 'biblioteca__tratado_enfermagem_medico_cirurgico__livro__brunner_suddarth__2011__v2.pdf',
+        content: 'Com as internações hospitalares mais curtas e o uso aumentado de serviços ambulatoriais, mais\ncuidados de enfermagem são prestados em casa e no ambiente comunitário.',
+        metadata: { drive_file_id: 'brunner', page_number: 75, chunk_index: 158 },
+      },
+      {
+        source: 'biblioteca__tratado_enfermagem_medico_cirurgico__livro__brunner_suddarth__2011__v2.pdf',
+        content: '(Connor, 2007–2008). Os recursos estão disponíveis para desenvolver parcerias de hospitais-cuidados de hospice.\nCuidados Paliativos nas Instituições de\nCuidados Prolongados\nA quantidade total de residentes alojados em clínicas de repouso diminuiu.',
+        metadata: { drive_file_id: 'brunner', page_number: 712, chunk_index: 2831 },
+      },
+      {
+        source: 'biblioteca__praticas_recomendadas__livro__sobecc__2013__v6',
+        content: 'Quadro 1. Qualidade da água indicada para as etapas da limpeza.\nCrítico\nPré-limpeza\nLimpeza\nEnxágue\nSemicrítico\nPré-limpeza\nLimpeza\nEnxágue\nEnxágue Enxágue Enxágue\nNão crítico\nLimpeza',
+        metadata: { drive_file_id: 'sobecc', page_number: 35, chunk_index: 116 },
+      },
+      {
+        source: 'administrativo__plano_ensino_INT55224__plano__ufsc__2026_2.pdf',
+        content: 'Discussão e raciocínio clínico nas atividades da prática quanto aos: Cuidados de Enfermagem ao paciente em Cirurgias Entero-Gástricas;\nCuidados de Enfermagem ao paciente em Cirurgias Vasculares; Cuidados de Enfermagem ao paciente\nem Cirurgias Urológicas.',
+        metadata: { drive_file_id: 'plano', page_number: 3, chunk_index: 9 },
+      },
+    ],
+    'livre',
+  );
+
+  assert.match(answer, /- Fase Pré-operatória\./);
+  assert.match(answer, /- Cuidados Paliativos nas Instituições de Cuidados Prolongados\./);
+  assert.equal((answer.match(/^-/gm) ?? []).length, 2);
+  assert.doesNotMatch(answer, /Com as internações|Cirurgias Vasculares|Enxágue(?:\s+Enxágue){2,}/i);
+  assert.doesNotMatch(answer, /\.pdf|\.docx|\[Fonte:|trecho \d+/i);
+});
+
 test('reconhece título quando autores estão na linha seguinte do trecho', () => {
   const answer = finalizeReferences(
     'Resumo.',

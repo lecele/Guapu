@@ -64,6 +64,7 @@ function isLikelyTitle(value: string): boolean {
   if (candidate.length < 8 || candidate.length > 180) return false;
   if (isRepeatedTokenNoise(candidate)) return false;
   if (/^\d+(?:\s+\d+)+/.test(candidate)) return false;
+  if (/;/.test(candidate)) return false;
   if (/\b(?:refer[eê]ncias|sum[aá]rio|[íi]ndice)\b/i.test(candidate)) return false;
   if (/\b(?:conforme|portanto|poder[aã]o|deve|devem|quando|durante|atrav[eé]s|consiste|compreende)\b/i.test(candidate)) return false;
   if (/[.!?]$/.test(candidate)) return false;
@@ -93,6 +94,22 @@ function appearsInContent(content: string, value: string): boolean {
   const needle = normalizeReferenceText(value);
   if (!needle) return false;
   return normalizeReferenceText(content).includes(needle);
+}
+
+function isLikelyAuthorLine(value: string): boolean {
+  const line = value.replace(/\s+/g, ' ').trim();
+  if (!line || line.length > 120 || /[;:!?]/.test(line) || /\d/.test(line)) return false;
+  const groups = line.split(/,\s*/);
+  return groups.every((group) => {
+    const tokens = group.split(/\s+/).filter(Boolean);
+    if (tokens.length === 0 || tokens.length > 6) return false;
+    return tokens.every((token, index) => {
+      if (index > 0 && /^(?:de|da|do|das|dos|e)$/i.test(token)) return true;
+      return index === 0
+        ? /^[A-ZÀ-Ý][A-Za-zÀ-ÿ'’.-]+$/.test(token)
+        : /^[A-ZÀ-Ý]{1,3}\.?$/.test(token);
+    });
+  });
 }
 
 function referenceFromContent(
@@ -160,7 +177,7 @@ function referenceFromContent(
       && !isTableLabel(next)
       && !hasNearbyTableNoise(lines, index);
     if (wrapsHeading) return `${candidate} ${next}`.replace(/[.:;]+$/, '') + '.';
-    if (explicitHeading || !hasNearbyTableNoise(lines, index)) {
+    if (explicitHeading) {
       return `${candidate.replace(/[.:;]+$/, '')}.`;
     }
   }
@@ -177,10 +194,7 @@ function referenceFromContent(
     const administrativeHeading = /\b(?:professor|hor[aá]rio|local|cronograma|avalia[cç][aã]o|m[oó]dulo|semestre|carga hor[aá]ria)\b/i.test(normalizedCandidate);
     const sentenceFragment = /\b(?:conforme|portanto|poder[aã]o|deve|devem|quando|durante|atrav[eé]s|consiste|compreende)\b/i.test(normalizedCandidate);
     const startsLikeTitle = isLikelyTitle(candidate);
-    const looksLikeAuthor =
-      authorLine.length <= 120 &&
-      !/[.!?]/.test(authorLine) &&
-      (/,/.test(authorLine) || /\b[A-ZÀ-Ý]{1,3}\b/.test(authorLine));
+    const looksLikeAuthor = isLikelyAuthorLine(authorLine);
     if (
       candidate.length >= 12 &&
       candidate.length <= 180 &&
