@@ -1,6 +1,6 @@
 # Worker do Drive na VPS
 
-O chat continua na Vercel. A VPS executa somente a sincronizacao em segundo plano: ela encontra alteracoes na pasta do Google Drive, publica trabalhos no Supabase e processa um PDF por vez. Assim, documentos grandes nao competem por memoria com o atendimento dos especialistas.
+O app, o painel e a sincronizacao executam na VPS. O worker encontra alteracoes na pasta do Google Drive, publica trabalhos no Supabase e processa um arquivo por vez. Assim, documentos grandes nao competem por memoria com o atendimento dos especialistas.
 
 ## Pre-requisitos
 
@@ -57,4 +57,4 @@ sudo -u guapu /opt/guapu/.venv/bin/pip install -r /opt/guapu/requirements.txt
 sudo systemctl restart guapu-drive-sync-worker.service
 ```
 
-Depois que a VPS estiver confirmada, desative o agendamento pesado do GitHub Actions. O GitHub nao deve processar o acervo inteiro em runners efemeros.
+O workflow do GitHub Actions permanece apenas como acionamento manual de contingencia; o processamento normal ocorre pelo timer e worker da VPS. O GitHub nao deve processar o acervo inteiro em runners efemeros.
