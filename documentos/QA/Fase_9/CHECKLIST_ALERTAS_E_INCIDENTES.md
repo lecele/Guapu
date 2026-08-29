@@ -46,6 +46,8 @@ journalctl -u guapu-drive-sync-worker.service --since '30 minutes ago' --no-page
 df -h /opt/guapu
 ```
 
+> A validação deve usar o Nginx do contêiner `agentes-saude-nginx`, que é o proxy efetivo dos domínios do Guapu. O `nginx.service` do host está desativado e mantém uma configuração legada de outro serviço; ele não participa do tráfego do app.
+
 ## Verificador local
 
 O verificador `deploy/ops/guapu-healthcheck.sh` gera um snapshot a cada cinco minutos, cobrindo app, painel, Nginx, worker, fila e disco. Os indicadores foram integrados ao `obs-node-exporter` e há regras do Guapu carregadas no Prometheus. Ele ainda não envia notificações por conta própria; os estados ficam registrados para integração com o canal escolhido.
