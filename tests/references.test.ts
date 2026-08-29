@@ -73,6 +73,70 @@ test('prioriza a referência extraída do próprio documento e nunca o nome do a
   assert.doesNotMatch(answer, /referência inventada/i);
 });
 
+test('usa catálogo bibliográfico verificado quando o chunk clínico não contém a capa', () => {
+  const answer = finalizeReferences(
+    'O controle de infecção no perioperatório exige técnica asséptica e vigilância contínua.',
+    [{
+      source: 'origem-tecnica-interna.pdf',
+      content: 'A vigilância do sítio cirúrgico deve ser contínua e baseada em sinais clínicos.',
+      metadata: {
+        drive_file_id: 'drive-sobecc',
+        reference_key: 'drive-sobecc',
+        reference_source: 'catalog',
+        reference_verified: true,
+        reference_title: 'Práticas Recomendadas SOBECC',
+        reference_year: '2013',
+        reference_edition: '6ª ed.',
+        page_number: 35,
+      },
+    }],
+    'livre',
+    true,
+    'controle de infecção no perioperatório',
+  );
+
+  assert.match(answer, /- \(2013\)\. Práticas Recomendadas SOBECC\. 6ª ed\. p\. 35\./);
+  assert.doesNotMatch(answer, /Informação não disponível no artigo|origem-tecnica|\.pdf/i);
+});
+
+test('deduplica páginas do mesmo documento catalogado', () => {
+  const answer = finalizeReferences(
+    'O cuidado perioperatório inclui prevenção de infecções e monitoramento.',
+    [
+      {
+        source: 'tecnico.pdf',
+        content: 'Prevenção de infecções no cuidado perioperatório.',
+        metadata: {
+          drive_file_id: 'drive-brunner', reference_key: 'drive-brunner',
+          reference_source: 'catalog', reference_verified: true,
+          reference_title: 'Brunner & Suddarth: Tratado de enfermagem médico-cirúrgica',
+          reference_author: 'Lillian Sholtis Brunner; Doris Smith Suddarth',
+          reference_year: '2014', reference_edition: '12ª ed.', page_number: 750,
+        },
+      },
+      {
+        source: 'tecnico.pdf',
+        content: 'A técnica asséptica reduz o risco de complicações.',
+        metadata: {
+          drive_file_id: 'drive-brunner', reference_key: 'drive-brunner',
+          reference_source: 'catalog', reference_verified: true,
+          reference_title: 'Brunner & Suddarth: Tratado de enfermagem médico-cirúrgica',
+          reference_author: 'Lillian Sholtis Brunner; Doris Smith Suddarth',
+          reference_year: '2014', reference_edition: '12ª ed.', page_number: 751,
+        },
+      },
+    ],
+    'livre',
+    true,
+    'cuidados perioperatórios e prevenção de infecções',
+  );
+
+  assert.equal((answer.match(/^- /gm) ?? []).length, 1);
+  assert.match(answer, /Doris Smith Suddarth \(2014\)\. Brunner & Suddarth/);
+  assert.match(answer, /p\. 750\./);
+  assert.doesNotMatch(answer, /p\. 751\./);
+});
+
 test('não transforma células repetidas de uma tabela em título de referência', () => {
   const answer = finalizeReferences(
     'A limpeza e o enxágue dependem da classificação do produto e da qualidade da água.',

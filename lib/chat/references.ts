@@ -167,6 +167,13 @@ function isLikelyAuthorLine(value: string): boolean {
   });
 }
 
+function isVerifiedCatalogReference(metadata?: Record<string, unknown>): boolean {
+  return metadata?.reference_source === 'catalog'
+    && metadata?.reference_verified === true
+    && typeof metadata.reference_title === 'string'
+    && metadata.reference_title.trim().length > 0;
+}
+
 function referenceFromContent(
   content?: string,
   metadata?: Record<string, unknown>,
@@ -176,6 +183,27 @@ function referenceFromContent(
   const storedYear = typeof metadata?.reference_year === 'string' ? metadata.reference_year.trim() : '';
   const storedSection = typeof metadata?.reference_section === 'string' ? metadata.reference_section.trim() : '';
   const rawContent = content || '';
+  // O catálogo é uma identidade bibliográfica curada e vinculada ao
+  // drive_file_id. Ela foi conferida no documento e, por isso, continua
+  // válida mesmo quando o chunk clínico não repete a folha de rosto.
+  if (isVerifiedCatalogReference(metadata) && isLikelyTitle(storedTitle)) {
+    const edition = typeof metadata?.reference_edition === 'string' ? metadata.reference_edition.trim() : '';
+    const publisher = typeof metadata?.reference_publisher === 'string' ? metadata.reference_publisher.trim() : '';
+    const page = Number(metadata?.page_number);
+    const period = (value: string) => value.replace(/[.]+$/, '') + '.';
+    const author = storedAuthor && storedYear
+      ? `${storedAuthor.replace(/[.]+$/, '')} (${storedYear}).`
+      : storedAuthor
+        ? period(storedAuthor)
+        : (storedYear ? `(${storedYear}).` : '');
+    return [
+      author,
+      period(storedTitle),
+      edition ? period(edition) : '',
+      publisher ? period(publisher) : '',
+      Number.isFinite(page) && page > 0 ? `p. ${page}.` : '',
+    ].filter(Boolean).join(' ').replace(/\s+\./g, '.');
+  }
   if (storedTitle && appearsInContent(rawContent, storedTitle) && isLikelyTitle(storedTitle)) {
     const author = storedAuthor && appearsInContent(rawContent, storedAuthor) ? storedAuthor : '';
     const year = storedYear && appearsInContent(rawContent, storedYear) ? `(${storedYear})` : '';
@@ -308,6 +336,10 @@ export function finalizeReferences(
     const reference = referenceFromContent(doc.content, doc.metadata);
     return {
       reference,
+      key: isVerifiedCatalogReference(doc.metadata)
+        ? String(doc.metadata?.reference_key || doc.metadata?.drive_file_id || reference)
+        : normalizeReferenceText(reference),
+      catalog: isVerifiedCatalogReference(doc.metadata),
     };
   });
   // A camada 3 só é permitida quando nenhum dos trechos trouxe pista
@@ -320,7 +352,7 @@ export function finalizeReferences(
     // apenas porque compartilha palavras genéricas com o texto gerado.
     const questionMatch = hasMeaningfulOverlap(relevanceText, item.reference);
     const answerMatchCount = meaningfulOverlapCount(withoutModelReferences, item.reference);
-    return questionMatch || answerMatchCount >= 2;
+    return questionMatch || answerMatchCount >= 2 || item.catalog;
   });
   if (relevant.length === 0) {
     // O fallback é uma referência válida quando houve uso efetivo dos
@@ -332,7 +364,9 @@ export function finalizeReferences(
     }
     return withoutModelReferences;
   }
-  const sources = [...new Map(relevant.map((item) => [normalizeReferenceText(item.reference), item])).values()].slice(0, 5);
+  const sources = relevant.filter((item, index, all) => (
+    all.findIndex((candidate) => candidate.key === item.key) === index
+  )).slice(0, 5);
   const lines = sources.map((item) => `- ${item.reference}`);
 
   return `${withoutModelReferences}\n\n**Referências:**\n${lines.join('\n')}`.trim();

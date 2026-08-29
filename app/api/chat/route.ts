@@ -31,6 +31,7 @@ import {
   isLikelyInfoInsufficient,
   sanitizeStudentFacingText,
 } from '@/lib/chat/references';
+import { enrichDocumentReferenceMetadata } from '@/lib/chat/document-catalog';
 
 export const runtime = 'nodejs';
 export const maxDuration = 120;
@@ -139,7 +140,7 @@ function mapRetrievedDocuments(rows: MatchDocumentRow[] | null): Document[] {
     content: row.content,
     source: row.source || 'desconhecido',
     similarity: row.similarity || 0,
-    metadata: row.metadata || {},
+    metadata: enrichDocumentReferenceMetadata(row.metadata || {}),
   }));
 }
 

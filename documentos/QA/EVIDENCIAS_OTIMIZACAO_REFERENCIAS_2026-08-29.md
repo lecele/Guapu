@@ -41,3 +41,17 @@ A latência clínica melhorou ao priorizar o modelo Flash Lite validado, mas ain
 - O padrão do app foi alinhado a `gemini-2.5-flash-lite`, seguido por `gemini-2.5-flash`, `gemini-3.1-flash-lite` e os modelos 3.5 como fallback.
 - Após a publicação: fallback administrativo exato em 4,0 s; pré-operatório em 7,4 s com 5 fontes, sem paliativos e com referência; água/limpeza em 7,5 s com 5 fontes, sem repetição de enxágue, sem paliativos e sem jargão interno.
 - O circuito de resfriamento de 60 s impede repetir imediatamente modelos que falharam por 503, 429 ou timeout.
+
+## Correção estrutural do fallback de referências
+
+- A pergunta real `Controle de infecção no perioperatório` foi auditada no Supabase. Os cinco chunks recuperados tinham `drive_file_id`, página, índice e hash, mas nenhum `reference_title`; por isso a versão anterior exibiu indevidamente o fallback apesar de haver material consultado.
+- A ficha catalográfica de Brunner foi conferida no próprio conteúdo indexado (p. 6): título, responsáveis, 12ª edição/reimpressão de 2014 e Guanabara Koogan. A folha inicial de SOBECC foi conferida no próprio conteúdo OCR (p. 1): título, 6ª edição e 2013.
+- Foi implementado um catálogo bibliográfico verificável por `drive_file_id`, com migração SQL `031_add_rag_document_reference_catalog.sql`, bootstrap versionado para atualização segura do app e propagação dos metadados na ingestão futura. A migração SQL ficou registrada, mas não foi declarada como aplicada no banco porque a VPS não possui rota IPv4/IPv6 funcional para o host direto do PostgreSQL; o app publicado usa o bootstrap sem depender dessa ponte.
+- A montagem das referências agora aceita identidade catalogada verificada mesmo quando o chunk clínico não contém a capa, inclui página real do chunk e deduplica várias páginas do mesmo documento. Nome de arquivo, extensão e caminho continuam proibidos.
+
+## Testes reais após a correção estrutural
+
+- Build/redeploy na VPS: container `guapu-app` voltou `running healthy`; `/api/health` confirmou `healthy` e Supabase conectado.
+- Pergunta pública real `Controle de infecção no perioperatório`: `sources_found=5`, `response_kind=free`, `processing_time_ms=8032`, seção `**Referências:**` presente, fallback ausente e nome técnico de arquivo ausente. Referência retornada: `Lillian Sholtis Brunner; Doris Smith Suddarth; Suzanne C. Smeltzer (ed.) (2014). Brunner & Suddarth: Tratado de enfermagem médico-cirúrgica. 12ª ed. [reimpr.]. Rio de Janeiro: Guanabara Koogan. p. 2313.`
+- Um segundo teste direcionado a limpeza/enxágue apresentou falha transitória de geração do modelo e foi tratado como incidente de disponibilidade, não como sucesso de referência; a resposta técnica não publicou referências, conforme a regra do cliente para falha sem resposta clínica. O código não foi alterado para mascarar essa falha.
+- Testes locais finais: `npm run test:flow` 45/45, `npm run lint` aprovado, `npm run build` aprovado e testes Python de ingestão/metadados 8/8.

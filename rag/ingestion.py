@@ -42,6 +42,7 @@ import os
 import subprocess
 import tempfile
 import time
+from pathlib import Path
 from itertools import chain, islice
 import zipfile
 import xml.etree.ElementTree as ET
@@ -83,6 +84,61 @@ def _open_direct_database_connection(settings):
 def _vector_literal(values: list[float]) -> str:
     """Converte um vetor Gemini para o formato aceito pelo tipo pgvector."""
     return "[" + ",".join(format(float(value), ".10g") for value in values) + "]"
+
+
+def _load_catalog_reference(file_id: str) -> dict[str, object]:
+    """Carrega a referência curada do arquivo sem usar o nome do arquivo.
+
+    O catálogo é opcional para manter compatibilidade com instalações que
+    ainda não aplicaram a migração. Apenas registros explicitamente verificados
+    são copiados para os chunks.
+    """
+    try:
+        response = (
+            get_supabase_client()
+            .table("rag_document_catalog")
+            .select(
+                "drive_file_id,reference_title,reference_author,reference_year,"
+                "reference_edition,reference_publisher,verification_status"
+            )
+            .eq("drive_file_id", file_id)
+            .eq("verification_status", "verified")
+            .limit(1)
+            .execute()
+        )
+    except Exception as exc:
+        # A tabela pode ainda não existir durante uma atualização gradual. A
+        # ingestão continua usando os metadados extraídos do próprio conteúdo.
+        logger.warning("reference_catalog_unavailable", error=str(exc))
+        catalog_path = Path(
+            os.getenv(
+                "GUAPU_REFERENCE_CATALOG_PATH",
+                str(Path(__file__).resolve().parents[1] / "reference_catalog.json"),
+            )
+        )
+        try:
+            catalog = json.loads(catalog_path.read_text(encoding="utf-8"))
+            fallback = catalog.get(file_id)
+            if isinstance(fallback, dict) and fallback.get("reference_verified") is True:
+                return fallback
+        except (OSError, json.JSONDecodeError):
+            pass
+        return {}
+    row = (response.data or [None])[0]
+    if not row:
+        return {}
+    return {
+        key: row[key]
+        for key in (
+            "reference_title", "reference_author", "reference_year",
+            "reference_edition", "reference_publisher",
+        )
+        if row.get(key)
+    } | {
+        "reference_source": "catalog",
+        "reference_verified": True,
+        "reference_key": file_id,
+    }
 
 
 def _upsert_records_direct(connection, table_name: str, records: list[dict]) -> int:
@@ -496,6 +552,7 @@ def upsert_chunks_to_supabase(
     settings = get_settings()
     client = get_supabase_client()
     embeddings_model = _get_embeddings()
+    catalog_reference = _load_catalog_reference(file_id)
 
     inserted = 0
     current_ids: set[str] = set()
@@ -543,6 +600,7 @@ def upsert_chunks_to_supabase(
                     "drive_modified_time": modified_time,
                     "drive_path": drive_path,
                     **chunk.get("reference_metadata", {}),
+                    **catalog_reference,
                 },
             }
             for chunk, vector in zip(batch, vectors)
@@ -602,6 +660,7 @@ def upsert_chunk_stream_to_supabase(
     settings = get_settings()
     client = get_supabase_client()
     embeddings_model = _get_embeddings()
+    catalog_reference = _load_catalog_reference(file_id)
     existing_rows_before = _document_rows_for_file(file_id)
     existing_active_ids_before = {
         row["id"]
@@ -660,6 +719,7 @@ def upsert_chunk_stream_to_supabase(
                             "active" if record_id in existing_active_ids_before else "staging"
                         ),
                         **chunk.get("reference_metadata", {}),
+                        **catalog_reference,
                     },
                 })
             current_ids.update(record["id"] for record in records)
