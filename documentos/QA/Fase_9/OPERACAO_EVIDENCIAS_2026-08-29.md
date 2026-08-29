@@ -25,6 +25,13 @@
 - Validação: gzip íntegro, contagem conferida e checksum conferido sem erro.
 - Método: exportação somente leitura pela API REST do Supabase, usando paginação por cursor de ID.
 
+Também foram preservados snapshots operacionais, ambos gzipados e protegidos com permissão 600:
+
+- `/opt/guapu/backups/drive_sync_manifest-20260829.json.gz`: 119 registros; SHA-256 das linhas `96b348ba415f8148a5dfdfaac302264f0b212d7baa5e35aaf25caf6d1ce01c3d`.
+- `/opt/guapu/backups/drive_sync_jobs-20260829.json.gz`: 112 registros; SHA-256 das linhas `74195267c9575dd1a4b937c648e2e9edaa24adb38f4e5400898be355c7b2ef6d`.
+
+O exportador genérico está em `scripts/backup_supabase_tables_rest.py` e limita-se às tabelas operacionais de manifesto e fila.
+
 O primeiro exportador usava `OFFSET` e recebeu `57014 / statement timeout` na faixa 65.500–65.999. A paginação foi corrigida para cursor/ID; a segunda exportação terminou sem repetir o erro. O arquivo parcial foi descartado automaticamente.
 
 ## Pendências que impedem o encerramento
