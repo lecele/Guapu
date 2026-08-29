@@ -32,14 +32,26 @@ Também foram preservados snapshots operacionais, ambos gzipados e protegidos co
 
 O exportador genérico está em `scripts/backup_supabase_tables_rest.py` e limita-se às tabelas operacionais de manifesto e fila.
 
+## Cópia externa confirmada
+
+Os três arquivos foram copiados da VPS para o armazenamento local independente:
+
+`C:\Users\llece\Documents\DEV\Agentes_na_Saude\_migration-backups\guapu-phase9-20260829\`
+
+Os hashes SHA-256 dos arquivos comprimidos conferem entre a VPS e o computador local:
+
+- `documents-20260829.ndjson.gz`: `506d26ab80c7670cda4df378eaad89843042a848df00a190da3909fba677350e`.
+- `drive_sync_manifest-20260829.json.gz`: `dc801808b6fa4590620a4d70749a59ff3d443ac7520d8455e615aa9fde3be9ca`.
+- `drive_sync_jobs-20260829.json.gz`: `5e200f656792d70a5ce0b663c9c6eb52f11a6356c92b782d6b37ade2f734ca3f`.
+
 O primeiro exportador usava `OFFSET` e recebeu `57014 / statement timeout` na faixa 65.500–65.999. A paginação foi corrigida para cursor/ID; a segunda exportação terminou sem repetir o erro. O arquivo parcial foi descartado automaticamente.
 
 ## Pendências que impedem o encerramento
 
-- O backup ainda está somente na VPS. Falta copiar para armazenamento externo independente e conferir o checksum após a cópia.
+- A cópia externa do corpus, manifesto e fila foi concluída e conferida por SHA-256.
 - A VPS não possui `pg_dump`, e a rota PostgreSQL direta do Supabase não está disponível por IPv4. A restauração transacional do banco ainda precisa ser validada por um caminho oficial do Supabase (backup gerenciado/PITR ou pooler compatível) ou em ambiente isolado.
 - Ainda não foi feito restore em produção, corretamente; não será feito restore destrutivo como teste.
-- É necessário exportar e guardar também os manifestos/fila necessários para reconstruir a operação, além do corpus.
+- Os snapshots de manifesto e fila foram exportados e guardados junto da cópia externa do corpus.
 - É necessário definir alerta operacional para quota Gemini/embeddings, timeout do Supabase, falha do worker, fila parada e divergência Drive–manifesto.
 
 ## Critério de encerramento
