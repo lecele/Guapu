@@ -411,6 +411,15 @@ interface GenerationResult {
   latencyMs: number;
 }
 
+function maxOutputTokensForMode(mode: GenerationMode): number {
+  if (mode === 'simulado_tema' || mode === 'simulado_respondendo' || mode === 'simulado_segunda_tentativa') {
+    return 900;
+  }
+  if (mode === 'info') return 1_200;
+  if (mode === 'resumo' || mode === 'resumo_aprofundar') return 1_800;
+  return 1_600;
+}
+
 async function generateResponse(
   question: string,
   docs: Document[],
@@ -464,7 +473,7 @@ async function generateResponse(
         contents: prompt,
         config: {
           systemInstruction: systemPrompt,
-          maxOutputTokens: 2500,
+          maxOutputTokens: maxOutputTokensForMode(sessionMode),
           thinkingConfig: {
             thinkingLevel: ThinkingLevel.LOW,
           },
@@ -714,8 +723,13 @@ export async function POST(req: NextRequest) {
     }
 
     const supabase = getSupabase();
-    const history = await getSessionHistory(supabase, sessionId);
-    const completedTurn = await findCompletedTurn(supabase, sessionId, requestId);
+    // As duas leituras são independentes. Executá-las em paralelo remove uma
+    // ida sequencial ao Supabase sem alterar a ordem do histórico nem a
+    // idempotência por request_id.
+    const [history, completedTurn] = await Promise.all([
+      getSessionHistory(supabase, sessionId),
+      findCompletedTurn(supabase, sessionId, requestId),
+    ]);
 
     if (completedTurn) {
       const metadata = completedTurn.metadata;
@@ -968,11 +982,11 @@ export async function POST(req: NextRequest) {
     // A avaliação usa outro worker/modelo e não participa da latência percebida
     // pelo estudante. Se a fila estiver indisponível, a resposta continua válida.
     if (docs.length > 0 && !generationErrorCode) {
-      try {
-        await enqueueQualityEvaluation(supabase, sessionId, requestId);
-      } catch (error) {
+      // A avaliação é assíncrona e não deve aumentar o tempo percebido pelo
+      // estudante. A resposta já foi persistida antes deste disparo.
+      void enqueueQualityEvaluation(supabase, sessionId, requestId).catch((error) => {
         console.warn(`[chat] Falha ao enfileirar avaliação para request_id=${requestId}`, error);
-      }
+      });
     }
 
     return chatResponse({
