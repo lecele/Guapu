@@ -2,7 +2,7 @@
 
 **Data:** 29/08/2026  
 **Ambiente:** `https://guapu.agentesnasaude.com.br` na VPS  
-**Status:** **EM HOMOLOGAÇÃO**; aceite funcional do cliente pendente.
+**Status:** **EM HOMOLOGAÇÃO INTERNA**; aceite de Leonardo, atuando como cliente, pendente.
 
 ## Bateria técnica publicada
 
@@ -15,6 +15,8 @@ A bateria padrão foi executada contra o domínio público após a publicação 
 - Latências observadas: 300 ms a 33,3 s; nenhum caso ultrapassou o limite definido para sua categoria.
 - Nenhum erro HTTP ou caso reprovado.
 
+Uma segunda rodada foi executada após a homologação interna ser definida, na mesma versão publicada: **8/8 aprovados** novamente. As latências ficaram entre 304 ms e 15,1 s, com 5 fontes nos quatro casos fundamentados e 0 fonte nos fluxos que não devem consultar o RAG.
+
 | Caso | Resultado | Latência | Fontes |
 |---|---:|---:|---:|
 | FLOW-001 — resumo sem tema | aprovado | 748 ms | 0 |
@@ -26,9 +28,9 @@ A bateria padrão foi executada contra o domínio público após a publicação 
 | FLOW-011 — encerrar sessão | aprovado | 308 ms | 0 |
 | RAG-001 — pergunta clínica | aprovado | 33,3 s | 5 |
 
-## Homologação do cliente
+## Homologação interna
 
-O roteiro para teste funcional diário está em `documentos/QA/Fase_7/ROTEIRO_HOMOLOGACAO_CLIENTE.md`. Ainda falta o cliente executar a bateria no uso real e confirmar:
+O roteiro para teste funcional está em `documentos/QA/Fase_7/ROTEIRO_HOMOLOGACAO_CLIENTE.md` e é de uso interno, não será enviado ao cliente externo. Ainda falta Leonardo executar a bateria no uso real e confirmar:
 
 - comportamento esperado dos conteúdos e respostas;
 - correção das referências para as perguntas que ele utiliza;
@@ -37,4 +39,4 @@ O roteiro para teste funcional diário está em `documentos/QA/Fase_7/ROTEIRO_HO
 
 ## Critério de saída
 
-A Fase 7 permanece aberta. Ela será marcada como aprovada somente após o registro do teste do cliente e a aprovação explícita de Leonardo, com a versão publicada identificada e sem falha crítica pendente.
+A Fase 7 permanece aberta. Ela será marcada como aprovada somente após o registro da homologação interna conduzida por Leonardo, com a versão publicada identificada e sem falha crítica pendente.
