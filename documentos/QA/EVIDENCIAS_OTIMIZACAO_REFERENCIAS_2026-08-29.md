@@ -55,3 +55,16 @@ A latência clínica melhorou ao priorizar o modelo Flash Lite validado, mas ain
 - Pergunta pública real `Controle de infecção no perioperatório`: `sources_found=5`, `response_kind=free`, `processing_time_ms=8032`, seção `**Referências:**` presente, fallback ausente e nome técnico de arquivo ausente. Referência retornada: `Lillian Sholtis Brunner; Doris Smith Suddarth; Suzanne C. Smeltzer (ed.) (2014). Brunner & Suddarth: Tratado de enfermagem médico-cirúrgica. 12ª ed. [reimpr.]. Rio de Janeiro: Guanabara Koogan. p. 2313.`
 - Um segundo teste direcionado a limpeza/enxágue apresentou falha transitória de geração do modelo e foi tratado como incidente de disponibilidade, não como sucesso de referência; a resposta técnica não publicou referências, conforme a regra do cliente para falha sem resposta clínica. O código não foi alterado para mascarar essa falha.
 - Testes locais finais: `npm run test:flow` 45/45, `npm run lint` aprovado, `npm run build` aprovado e testes Python de ingestão/metadados 8/8.
+
+## Catálogo fechado para o inventário ativo
+
+- A auditoria somente leitura da tabela ativa encontrou 6 documentos e 39.128 chunks: Morton (18.979), Manual Técnico (20), Glossário (3), Nutrição (2.240), SOBECC (2.897) e Brunner (14.989).
+- As seis identidades abaixo foram conferidas nas primeiras páginas indexadas e passaram a ser resolvidas por `drive_file_id`, sem derivação do nome do arquivo:
+  - Cuidados críticos de enfermagem: abordagem holística — título confirmado na folha inicial; autor e ano não foram preenchidos porque o OCR não os confirmou com segurança.
+  - Manual Técnico de Arquitetura, Engenharia e Operação: Tutor de Enfermagem — título confirmado na p. 1.
+  - Glossário Técnico — título confirmado na p. 1.
+  - Nutrition Assessment: Clinical and Research Applications — Nancy Munoz e Melissa Bernstein, 2019, Jones & Bartlett Learning, conferidos nas p. 4–5.
+  - Práticas Recomendadas SOBECC — 6ª edição, 2013, conferidos na p. 1.
+  - Brunner & Suddarth: Tratado de enfermagem médico-cirúrgica — ficha catalográfica conferida na p. 6.
+- O catálogo foi ampliado no bootstrap do app, no catálogo JSON do ingestador e na migração SQL 031. A migração continua pendente de aplicação no banco por indisponibilidade da rota direta PostgreSQL; a aplicação publicada já resolve as referências no momento da recuperação.
+- O teste real específico de cinco obras foi executado após o deploy, mas o provedor retornou falha técnica transitória nas cinco chamadas; as respostas foram o fallback exato, sem referências, como exigido para não inventar conteúdo. Isso fica registrado como pendência de disponibilidade/modelo, não como aprovação funcional.

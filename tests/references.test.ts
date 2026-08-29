@@ -6,6 +6,7 @@ import {
   isLikelyInfoInsufficient,
   sanitizeStudentFacingText,
 } from '../lib/chat/references.ts';
+import { DOCUMENT_REFERENCE_CATALOG, enrichDocumentReferenceMetadata } from '../lib/chat/document-catalog.ts';
 
 test('substitui referências geradas pelo modelo por dados presentes no trecho RAG', () => {
   const answer = finalizeReferences(
@@ -97,6 +98,26 @@ test('usa catálogo bibliográfico verificado quando o chunk clínico não cont�
 
   assert.match(answer, /- \(2013\)\. Práticas Recomendadas SOBECC\. 6ª ed\. p\. 35\./);
   assert.doesNotMatch(answer, /Informação não disponível no artigo|origem-tecnica|\.pdf/i);
+});
+
+test('resolve a identidade por drive_file_id para todos os documentos ativos catalogados', () => {
+  const ids = [
+    '19X545ckd-ZnfYbo73Tz2glTklUiDA9qd',
+    '1IEpBXcCPCvgrivRH57lEmK_0i_7Jr-Tf',
+    '1eEE2VGeeqeY0G4xCeqAAmdituf7WsjVv',
+    '1hPPWPIJJ6zc-C0Tnihf6fpVwlE13HaoL',
+    '1YUfjf2WG5FonQaOImCsAY6aHSuyK7XNL',
+    '1rsAmg3UK8m_2fP4STqoiB_Zhyktnlw-W',
+  ];
+
+  for (const drive_file_id of ids) {
+    const metadata = enrichDocumentReferenceMetadata({ drive_file_id });
+    assert.equal(metadata.reference_verified, true);
+    assert.equal(metadata.reference_key, drive_file_id);
+    assert.equal(metadata.reference_source, 'catalog');
+    assert.ok(typeof metadata.reference_title === 'string' && metadata.reference_title.length > 5);
+  }
+  assert.equal(Object.keys(DOCUMENT_REFERENCE_CATALOG).length, 6);
 });
 
 test('deduplica páginas do mesmo documento catalogado', () => {

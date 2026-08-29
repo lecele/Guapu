@@ -34,6 +34,35 @@ INSERT INTO public.rag_document_catalog (
 )
 VALUES
 (
+    '19X545ckd-ZnfYbo73Tz2glTklUiDA9qd',
+    'Cuidados críticos de enfermagem: abordagem holística',
+    NULL, NULL, NULL, NULL,
+    'verified', 'documentos, p. 1',
+    'Título conferido na folha inicial do documento; OCR não permitiu confirmar autor e ano com segurança.'
+),
+(
+    '1IEpBXcCPCvgrivRH57lEmK_0i_7Jr-Tf',
+    'Manual Técnico de Arquitetura, Engenharia e Operação: Tutor de Enfermagem',
+    NULL, NULL, NULL, NULL,
+    'verified', 'documentos, p. 1',
+    'Título conferido na primeira página do manual técnico.'
+),
+(
+    '1eEE2VGeeqeY0G4xCeqAAmdituf7WsjVv',
+    'Glossário Técnico',
+    NULL, NULL, NULL, NULL,
+    'verified', 'documentos, p. 1',
+    'Título conferido na primeira página do glossário.'
+),
+(
+    '1hPPWPIJJ6zc-C0Tnihf6fpVwlE13HaoL',
+    'Nutrition Assessment: Clinical and Research Applications',
+    'Nancy Munoz; Melissa Bernstein (ed.)', '2019', NULL,
+    'Burlington, MA: Jones & Bartlett Learning',
+    'verified', 'documentos, p. 4-5',
+    'Título, responsáveis editoriais, ano e editora conferidos na página de título e ficha catalográfica.'
+),
+(
     '1rsAmg3UK8m_2fP4STqoiB_Zhyktnlw-W',
     'Brunner & Suddarth: Tratado de enfermagem médico-cirúrgica',
     'Lillian Sholtis Brunner; Doris Smith Suddarth; Suzanne C. Smeltzer (ed.)',

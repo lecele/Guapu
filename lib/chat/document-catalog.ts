@@ -16,6 +16,33 @@ export interface CatalogReference {
  * indisponível, sem derivar uma referência do nome do arquivo.
  */
 export const DOCUMENT_REFERENCE_CATALOG: Record<string, CatalogReference> = {
+  '19X545ckd-ZnfYbo73Tz2glTklUiDA9qd': {
+    reference_title: 'Cuidados críticos de enfermagem: abordagem holística',
+    reference_source: 'catalog',
+    reference_verified: true,
+    reference_key: '19X545ckd-ZnfYbo73Tz2glTklUiDA9qd',
+  },
+  '1IEpBXcCPCvgrivRH57lEmK_0i_7Jr-Tf': {
+    reference_title: 'Manual Técnico de Arquitetura, Engenharia e Operação: Tutor de Enfermagem',
+    reference_source: 'catalog',
+    reference_verified: true,
+    reference_key: '1IEpBXcCPCvgrivRH57lEmK_0i_7Jr-Tf',
+  },
+  '1eEE2VGeeqeY0G4xCeqAAmdituf7WsjVv': {
+    reference_title: 'Glossário Técnico',
+    reference_source: 'catalog',
+    reference_verified: true,
+    reference_key: '1eEE2VGeeqeY0G4xCeqAAmdituf7WsjVv',
+  },
+  '1hPPWPIJJ6zc-C0Tnihf6fpVwlE13HaoL': {
+    reference_title: 'Nutrition Assessment: Clinical and Research Applications',
+    reference_author: 'Nancy Munoz; Melissa Bernstein (ed.)',
+    reference_year: '2019',
+    reference_publisher: 'Burlington, MA: Jones & Bartlett Learning',
+    reference_source: 'catalog',
+    reference_verified: true,
+    reference_key: '1hPPWPIJJ6zc-C0Tnihf6fpVwlE13HaoL',
+  },
   '1rsAmg3UK8m_2fP4STqoiB_Zhyktnlw-W': {
     reference_title: 'Brunner & Suddarth: Tratado de enfermagem médico-cirúrgica',
     reference_author: 'Lillian Sholtis Brunner; Doris Smith Suddarth; Suzanne C. Smeltzer (ed.)',
