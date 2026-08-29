@@ -9,6 +9,40 @@ export interface RetrievedSource {
 const REFERENCE_HEADING = /(?:^|\n)\s*(?:\*\*)?refer[êe]ncias:?\*{0,2}\s*/i;
 const CONTINUATION = /\n\s*\n(?=(?:\*{0,2})?(?:deseja|gostaria de|por favor|qual tema|quest[aã]o))/i;
 
+/**
+ * Termos do mecanismo interno de recuperação nunca devem aparecer para o
+ * estudante, mesmo quando o modelo ignora a instrução correspondente.
+ */
+export function sanitizeStudentFacingText(text: string): string {
+  return text
+    .replace(/\b(?:materiais|documentos)\s+RAG\b/gi, 'materiais da disciplina')
+    .replace(/\bbase\s+RAG\b/gi, 'materiais da disciplina')
+    .replace(/\bcontexto\s+RAG\b/gi, 'materiais da disciplina disponíveis')
+    .replace(/\bcontexto\s+recuperado\b/gi, 'materiais da disciplina disponíveis')
+    .replace(/\btrechos?\s+RAG\b/gi, 'materiais consultados')
+    .replace(/\btrechos?\s+recuperados?\b/gi, 'materiais consultados')
+    .replace(/\bchunks?\b/gi, 'materiais consultados')
+    .replace(/\bretrieval\b/gi, 'busca nos materiais')
+    .replace(/\bRAG\b/gi, 'materiais da disciplina')
+    .replace(/[ \t]{2,}/g, ' ')
+    .trim();
+}
+
+/**
+ * Informações administrativas sem confirmação no plano não devem ser
+ * apresentadas como uma resposta longa gerada pelo modelo. Esse detector é
+ * deliberadamente restrito ao modo Informações e exige linguagem explícita
+ * de ausência, para não cortar explicações clínicas legítimas.
+ */
+export function isLikelyInfoInsufficient(question: string, answer: string): boolean {
+  const asksAdministrativeFact = /\b(?:aula|aulas|atividade|atividades|dia|data|cronograma|hor[aá]rio|hor[aá]rios|professor|professores|docente|docentes|avalia[cç][aã]o|nota|notas|peso|pesos|frequ[eê]ncia|trabalho|trabalhos|plano|conte[uú]do program[aá]tico)\b/i.test(question);
+  if (!asksAdministrativeFact) return false;
+
+  const absence = /\b(?:n[aã]o\s+const(?:a|am)|n[aã]o\s+h[aá]|n[aã]o\s+existe(?:m)?|n[aã]o\s+foi\s+encontrad[ao]s?|n[aã]o\s+localiz(?:ei|amos)|n[aã]o\s+encontr(?:ei|amos)|n[aã]o\s+est[aá]\s+dispon[ií]vel|n[aã]o\s+foi\s+poss[ií]vel\s+(?:confirmar|localizar|identificar)|sem\s+registro)\b/i.test(answer);
+  const guidance = /\b(?:Moodle|plano de ensino|consult(?:e|ar)|confirmar|comunicado|docente)/i.test(answer);
+  return absence && guidance;
+}
+
 function needsReferences(mode: GenerationMode): boolean {
   return ['resumo', 'resumo_aprofundar', 'resumo_reformular', 'info', 'livre'].includes(mode);
 }
@@ -33,6 +67,9 @@ const REFERENCE_STOPWORDS = new Set([
   'a', 'as', 'ao', 'aos', 'com', 'da', 'das', 'de', 'do', 'dos', 'e', 'em',
   'essa', 'esse', 'esta', 'este', 'na', 'nas', 'no', 'nos', 'o', 'os', 'para',
   'por', 'que', 'se', 'sem', 'sua', 'suas', 'um', 'uma', 'umas', 'uns', 'sobre',
+  'cuidado', 'cuidados', 'enfermagem', 'paciente', 'pacientes', 'procedimento',
+  'procedimentos', 'cirurgico', 'cirurgicos', 'cirurgica', 'cirurgicas',
+  'material', 'materiais', 'conteudo', 'disciplina', 'fase',
 ]);
 
 function hasMeaningfulOverlap(answer: string, reference: string): boolean {
@@ -44,7 +81,14 @@ function hasMeaningfulOverlap(answer: string, reference: string): boolean {
   );
   const answerWords = words(answer);
   const referenceWords = [...words(reference)].filter((word) => !REFERENCE_STOPWORDS.has(word));
-  return referenceWords.some((word) => answerWords.has(word));
+  const matches = referenceWords.filter((word) => [...answerWords].some((answerWord) => (
+    answerWord === word || (
+      answerWord.length >= 8 &&
+      word.length >= 8 &&
+      answerWord.slice(0, 8) === word.slice(0, 8)
+    )
+  )));
+  return matches.some((word) => word.length >= 7) || matches.length >= 2;
 }
 
 function normalizeReferenceText(value: string): string {
@@ -240,12 +284,13 @@ export function finalizeReferences(
   docs: RetrievedSource[],
   mode: GenerationMode,
   enabled = true,
+  relevanceText = text,
 ): string {
-  const withoutModelReferences = removeModelReferences(text)
+  const withoutModelReferences = sanitizeStudentFacingText(removeModelReferences(text)
     .replace(/\[\s*\d+(?:\s*,\s*\d+)*\s*\]/g, '')
     .replace(/[ \t]{2,}/g, ' ')
     .replace(/\n[ \t]+\n/g, '\n\n')
-    .trim();
+    .trim());
   if (!enabled) return withoutModelReferences;
   if (!needsReferences(mode)) return withoutModelReferences;
   // Uma recusa ou fallback de conteúdo insuficiente não deve carregar
@@ -262,9 +307,10 @@ export function finalizeReferences(
   // bibliográfica melhor. Nunca misture uma referência identificada com
   // rótulos de arquivo ou uma linha de fallback.
   const identified = extracted.filter((item) => item.reference && !isSourceOnlyReference(item.reference));
-  const relevant = mode === 'info'
-    ? identified.filter((item) => hasMeaningfulOverlap(withoutModelReferences, item.reference))
-    : identified;
+  const relevant = identified.filter((item) => hasMeaningfulOverlap(
+    `${relevanceText}\n${withoutModelReferences}`,
+    item.reference,
+  ));
   if (relevant.length === 0) {
     // O fallback é uma referência válida quando houve uso efetivo dos
     // materiais, mas nenhum trecho trouxe título, capítulo, autoria ou outro

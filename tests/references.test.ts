@@ -1,7 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { finalizeReferences } from '../lib/chat/references.ts';
+import {
+  finalizeReferences,
+  isLikelyInfoInsufficient,
+  sanitizeStudentFacingText,
+} from '../lib/chat/references.ts';
 
 test('substitui referências geradas pelo modelo por dados presentes no trecho RAG', () => {
   const answer = finalizeReferences(
@@ -12,6 +16,8 @@ test('substitui referências geradas pelo modelo por dados presentes no trecho R
       { source: 'plano_de_ensino.docx', content: 'Plano de ensino sem metadados bibliográficos no trecho recuperado.' },
     ],
     'resumo',
+    true,
+    'cuidados perioperatórios',
   );
 
   assert.match(answer, /- Silva \(2022\) Cuidados perioperatórios em cirurgia geral\. p\. 45-52\./);
@@ -33,6 +39,8 @@ test('usa título de capítulo do conteúdo antes do fallback', () => {
     'Resumo do conteúdo.',
     [{ source: 'arquivo-que-nao-deve-aparecer.pdf', content: 'Capítulo 6 — Cuidados de Enfermagem no Pós-Operatório Imediato. A vigilância deve ser contínua.' }],
     'resumo',
+    true,
+    'cuidados de enfermagem no pós-operatório imediato',
   );
 
   assert.match(answer, /- Cuidados de Enfermagem no Pós-Operatório Imediato \(Cap\. 6\)\./);
@@ -56,6 +64,8 @@ test('prioriza a referência extraída do próprio documento e nunca o nome do a
       },
     }],
     'livre',
+    true,
+    'Cuidados Críticos de Enfermagem',
   );
 
   assert.match(answer, /- Morton, P\. \(2011\) Cuidados Críticos de Enfermagem \(Cap\. 8\)\./);
@@ -83,6 +93,8 @@ Limpeza`,
       metadata: { drive_file_id: '1YUfjf2WG5FonQaOImCsAY6aHSuyK7XNL', page_number: 35, chunk_index: 116 },
     }],
     'livre',
+    true,
+    'cuidado pré-operatório',
   );
 
   assert.doesNotMatch(answer, /Enxágue Enxágue Enxágue/i);
@@ -100,6 +112,8 @@ test('mantém um cabeçalho real do trecho sem expor a origem técnica', () => {
       metadata: { drive_file_id: '1rsAmg3UK8m_2fP4STqoiB_Zhyktnlw-W', page_number: 750, chunk_index: 3003 },
     }],
     'livre',
+    true,
+    'cuidados pré-operatórios',
   );
 
   assert.match(answer, /- Fase Pré-operatória\./);
@@ -140,8 +154,8 @@ test('reprodução real de pré-operatório não publica prosa, lista truncada o
   );
 
   assert.match(answer, /- Fase Pré-operatória\./);
-  assert.match(answer, /- Cuidados Paliativos nas Instituições de Cuidados Prolongados\./);
-  assert.equal((answer.match(/^-/gm) ?? []).length, 2);
+  assert.doesNotMatch(answer, /- Cuidados Paliativos nas Instituições de Cuidados Prolongados\./);
+  assert.equal((answer.match(/^-/gm) ?? []).length, 1);
   assert.doesNotMatch(answer, /Com as internações|Cirurgias Vasculares|Enxágue(?:\s+Enxágue){2,}/i);
   assert.doesNotMatch(answer, /\.pdf|\.docx|\[Fonte:|trecho \d+/i);
 });
@@ -151,6 +165,8 @@ test('reconhece título quando autores estão na linha seguinte do trecho', () =
     'Resumo.',
     [{ source: 'nao-usar.pdf', content: 'Intervenções fundamentais em cirurgia: diérese, hemostasia e síntese\nMedeiros AC, Dantas-Filho AM\nTexto do artigo.' }],
     'resumo',
+    true,
+    'intervenções fundamentais em cirurgia',
   );
   assert.match(answer, /- Intervenções fundamentais em cirurgia: diérese, hemostasia e síntese\./);
 });
@@ -163,6 +179,8 @@ test('não mistura fallback com uma referência identificada', () => {
       { source: 'dois.pdf', content: 'Trecho sem pista bibliográfica.' },
     ],
     'resumo',
+    true,
+    'intervenções fundamentais em cirurgia',
   );
   assert.match(answer, /Intervenções fundamentais em cirurgia/);
   assert.doesNotMatch(answer, /Informação não disponível no artigo/);
@@ -266,4 +284,30 @@ test('remove marcadores numéricos herdados dos documentos', () => {
   );
   assert.doesNotMatch(answer, /\[\s*\d/);
   assert.match(answer, /normas da ABNT incluem etapas específicas/);
+});
+
+test('remove jargão interno antes de exibir a resposta ao estudante', () => {
+  const answer = sanitizeStudentFacingText(
+    'Os materiais RAG e o contexto recuperado não trouxeram dados suficientes. Veja os chunks consultados.',
+  );
+
+  assert.doesNotMatch(answer, /RAG|contexto recuperado|chunks?/i);
+  assert.match(answer, /materiais da disciplina/);
+});
+
+test('reconhece informação administrativa sem confirmação no plano', () => {
+  assert.equal(
+    isLikelyInfoInsufficient(
+      'quais são as aulas no dia 16/09?',
+      'Não constam atividades acadêmicas programadas para essa data. Consulte o plano de ensino no Moodle.',
+    ),
+    true,
+  );
+  assert.equal(
+    isLikelyInfoInsufficient(
+      'quais são os cuidados pré-operatórios?',
+      'Não há necessidade de repetir a avaliação quando o paciente está estável.',
+    ),
+    false,
+  );
 });

@@ -26,7 +26,11 @@ import {
 import { buildCorePrompt, PROMPT_VERSION } from '@/lib/chat/prompts/core';
 import { buildFlowPrompt } from '@/lib/chat/prompts/flow';
 import { buildModePrompt } from '@/lib/chat/prompts/modes';
-import { finalizeReferences } from '@/lib/chat/references';
+import {
+  finalizeReferences,
+  isLikelyInfoInsufficient,
+  sanitizeStudentFacingText,
+} from '@/lib/chat/references';
 
 export const runtime = 'nodejs';
 export const maxDuration = 120;
@@ -75,6 +79,9 @@ const QUIZ_INVALID_RESPONSE =
 const INFO_MENU_RESPONSE =
   'Que informação da disciplina você deseja consultar?\n\n' +
   'Você pode perguntar sobre o plano de ensino, professores, horários, cronograma, avaliações, frequência, trabalhos ou conteúdo programático.';
+
+const INFO_INSUFFICIENT_RESPONSE =
+  'Consultar o plano de ensino na página da disciplina no Moodle.';
 
 function insufficientContentResponse(topic: string): string {
   const safeTopic = topic.trim() || 'esse tema';
@@ -475,7 +482,13 @@ async function generateResponse(
 
       if (text && text.trim().length > 0) {
         return {
-          text: finalizeReferences(text, docs, sessionMode, RAG_REFERENCES_ENABLED),
+          text: finalizeReferences(
+            text,
+            docs,
+            sessionMode,
+            RAG_REFERENCES_ENABLED,
+            `${question}\n${inlineTheme}`,
+          ),
           modelRequested: candidateModels[0],
           modelUsed: modelName,
           fallbackUsed: modelName !== candidateModels[0],
@@ -832,7 +845,9 @@ export async function POST(req: NextRequest) {
 
     if (docs.length === 0) {
       answer = retrievalErrorCode === 'NO_RELEVANT_CONTEXT'
-        ? insufficientContentResponse(decision.topic || searchQuery)
+        ? decision.generationMode === 'info'
+          ? INFO_INSUFFICIENT_RESPONSE
+          : insufficientContentResponse(decision.topic || searchQuery)
         : TECHNICAL_FALLBACK_RESPONSE;
       finalState = decision.stateBefore;
       fallbackUsed = true;
@@ -855,6 +870,16 @@ export async function POST(req: NextRequest) {
       fallbackReason = generation.fallbackReason;
       generationLatency = generation.latencyMs;
       generationErrorCode = generation.errorCode;
+      if (
+        !generationErrorCode &&
+        decision.generationMode === 'info' &&
+        isLikelyInfoInsufficient(question, answer)
+      ) {
+        answer = 'Consultar o plano de ensino na página da disciplina no Moodle.';
+        finalState = decision.stateBefore;
+      } else {
+        answer = sanitizeStudentFacingText(answer);
+      }
       if (!generation.errorCode && needsClinicalCoverageRepair(question, answer)) {
         const repair = await generateResponse(
           question,
@@ -903,6 +928,10 @@ export async function POST(req: NextRequest) {
         ? decision.stateBefore
         : finalizeGeneratedTurn(decision, answer);
     }
+
+    // Última barreira antes de persistir e enviar a resposta ao estudante.
+    // Isso também cobre respostas produzidas por uma chamada de reparo.
+    answer = sanitizeStudentFacingText(answer);
 
     const totalLatency = Date.now() - startedAt;
     const metadata = buildTurnMetadata({
