@@ -52,4 +52,4 @@ O verificador `deploy/ops/guapu-healthcheck.sh` gera um snapshot a cada cinco mi
 
 ## Critério de encerramento
 
-Para fechar esta parte da Fase 9, é necessário escolher um canal de alerta, configurar o verificador nesse canal e executar um teste controlado de cada alerta sem expor segredos. O restore em banco continua dependendo de um projeto/branch isolado do Supabase ou de um recurso oficial de recuperação.
+Para fechar esta parte da Fase 9, é necessário escolher um canal de alerta, configurar o verificador nesse canal e executar um teste controlado de cada alerta sem expor segredos. O ensaio de restauração isolado local já foi concluído; não há necessidade de tocar no Supabase de produção para esse teste.

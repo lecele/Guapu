@@ -51,11 +51,14 @@ O ensaio local de carga de recuperação também passou: 87.040 IDs únicos, 87.
 
 O primeiro exportador usava `OFFSET` e recebeu `57014 / statement timeout` na faixa 65.500–65.999. A paginação foi corrigida para cursor/ID; a segunda exportação terminou sem repetir o erro. O arquivo parcial foi descartado automaticamente.
 
+## Ensaio de restauração isolado
+
+Em 29/08/2026, o backup foi importado em um contêiner Postgres temporário com extensão `pgvector`, separado do app e do Supabase de produção. O ensaio terminou com `COPY 87040` e confirmou 87.040 registros no banco, 87.040 IDs únicos, 185 fontes distintas e dimensões mínima/máxima de embedding iguais a 768. O contêiner temporário foi removido ao final; nenhum dado de produção foi alterado. O procedimento está reproduzível em `deploy/ops/restore_rehearsal.py`.
+
 ## Pendências que impedem o encerramento
 
 - A cópia externa do corpus, manifesto e fila foi concluída e conferida por SHA-256.
-- A VPS não possui `pg_dump`, e a rota PostgreSQL direta do Supabase não está disponível por IPv4. A restauração transacional do banco ainda precisa ser validada por um caminho oficial do Supabase (backup gerenciado/PITR ou pooler compatível) ou em ambiente isolado.
-- Ainda não foi feito restore em produção, corretamente; não será feito restore destrutivo como teste.
+- A VPS não possui `pg_dump`, e a rota PostgreSQL direta do Supabase não está disponível por IPv4. O ensaio isolado local foi concluído; ainda não foi feito restore em produção e não será feito restore destrutivo como teste.
 - Os snapshots de manifesto e fila foram exportados e guardados junto da cópia externa do corpus.
 - É necessário definir alerta operacional para quota Gemini/embeddings, timeout do Supabase, falha do worker, fila parada e divergência Drive–manifesto.
 - A stack Prometheus/Grafana/Uptime Kuma existe na VPS, mas ainda não possui monitor do Guapu nem canal de notificação configurado.
@@ -76,4 +79,4 @@ Em 29/08/2026, a checagem foi integrada ao `obs-node-exporter` e o Prometheus fo
 
 ## Critério de encerramento
 
-A Fase 9 só pode ser marcada como concluída quando houver cópia externa verificável, procedimento de recuperação documentado e um ensaio de restauração não destrutivo/isolado com evidência de contagem, checksum e integridade. Até lá, a operação permanece aprovada para observação, mas não declarada como plenamente recuperável.
+A Fase 9 só pode ser marcada como concluída quando houver cópia externa verificável, procedimento de recuperação documentado, ensaio de restauração isolado com evidência de contagem/checksum/integridade e canal de alertas testado. Os três primeiros critérios estão atendidos; a operação permanece em andamento até o canal de alertas ser configurado e testado.
