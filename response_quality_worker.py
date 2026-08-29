@@ -65,8 +65,10 @@ def load_context(client: Any, metadata: dict[str, Any]) -> list[dict[str, str]]:
 def _model_candidates() -> list[str]:
     configured = os.environ.get("RAG_EVALUATOR_MODELS") or os.environ.get("RAG_EVALUATOR_MODEL")
     values = configured.split(",") if configured else [
-        "gemini-3.5-flash-lite",
+        "gemini-2.5-flash-lite",
+        "gemini-2.5-flash",
         "gemini-3.1-flash-lite",
+        "gemini-3.5-flash-lite",
         "gemini-3.5-flash",
     ]
     return list(dict.fromkeys(item.strip() for item in values if item.strip()))

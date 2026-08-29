@@ -33,3 +33,11 @@ A latência clínica melhorou ao priorizar o modelo Flash Lite validado, mas ain
 - A área rolável da conversa recebeu `scroll-padding-top` e as respostas do tutor receberam `scroll-margin-top`, impedindo que o cabeçalho cubra o avatar ou a primeira linha da resposta.
 - A correção foi validada na interface publicada em viewport de desktop e em viewport móvel de 390 × 844 px.
 - Health pós-publicação: aplicação `running healthy`, HTTP 200 e Supabase conectado.
+
+## Medição de disponibilidade do provedor e ajuste de fallback
+
+- O teste direto na VPS, com prompt mínimo e sem exibir a chave, mediu `gemini-2.5-flash-lite` em 0,59 s, `gemini-2.5-flash` em 0,69 s e `gemini-3.1-flash-lite` em 1,97 s.
+- Na mesma janela, `gemini-3.5-flash-lite` e `gemini-3.5-flash` excederam o limite de 12 s. O log do app confirmou 503/UNAVAILABLE nos modelos 3.5.
+- O padrão do app foi alinhado a `gemini-2.5-flash-lite`, seguido por `gemini-2.5-flash`, `gemini-3.1-flash-lite` e os modelos 3.5 como fallback.
+- Após a publicação: fallback administrativo exato em 4,0 s; pré-operatório em 7,4 s com 5 fontes, sem paliativos e com referência; água/limpeza em 7,5 s com 5 fontes, sem repetição de enxágue, sem paliativos e sem jargão interno.
+- O circuito de resfriamento de 60 s impede repetir imediatamente modelos que falharam por 503, 429 ou timeout.

@@ -178,11 +178,16 @@ let _supabase: ReturnType<typeof createClient> | null = null;
 let _genai: GoogleGenAI | null = null;
 
 const SUPABASE_REQUEST_TIMEOUT_MS = 6_000;
+// Evita que uma indisponibilidade do modelo primário deixe o aluno aguardando
+// dezenas de segundos antes de cair para o próximo modelo validado.
+const MODEL_REQUEST_TIMEOUT_MS = 12_000;
+const MODEL_FAILURE_COOLDOWN_MS = 60_000;
 const CORPUS_VERSION_TIMEOUT_MS = 800;
 const RETRIEVAL_CACHE_TTL_MS = 5 * 60 * 1_000;
 const RETRIEVAL_CACHE_MAX_ENTRIES = 128;
 const RETRIEVAL_CACHE_ENABLED = process.env.RAG_RETRIEVAL_CACHE_ENABLED === 'true';
 const retrievalCache = new Map<string, RetrievalCacheEntry>();
+const modelCooldownUntil = new Map<string, number>();
 
 async function fetchSupabaseWithTimeout(
   input: RequestInfo | URL,
@@ -440,13 +445,16 @@ async function generateResponse(
   // O Flash Lite validado nos testes reais apresentou o melhor equilíbrio
   // entre fidelidade ao contexto do cliente e latência. O fallback fica
   // restrito a modelos conhecidos para não perder tempo em nomes instáveis.
-  // A ordem padrão acompanha a bateria de aceite registrada: 3.5 Flash Lite,
-  // depois 3.1 Flash Lite e, por último, Flash completo.
-  const requestedModel = process.env.GEMINI_CHAT_MODEL ?? 'gemini-3.5-flash-lite';
+  // A ordem padrão acompanha a disponibilidade real medida nesta chave: 2.5
+  // Flash Lite e 2.5 Flash responderam rapidamente; os modelos 3.x ficam
+  // como fallback quando a conta/provedor estiverem estáveis para eles.
+  const requestedModel = process.env.GEMINI_CHAT_MODEL ?? 'gemini-2.5-flash-lite';
   const candidateModels = [...new Set([
     requestedModel,
-    'gemini-3.5-flash-lite',
+    'gemini-2.5-flash-lite',
+    'gemini-2.5-flash',
     'gemini-3.1-flash-lite',
+    'gemini-3.5-flash-lite',
     'gemini-3.5-flash',
   ])];
 
@@ -466,6 +474,12 @@ async function generateResponse(
   let lastErrorMessage = '';
 
   for (const modelName of candidateModels) {
+    const cooldownUntil = modelCooldownUntil.get(modelName) ?? 0;
+    if (cooldownUntil > Date.now()) {
+      lastErrorMessage = `MODEL_COOLDOWN:${modelName}`;
+      continue;
+    }
+
     try {
       const result = await getGenAI().models.generateContent({
         model: modelName,
@@ -473,6 +487,7 @@ async function generateResponse(
         config: {
           systemInstruction: systemPrompt,
           maxOutputTokens: maxOutputTokensForMode(sessionMode),
+          abortSignal: AbortSignal.timeout(MODEL_REQUEST_TIMEOUT_MS),
           thinkingConfig: {
             thinkingLevel: ThinkingLevel.LOW,
           },
@@ -508,6 +523,9 @@ async function generateResponse(
       lastErrorMessage = 'EMPTY_MODEL_RESPONSE';
     } catch (error: unknown) {
       lastErrorMessage = error instanceof Error ? error.message : String(error);
+      if (/(?:503|UNAVAILABLE|429|RESOURCE_EXHAUSTED|aborted|timeout)/i.test(lastErrorMessage)) {
+        modelCooldownUntil.set(modelName, Date.now() + MODEL_FAILURE_COOLDOWN_MS);
+      }
       console.warn(
         `[generateResponse] Model ${modelName} falhou; tentando o próximo modelo: ${lastErrorMessage.slice(0, 200)}`,
       );
