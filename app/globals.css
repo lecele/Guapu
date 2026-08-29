@@ -277,7 +277,11 @@ button {
 }
 
 .guapu-main-content.is-conversation {
-  padding: var(--space-2) 2px var(--space-5);
+  /* A rolagem automática para o início de uma resposta precisa deixar uma
+     faixa livre abaixo do cabeçalho; sem isso o avatar e a primeira linha
+     podem ficar sob a barra de identificação em telas baixas. */
+  padding: var(--space-5) 2px var(--space-5);
+  scroll-padding-top: var(--space-5);
 }
 
 .guapu-welcome {
@@ -663,6 +667,10 @@ button {
   align-items: flex-start;
 }
 
+.guapu-chat-row.is-assistant {
+  scroll-margin-top: var(--space-5);
+}
+
 .guapu-chat-row.is-user {
   justify-content: flex-end;
 }
@@ -975,6 +983,15 @@ button {
     padding-bottom: 0;
   }
 
+  .guapu-main-content.is-conversation {
+    padding-top: var(--space-4);
+    scroll-padding-top: var(--space-4);
+  }
+
+  .guapu-chat-row.is-assistant {
+    scroll-margin-top: var(--space-4);
+  }
+
   .guapu-hero h1 {
     margin-bottom: var(--space-2);
     font-size: 24px;
@@ -1066,6 +1083,11 @@ button {
 
   .guapu-hero {
     padding: var(--space-5) var(--space-4);
+  }
+
+  .guapu-main-content.is-conversation {
+    padding-top: var(--space-4);
+    scroll-padding-top: var(--space-4);
   }
 
   .guapu-hero h1 {
