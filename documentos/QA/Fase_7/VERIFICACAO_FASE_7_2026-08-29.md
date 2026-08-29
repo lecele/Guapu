@@ -37,6 +37,8 @@ O roteiro para teste funcional está em `documentos/QA/Fase_7/ROTEIRO_HOMOLOGACA
 - experiência em desktop e celular;
 - ausência de erro crítico conhecido.
 
+A integração adicional do executor de homologação com o Telegram/Elle foi deixada para depois da entrega do app. Ela não é dependência para o funcionamento do Guapu nem para o aceite desta fase; a prioridade permanece sendo a estabilidade do aplicativo e a validação funcional direta.
+
 ## Critério de saída
 
 A Fase 7 permanece aberta. Ela será marcada como aprovada somente após o registro da homologação interna conduzida por Leonardo, com a versão publicada identificada e sem falha crítica pendente.
