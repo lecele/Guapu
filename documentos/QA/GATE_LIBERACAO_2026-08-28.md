@@ -13,7 +13,7 @@ Este documento é o controle de evidências para a liberação. Uma fase só pod
 | 3. Referências verificadas | Aprovada tecnicamente | Regra estrita publicada: somente pistas bibliográficas verificáveis; sem fallback por nome de arquivo; sem referências em recusa, insuficiência ou ruído OCR; auditoria live formal passou em 9/9 e bateria publicada em 8/8 | Nenhum bloqueio técnico; manter a regra nas próximas alterações de prompt/interface |
 | 4. Prompts e fluxos | Aprovada tecnicamente | 37 testes locais e bateria real 8/8 no runtime VPS, registrados em `documentos/QA/Fase_4/VERIFICACAO_FASE_4_2026-08-29.md` | Manter os fluxos na regressão e validar a aceitação final na Fase 7 |
 | 5. Interface | Aprovada tecnicamente | Build/deploy e QA visual real em 1366×768, 1280×720, 390×844 e 412×915, registrados em `documentos/QA/Fase_5/VERIFICACAO_FASE_5_2026-08-29.md` | Manter regressão visual; aceite final continua na Fase 7 |
-| 6. Painel e avaliação | Parcial | `/api/admin/stats` autenticada em HTTP 200; métricas reais e modelo efetivo exibidos | Confirmar cobertura/qualidade em amostra operacional e critérios visuais finais |
+| 6. Painel e avaliação | Aprovada tecnicamente | Aceite real do painel/pipeline aprovado: resposta fundamentada, ausência de evidência, requisição inválida e avaliação assíncrona; evidência em `documentos/QA/Fase_6/VERIFICACAO_FASE_6_2026-08-29.md` | Manter regressão; Fase 7 ainda exige homologação diária e aceite do cliente |
 | 7. Homologação e liberação | Bloqueada | Ainda não há aceite final do cliente na versão atual | Requer fases 4–6 aprovadas e roteiro de aceite executado |
 | 8. Runtime VPS/DNS | Aprovada — VPS-only | Runtime, domínios, serviços críticos, bateria real 8/8 e ponto de recuperação da própria VPS validados em 29/08/2026 | Manter a Vercel preservada, sem tráfego operacional; não é dependência da produção |
 | 9. Operação, recuperação e alertas | Aprovada | Backup externo, restauração isolada, healthcheck, Prometheus e Telegram/Uptime Kuma testados em 29/08/2026 | Manter observação operacional contínua |
@@ -34,6 +34,7 @@ Este documento é o controle de evidências para a liberação. Uma fase só pod
 - Ciclo end-to-end da Fase 2A: inclusão, recuperação, remoção e não recuperação do `Teste.docx` aprovadas; a bateria publicada adicional passou em 8/8.
 - Fase 3: bateria formal de referências e rastreabilidade passou em 9/9 após sincronizar o script de QA da VPS com a versão atual; nenhum cenário falhou.
 - Auditoria posterior das reclamações do cliente: referências de resposta fundamentada mantidas somente quando há pista verificável e relação textual; recusas, informação incompleta e fragmentos OCR ficaram sem seção de referências; 9/9 cenários formais e 8/8 fluxos publicados aprovados após o último deploy.
+- Fase 6: aceite real do painel e avaliação assíncrona aprovado; resposta fundamentada com 5 fontes e referências, recusa sem evidência, validação HTTP 400 e avaliação `succeeded/correct` registrados em `documentos/QA/Fase_6/VERIFICACAO_FASE_6_2026-08-29.md`.
 - Amostra independente posterior: 10/10 perguntas reais aprovadas; cinco referências fundamentadas com `Fonte`, página e trecho; cinco respostas que não deveriam citar fonte sem referências; zero fallback, arquivo isolado ou ruído OCR detectado.
 
 ## Regra de liberação

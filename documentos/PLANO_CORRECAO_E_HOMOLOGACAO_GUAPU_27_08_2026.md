@@ -2,7 +2,7 @@
 
 **Data de abertura:** 27/08/2026  
 **Status geral:** em execução  
-**Fase atual:** Fase 6 — painel e avaliação de qualidade auditáveis
+**Fase atual:** Fase 7 — homologação diária e liberação controlada
 **Documento de referência:** este arquivo é o controle oficial das próximas etapas.
 
 ## 1. Objetivo
@@ -565,7 +565,7 @@ As evidências de cada fase serão salvas em `documentos/QA/Fase_<numero>/`, sep
 | 3. Referências verificadas | Aprovada | 28/08/2026 | auditoria formal 9/9 e amostra independente 10/10 no gate | Leonardo |
 | 4. Prompts v1.3 e fluxos | Aprovada tecnicamente | 29/08/2026 | `documentos/QA/Fase_4/VERIFICACAO_FASE_4_2026-08-29.md`; 37 testes locais e 8/8 reais na VPS | Leonardo |
 | 5. Interface nova | Aprovada tecnicamente | 29/08/2026 | `documentos/QA/Fase_5/VERIFICACAO_FASE_5_2026-08-29.md`; QA real em 1366×768, 1280×720, 390×844 e 412×915 | Leonardo |
-| 6. Painel e avaliação | Parcial | — | rota autenticada e métricas reais; falta validação operacional completa | — |
+| 6. Painel e avaliação | Aprovada tecnicamente | 29/08/2026 | `documentos/QA/Fase_6/VERIFICACAO_FASE_6_2026-08-29.md`; 37 testes locais e aceite real do painel/pipeline aprovados | Leonardo |
 | 7. Homologação e liberação | Aguardando | — | — | — |
 | 8. Runtime VPS e migração controlada da Vercel | Aprovada — VPS-only | 29/08/2026 | `documentos/QA/FASE_8_RUNTIME_VPS_EVIDENCIAS_2026-08-29.md` | Leonardo |
 | 9. Operação, recuperação e alertas | Aprovada | 29/08/2026 | `documentos/QA/Fase_9/OPERACAO_EVIDENCIAS_2026-08-29.md` | Leonardo |

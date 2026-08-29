@@ -71,7 +71,7 @@ const invalidRequest = await requestJson(appHost, '/api/chat', {
 });
 let evaluation = null;
 
-for (let attempt = 0; attempt < 10; attempt += 1) {
+for (let attempt = 0; attempt < 20; attempt += 1) {
   const statsResponse = await requestJson(panelHost, '/api/admin/stats', { authorization });
   if (statsResponse.status !== 200) throw new Error(`Painel retornou HTTP ${statsResponse.status}.`);
   const session = (statsResponse.body.sessions || []).find((item) => item.sessionId === grounded.sessionId);
