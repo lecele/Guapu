@@ -14,7 +14,7 @@ Versão independente do assistente educacional da disciplina INT 5224 - *O cuida
 - **Chat:** Next.js 16, rota `app/api/chat/route.ts`, estado de sessão persistente e fluxos determinísticos para resumo, quiz, informações da disciplina e encerramento.
 - **RAG:** embeddings `gemini-embedding-2` com 768 dimensões, busca vetorial HNSW e referências acrescentadas deterministicamente a partir dos trechos realmente recuperados.
 - **Informações da disciplina:** consultas desse modo são restritas aos arquivos oficiais do plano de ensino antes do ranking vetorial. O assistente não reconstrói notas ou fórmulas quando a tabela recuperada estiver incompleta.
-- **Geração:** modelo configurado por `GEMINI_CHAT_MODEL` (padrão atual: `gemini-3.5-flash`), com fallbacks controlados e telemetria por turno.
+- **Geração:** modelo configurado por `GEMINI_CHAT_MODEL` (padrão validado: `gemini-3.5-flash-lite`), com fallbacks controlados e telemetria por turno.
 - **Qualidade:** cada resposta com RAG é avaliada em segundo plano usando os mesmos trechos recuperados. A avaliação não aumenta o tempo de resposta do estudante.
 - **Painel:** exibe conversas reais, telemetria de embedding/recuperação/geração, fontes RAG, avaliação automática e avaliações por estrelas. Sessões sintéticas de QA são excluídas das métricas, mas permanecem no banco para auditoria.
 - **Drive:** a VPS detecta arquivos novos, alterados e removidos, registra o manifesto e atualiza ou elimina apenas os chunks afetados. O chat não espera esse processamento.

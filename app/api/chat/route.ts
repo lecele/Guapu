@@ -437,16 +437,15 @@ async function generateResponse(
     history: formatHistory(history),
   })}\n\n${buildFlowPrompt({ state: sessionState, mode: activeMode, topic: inlineTheme || '', quizQuestion })}`;
 
-  // Flash Lite foi comparado com os candidatos disponíveis e apresentou o
-  // melhor equilíbrio entre correção do conteúdo e latência. O fallback fica
+  // O Flash Lite validado nos testes reais apresentou o melhor equilíbrio
+  // entre fidelidade ao contexto do cliente e latência. O fallback fica
   // restrito a modelos conhecidos para não perder tempo em nomes instáveis.
-  // O 3.5 Flash Lite apresentou 503 intermitente por alta demanda na cota
-  // atual. O 3.1 Flash Lite é o modelo que respondeu de forma estável nos
-  // testes de aceite e passa a ser o padrão; o override por ambiente continua
-  // disponível para uma futura troca controlada.
-  const requestedModel = process.env.GEMINI_CHAT_MODEL ?? 'gemini-3.1-flash-lite';
+  // A ordem padrão acompanha a bateria de aceite registrada: 3.5 Flash Lite,
+  // depois 3.1 Flash Lite e, por último, Flash completo.
+  const requestedModel = process.env.GEMINI_CHAT_MODEL ?? 'gemini-3.5-flash-lite';
   const candidateModels = [...new Set([
     requestedModel,
+    'gemini-3.5-flash-lite',
     'gemini-3.1-flash-lite',
     'gemini-3.5-flash',
   ])];
