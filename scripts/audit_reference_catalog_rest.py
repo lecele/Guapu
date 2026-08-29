@@ -58,9 +58,12 @@ def main() -> None:
 
     catalog = json.loads(args.catalog.read_text(encoding="utf-8")) if args.catalog.exists() else {}
     groups: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    # O limite máximo padrão do REST do Supabase é 1000; respeitá-lo evita
+    # encerrar a auditoria cedo quando alguém informa um lote maior.
+    page_limit = min(max(args.limit, 1), 1000)
     offset = 0
     while True:
-        rows = fetch_page(base_url, service_key, offset, args.limit)
+        rows = fetch_page(base_url, service_key, offset, page_limit)
         if not rows:
             break
         for row in rows:
@@ -69,7 +72,7 @@ def main() -> None:
             if file_id:
                 groups[str(file_id)].append(row)
         offset += len(rows)
-        if len(rows) < args.limit:
+        if len(rows) < page_limit:
             break
 
     summary: list[dict[str, Any]] = []

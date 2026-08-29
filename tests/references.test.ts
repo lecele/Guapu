@@ -104,7 +104,9 @@ test('resolve a identidade por drive_file_id para todos os documentos ativos cat
   const ids = [
     '19X545ckd-ZnfYbo73Tz2glTklUiDA9qd',
     '1IEpBXcCPCvgrivRH57lEmK_0i_7Jr-Tf',
+    '1QIm6St6nnOIf7JXFwoXCy6-InqKhF2WI',
     '1eEE2VGeeqeY0G4xCeqAAmdituf7WsjVv',
+    '1gu0sH0qoUa1kVbqtv0-Zz33OC4vvSEYD',
     '1hPPWPIJJ6zc-C0Tnihf6fpVwlE13HaoL',
     '1YUfjf2WG5FonQaOImCsAY6aHSuyK7XNL',
     '1rsAmg3UK8m_2fP4STqoiB_Zhyktnlw-W',
@@ -117,7 +119,7 @@ test('resolve a identidade por drive_file_id para todos os documentos ativos cat
     assert.equal(metadata.reference_source, 'catalog');
     assert.ok(typeof metadata.reference_title === 'string' && metadata.reference_title.length > 5);
   }
-  assert.equal(Object.keys(DOCUMENT_REFERENCE_CATALOG).length, 6);
+  assert.equal(Object.keys(DOCUMENT_REFERENCE_CATALOG).length, 8);
 });
 
 test('deduplica páginas do mesmo documento catalogado', () => {

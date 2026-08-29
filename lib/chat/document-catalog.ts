@@ -28,6 +28,15 @@ export const DOCUMENT_REFERENCE_CATALOG: Record<string, CatalogReference> = {
     reference_verified: true,
     reference_key: '1IEpBXcCPCvgrivRH57lEmK_0i_7Jr-Tf',
   },
+  '1QIm6St6nnOIf7JXFwoXCy6-InqKhF2WI': {
+    reference_title: 'Incision care and dressing selection in surgical incision wounds: findings from an international meeting of surgeons from Northern Europe',
+    reference_author: 'Rhidian Morgan-Jones (chair) et al.',
+    reference_year: '2022',
+    reference_publisher: 'Wounds International',
+    reference_source: 'catalog',
+    reference_verified: true,
+    reference_key: '1QIm6St6nnOIf7JXFwoXCy6-InqKhF2WI',
+  },
   '1eEE2VGeeqeY0G4xCeqAAmdituf7WsjVv': {
     reference_title: 'Glossário Técnico',
     reference_source: 'catalog',
@@ -42,6 +51,14 @@ export const DOCUMENT_REFERENCE_CATALOG: Record<string, CatalogReference> = {
     reference_source: 'catalog',
     reference_verified: true,
     reference_key: '1hPPWPIJJ6zc-C0Tnihf6fpVwlE13HaoL',
+  },
+  '1gu0sH0qoUa1kVbqtv0-Zz33OC4vvSEYD': {
+    reference_title: 'Surgical wound dehiscence: improving prevention and outcomes',
+    reference_author: 'World Union of Wound Healing Societies',
+    reference_year: '2018',
+    reference_source: 'catalog',
+    reference_verified: true,
+    reference_key: '1gu0sH0qoUa1kVbqtv0-Zz33OC4vvSEYD',
   },
   '1rsAmg3UK8m_2fP4STqoiB_Zhyktnlw-W': {
     reference_title: 'Brunner & Suddarth: Tratado de enfermagem médico-cirúrgica',

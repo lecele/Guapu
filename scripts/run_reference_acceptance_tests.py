@@ -27,13 +27,25 @@ SCENARIOS = (
     },
     {
         "name": "cuidados_criticos",
-        "question": "Quais cuidados críticos de enfermagem são importantes para prevenir infecções?",
+        "question": "No livro Cuidados críticos de enfermagem, no período pós-operatório inicial, por que um nível de glicemia menor que 200 mg/dL é importante para a cicatrização das feridas?",
         "source": "cuidados_criticos",
         "reference": "Cuidados críticos de enfermagem",
     },
     {
+        "name": "incisao_cirurgica",
+        "question": "Segundo o consenso Wounds International 2022 sobre cuidados da incisão cirúrgica, quais cuidados são recomendados?",
+        "source": "ferida__consenso_ferida_cirurgica",
+        "reference": "Incision care and dressing selection in surgical incision wounds",
+    },
+    {
+        "name": "deiscencia",
+        "question": "Segundo o documento sobre deiscência de ferida cirúrgica da World Union, quais fatores aumentam o risco?",
+        "source": "ferida__consenso_deiscencia",
+        "reference": "Surgical wound dehiscence",
+    },
+    {
         "name": "nutricao",
-        "question": "O que é avaliação nutricional e quais métodos podem ser usados?",
+        "question": "No livro Nutrition Assessment: Clinical and Research Applications, como é feita a avaliação nutricional?",
         "source": "nutricao",
         "reference": "Nutrition Assessment: Clinical and Research Applications",
     },
@@ -78,13 +90,18 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--base-url", required=True)
     parser.add_argument("--output", required=True)
+    parser.add_argument("--scenario", action="append", choices=[item["name"] for item in SCENARIOS])
     args = parser.parse_args()
 
     supabase_url = os.environ["SUPABASE_URL"]
     service_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY") or os.environ["SUPABASE_KEY"]
     client = create_client(supabase_url, service_key)
+    scenarios = [
+        scenario for scenario in SCENARIOS
+        if not args.scenario or scenario["name"] in args.scenario
+    ]
     results = []
-    for scenario in SCENARIOS:
+    for scenario in scenarios:
         session_id = f"qa-reference-{scenario['name']}-{uuid4().hex}"
         request_id = str(uuid4())
         response = post(

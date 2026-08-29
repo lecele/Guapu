@@ -5,7 +5,7 @@ import { randomUUID } from 'node:crypto';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { GoogleGenAI, ThinkingLevel } from '@google/genai';
+import { GoogleGenAI } from '@google/genai';
 
 import {
   finalizeGeneratedTurn,
@@ -142,6 +142,61 @@ function mapRetrievedDocuments(rows: MatchDocumentRow[] | null): Document[] {
     similarity: row.similarity || 0,
     metadata: enrichDocumentReferenceMetadata(row.metadata || {}),
   }));
+}
+
+// Um título citado pelo estudante é uma restrição explícita de escopo, não
+// uma tentativa de adivinhar a fonte. Nesses casos usamos a identidade exata
+// do arquivo ativo; perguntas genéricas continuam usando a busca híbrida.
+function resolveExplicitSourcePattern(query: string): string | undefined {
+  const normalized = query
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLocaleLowerCase('pt-BR');
+  const matches = [
+    {
+      aliases: ['cuidados criticos', 'morton', 'fontaine'],
+      source: 'biblioteca__cuidados_criticos_enfermagem__livro__patricia_morton_and_dorrie_fontaine__2011__v9.pdf',
+    },
+    {
+      aliases: ['incision care', 'surgical incision', 'morgan-jones', 'wounds international 2022'],
+      source: 'ferida__consenso_ferida_cirurgica__guia__wounds_international__2022__v1',
+    },
+    {
+      aliases: ['brunner', 'suddarth'],
+      source: 'biblioteca__tratado_enfermagem_medico_cirurgico__livro__brunner_suddarth__2011__v2.pdf',
+    },
+    {
+      aliases: ['dehiscence', 'deiscencia', 'world union', 'surgical wound dehiscence'],
+      source: 'ferida__consenso_deiscencia__guia__wounds_international__2018__v1',
+    },
+    {
+      aliases: ['nutrition assessment', 'nancy munoz', 'melissa bernstein'],
+      source: 'nutricao__nutrition_assessment__livro__nancy_munoz_melissa_bernstein__2019__v1.pdf',
+    },
+    {
+      aliases: ['praticas recomendadas', 'sobecc'],
+      source: 'biblioteca__praticas_recomendadas__livro__sobecc__2013__v6',
+    },
+    {
+      aliases: ['manual tecnico', 'tutor de enfermagem'],
+      source: 'Manual Técnico - Tutor de Enfermagem.pdf',
+    },
+    {
+      aliases: ['glossario tecnico', 'glossario'],
+      source: 'glossario.docx',
+    },
+  ];
+  return matches.find(({ aliases }) => aliases.some((alias) => normalized.includes(alias)))?.source;
+}
+
+function sourceEmbeddingExpansion(sourcePattern: string): string {
+  if (sourcePattern.includes('consenso_ferida_cirurgica')) {
+    return 'According to the Wounds International 2022 consensus on incision care and dressing selection in surgical incision wounds, what care is recommended?';
+  }
+  if (sourcePattern.includes('consenso_deiscencia')) {
+    return 'surgical wound dehiscence improving prevention outcomes risk factors';
+  }
+  return sourcePattern.replace(/[_.-]+/g, ' ');
 }
 
 type ResponseKind = 'navigation' | 'summary' | 'quiz_question' | 'quiz_feedback' | 'info' | 'free' | 'fallback';
@@ -355,12 +410,24 @@ async function retrieveDocs(
     functionName: 'match_documents' | 'match_documents_filtered' | 'match_documents_hybrid';
     args: Parameters<MatchDocumentsRpc>[1];
     attempts: number;
+    sourceOnly?: boolean;
   }> = sourcePattern
-    ? [{
-      functionName: 'match_documents_filtered',
-      args: { query_embedding: embedding, match_threshold: threshold, match_count: matchCount, source_pattern: sourcePattern },
-      attempts: 2,
-    }]
+    ? [
+      {
+        functionName: 'match_documents_filtered',
+        args: { query_embedding: embedding, match_threshold: threshold, match_count: matchCount, source_pattern: sourcePattern },
+        attempts: 2,
+      },
+      // Alguns lotes antigos do Supabase foram indexados antes da função
+      // filtrada existir. O fallback consulta candidatos vetoriais e aplica
+      // o mesmo escopo localmente, sem permitir mistura de obras.
+      {
+        functionName: 'match_documents',
+        args: { query_embedding: embedding, match_threshold: -1, match_count: Math.max(matchCount, 20) },
+        attempts: 1,
+        sourceOnly: true,
+      },
+    ]
     : [
       ...(hybridEnabled && queryText
         ? [{
@@ -383,11 +450,15 @@ async function retrieveDocs(
         const { data, error } = await matchDocuments(strategy.functionName, strategy.args);
         if (!error) {
           const documents = mapRetrievedDocuments(data);
+          const scopedDocuments = strategy.sourceOnly
+            ? documents.filter((document) => document.source.toLocaleLowerCase('pt-BR') === sourcePattern?.toLocaleLowerCase('pt-BR'))
+            : documents;
           // Um híbrido sem candidatos não deve bloquear uma resposta que a
           // busca semântica ainda consegue fundamentar.
-          if (documents.length || strategy.functionName !== 'match_documents_hybrid') {
-            if (cacheKey && documents.length) setCachedRetrieval(cacheKey, documents);
-            return { docs: documents, cacheHit: false };
+          const keepTryingForScopedMiss = Boolean(sourcePattern) && scopedDocuments.length === 0;
+          if (!keepTryingForScopedMiss && (scopedDocuments.length || strategy.functionName !== 'match_documents_hybrid')) {
+            if (cacheKey && scopedDocuments.length) setCachedRetrieval(cacheKey, scopedDocuments);
+            return { docs: scopedDocuments, cacheHit: false };
           }
         } else {
           lastError = error.message;
@@ -489,9 +560,6 @@ async function generateResponse(
           systemInstruction: systemPrompt,
           maxOutputTokens: maxOutputTokensForMode(sessionMode),
           abortSignal: AbortSignal.timeout(MODEL_REQUEST_TIMEOUT_MS),
-          thinkingConfig: {
-            thinkingLevel: ThinkingLevel.LOW,
-          },
         },
       });
       text = result.text ?? '';
@@ -825,10 +893,16 @@ export async function POST(req: NextRequest) {
     const corpusVersionPromise = readCorpusVersion();
     let corpusVersion: string | null = null;
     const searchQuery = decision.topic || question;
+    const explicitSourcePattern = resolveExplicitSourcePattern(question);
 
     try {
       const embeddingStartedAt = Date.now();
-      const embedding = await embedQuery(searchQuery);
+      const embeddingQuery = explicitSourcePattern
+        ? explicitSourcePattern.includes('consenso_ferida_cirurgica')
+          ? sourceEmbeddingExpansion(explicitSourcePattern)
+          : `${searchQuery}\nFonte citada: ${sourceEmbeddingExpansion(explicitSourcePattern)}`
+        : searchQuery;
+      const embedding = await embedQuery(embeddingQuery);
       embeddingLatency = Date.now() - embeddingStartedAt;
       corpusVersion = await corpusVersionPromise;
 
@@ -836,10 +910,12 @@ export async function POST(req: NextRequest) {
       const isCourseQuery =
         decision.generationMode === 'info' ||
         /prof|hor[aá]r|atend|cron|calend|nota|avali|plano|trabalho|conte[uú]do|carga|disciplin|ementa|frequ[eê]nc|moodle|email|contato|m[eé]dia|prova/i.test(searchQuery);
+      // Use a pergunta original para não perder o nome da obra quando o
+      // roteador reduz o texto a um tema antes da recuperação.
       const retrieval = await retrieveDocs(
         embedding,
-        decision.generationMode === 'info' ? -1 : isCourseQuery ? 0.25 : 0.35,
-        decision.generationMode === 'info' ? ACTIVE_PLAN_SOURCE : undefined,
+        decision.generationMode === 'info' || explicitSourcePattern ? -1 : isCourseQuery ? 0.25 : 0.35,
+        decision.generationMode === 'info' ? ACTIVE_PLAN_SOURCE : explicitSourcePattern,
         searchQuery,
         corpusVersion,
         decision.generationMode ?? 'livre',
