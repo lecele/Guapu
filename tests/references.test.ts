@@ -14,7 +14,9 @@ test('substitui referências geradas pelo modelo por dados presentes no trecho R
     'resumo',
   );
 
-  assert.match(answer, /- Silva \(2022\) Cuidados perioperatórios em cirurgia geral\. p\. 45-52\. \[Fonte: aula__cuidados_pos_operatorios_v1\.pdf; p\. 1; trecho 1\]/);
+  assert.match(answer, /- Silva \(2022\) Cuidados perioperatórios em cirurgia geral\. p\. 45-52\./);
+  assert.equal((answer.match(/Silva \(2022\)/g) ?? []).length, 1);
+  assert.doesNotMatch(answer, /\[Fonte:|\.pdf|trecho 1/i);
   assert.doesNotMatch(answer, /- Informação não disponível no artigo/);
   assert.doesNotMatch(answer, /aula cuidados pos operatorios|plano de ensino\.docx/i);
   assert.doesNotMatch(answer, /fonte inventada/);
@@ -42,7 +44,7 @@ test('prioriza a referência extraída do próprio documento e nunca o nome do a
     'Explicação baseada no contexto.\n\nReferências: referência inventada.',
     [{
       source: 'biblioteca__nome-interno-que-nao-pode-ser-exibido.pdf',
-      content: 'Trecho clínico recuperado.',
+      content: 'Morton, P. (2011). Cuidados Críticos de Enfermagem. Cap. 8. Trecho clínico recuperado.',
       metadata: {
         drive_file_id: 'drive-morton',
         reference_author: 'Morton, P.',
@@ -56,8 +58,51 @@ test('prioriza a referência extraída do próprio documento e nunca o nome do a
     'livre',
   );
 
-  assert.match(answer, /- Morton, P\. \(2011\) Cuidados Críticos de Enfermagem \(Cap\. 8\)\. \[Fonte: biblioteca__nome-interno-que-nao-pode-ser-exibido\.pdf; p\. 8; trecho 3; Cap\. 8\]/);
+  assert.match(answer, /- Morton, P\. \(2011\) Cuidados Críticos de Enfermagem \(Cap\. 8\)\./);
+  assert.doesNotMatch(answer, /biblioteca__nome-interno|\.pdf|\[Fonte:/i);
   assert.doesNotMatch(answer, /referência inventada/i);
+});
+
+test('não transforma células repetidas de uma tabela em título de referência', () => {
+  const answer = finalizeReferences(
+    'A limpeza e o enxágue dependem da classificação do produto e da qualidade da água.',
+    [{
+      source: 'biblioteca__praticas_recomendadas__livro__sobecc__2013__v6',
+      content: `Quadro 1. Qualidade da água indicada para as etapas da limpeza.
+Crítico
+Pré-limpeza
+Limpeza
+Enxágue
+Semicrítico
+Pré-limpeza
+Limpeza
+Enxágue
+Enxágue Enxágue Enxágue
+Não crítico
+Limpeza`,
+      metadata: { drive_file_id: '1YUfjf2WG5FonQaOImCsAY6aHSuyK7XNL', page_number: 35, chunk_index: 116 },
+    }],
+    'livre',
+  );
+
+  assert.doesNotMatch(answer, /Enxágue Enxágue Enxágue/i);
+  assert.doesNotMatch(answer, /\*\*Referências:\*\*/i);
+  assert.doesNotMatch(answer, /biblioteca__praticas|\.pdf|\[Fonte:/i);
+});
+
+test('mantém um cabeçalho real do trecho sem expor a origem técnica', () => {
+  const answer = finalizeReferences(
+    'O cuidado pré-operatório organiza a avaliação e o preparo do paciente.',
+    [{
+      source: 'biblioteca__tratado_enfermagem_medico_cirurgico__livro__brunner_suddarth__2011__v2.pdf',
+      content: 'Quadro 18.1 — Exemplos de Atividades de Enfermagem nas Fases de Cuidado Perioperatório\nFase Pré-operatória\nExames Pré-admissionais.',
+      metadata: { drive_file_id: '1rsAmg3UK8m_2fP4STqoiB_Zhyktnlw-W', page_number: 750, chunk_index: 3003 },
+    }],
+    'livre',
+  );
+
+  assert.match(answer, /- Fase Pré-operatória\./);
+  assert.doesNotMatch(answer, /brunner|\.pdf|\[Fonte:|trecho 3004/i);
 });
 
 test('reconhece título quando autores estão na linha seguinte do trecho', () => {

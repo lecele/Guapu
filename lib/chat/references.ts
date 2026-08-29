@@ -43,25 +43,56 @@ function hasMeaningfulOverlap(answer: string, reference: string): boolean {
   return referenceWords.some((word) => answerWords.has(word));
 }
 
-function traceLocation(source?: string, metadata?: Record<string, unknown>): string {
-  const sourceLabel = source?.trim();
-  const driveFileId = typeof metadata?.drive_file_id === 'string' ? metadata.drive_file_id.trim() : '';
-  // Só exibimos a trilha de arquivo quando o chunk está vinculado ao Drive.
-  // Isso evita transformar um rótulo legado/desconhecido em uma referência
-  // aparentemente oficial.
-  if (!driveFileId) return '';
-  const page = Number(metadata?.page_number);
-  const chunk = Number(metadata?.chunk_index);
-  const section = typeof metadata?.reference_section === 'string'
-    ? metadata.reference_section.trim()
-    : '';
-  const location = [
-    sourceLabel ? `Fonte: ${sourceLabel}` : null,
-    Number.isFinite(page) && page > 0 ? `p. ${page}` : null,
-    Number.isFinite(chunk) && chunk >= 0 ? `trecho ${chunk + 1}` : null,
-    section ? section : null,
-  ].filter(Boolean);
-  return location.length > 0 ? ` [${location.join('; ')}]` : '';
+function normalizeReferenceText(value: string): string {
+  return value
+    .toLocaleLowerCase('pt-BR')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+}
+
+function isRepeatedTokenNoise(value: string): boolean {
+  const tokens = normalizeReferenceText(value).split(/\s+/).filter(Boolean);
+  if (tokens.length < 3) return false;
+  const unique = new Set(tokens);
+  return unique.size <= 2 && tokens.length / unique.size >= 2;
+}
+
+function isLikelyTitle(value: string): boolean {
+  const candidate = value.replace(/[*_#]+/g, ' ').replace(/\s+/g, ' ').trim();
+  if (candidate.length < 8 || candidate.length > 180) return false;
+  if (isRepeatedTokenNoise(candidate)) return false;
+  if (/^\d+(?:\s+\d+)+/.test(candidate)) return false;
+  if (/\b(?:refer[eê]ncias|sum[aá]rio|[íi]ndice)\b/i.test(candidate)) return false;
+  if (/\b(?:conforme|portanto|poder[aã]o|deve|devem|quando|durante|atrav[eé]s|consiste|compreende)\b/i.test(candidate)) return false;
+  if (/[.!?]$/.test(candidate)) return false;
+  return /^[A-ZÀ-Ý]/.test(candidate);
+}
+
+function isTableLabel(value: string): boolean {
+  return new Set([
+    'critico', 'semicritico', 'nao critico', 'pre limpeza', 'limpeza', 'enxague',
+  ]).has(normalizeReferenceText(value));
+}
+
+function hasNearbyTableNoise(lines: string[], index: number): boolean {
+  const window = lines.slice(Math.max(0, index - 3), index + 4);
+  const repeatedRows = window.filter((line) => isRepeatedTokenNoise(line)).length;
+  const tableMarkers = window.filter((line) => /\|/.test(line) || /\bquadro\b/i.test(line)).length;
+  return repeatedRows > 0 || tableMarkers > 0;
+}
+
+function hasTableStructure(lines: string[]): boolean {
+  const hasTableMarker = lines.some((line) => /\bquadro\b/i.test(line) || /\|/.test(line));
+  const repeatedRows = lines.filter((line) => isRepeatedTokenNoise(line)).length;
+  return hasTableMarker && repeatedRows > 0;
+}
+
+function appearsInContent(content: string, value: string): boolean {
+  const needle = normalizeReferenceText(value);
+  if (!needle) return false;
+  return normalizeReferenceText(content).includes(needle);
 }
 
 function referenceFromContent(
@@ -72,11 +103,15 @@ function referenceFromContent(
   const storedAuthor = typeof metadata?.reference_author === 'string' ? metadata.reference_author.trim() : '';
   const storedYear = typeof metadata?.reference_year === 'string' ? metadata.reference_year.trim() : '';
   const storedSection = typeof metadata?.reference_section === 'string' ? metadata.reference_section.trim() : '';
-  if (storedTitle) {
-    return [storedAuthor, storedYear ? `(${storedYear})` : '', `${storedTitle}${storedSection ? ` (${storedSection})` : ''}.`]
+  const rawContent = content || '';
+  if (storedTitle && appearsInContent(rawContent, storedTitle) && isLikelyTitle(storedTitle)) {
+    const author = storedAuthor && appearsInContent(rawContent, storedAuthor) ? storedAuthor : '';
+    const year = storedYear && appearsInContent(rawContent, storedYear) ? `(${storedYear})` : '';
+    const section = storedSection && appearsInContent(rawContent, storedSection) ? ` (${storedSection})` : '';
+    return [author, year, `${storedTitle}${section}.`]
       .filter(Boolean).join(' ');
   }
-  const text = (content || '').replace(/\s+/g, ' ').trim();
+  const text = rawContent.replace(/\s+/g, ' ').trim();
   if (!text) return '';
 
   const bibliographic = text.match(/\b([A-ZÀ-Ý][A-Za-zÀ-ÿ'’.-]+(?:\s+(?:[A-ZÀ-Ý][A-Za-zÀ-ÿ'’.-]+|de|da|do|dos|das)){0,5})\s*\(?((?:19|20)\d{2})\)?\.\s*([^.!?]{12,160})(?:\.|$)/);
@@ -98,8 +133,7 @@ function referenceFromContent(
   // uma referência útil. Nunca recorremos ao nome do arquivo.
   if (chapter?.[2]) {
     const chapterTitle = chapter[2].trim().replace(/[.:;]+$/, '');
-    const ocrNoise = /\b(?:refer[eê]ncias|sum[aá]rio|[íi]ndice)\b/i.test(chapterTitle) || /^\d/.test(chapterTitle);
-    if (!ocrNoise) {
+    if (isLikelyTitle(chapterTitle)) {
       const number = chapter[1] ? ` (Cap. ${chapter[1]})` : '';
       return `${chapterTitle}${number}.`;
     }
@@ -108,7 +142,29 @@ function referenceFromContent(
   // Alguns PDFs extraem título e autores em linhas separadas. Quando a linha
   // seguinte parece uma autoria, a linha anterior é uma pista bibliográfica
   // válida de camada 2 — sem consultar ou exibir o nome do arquivo.
-  const lines = (content || '').split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+  const lines = rawContent.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+  const tableContent = hasTableStructure(lines);
+
+  // Cabeçalhos podem aparecer sozinhos no início do chunk, sem autor na linha
+  // seguinte. Aceitamos apenas uma linha curta e identificável; rótulos
+  // isolados de tabelas são descartados mesmo que comecem em maiúscula.
+  for (let index = 0; index < lines.length; index += 1) {
+    const candidate = lines[index].replace(/^\[P[aá]g\.\s*\d+\]\s*/i, '').trim();
+    if (!isLikelyTitle(candidate)) continue;
+    const next = lines[index + 1];
+    const explicitHeading = /^(?:cap[ií]tulo|cap\.|se[cç][aã]o|unidade|m[oó]dulo|fase|parte)\b/i.test(candidate);
+    if (tableContent && !explicitHeading) continue;
+    const wrapsHeading = next
+      && /\b(?:de|da|do|das|dos|em|no|na)\s*$/i.test(candidate)
+      && isLikelyTitle(next)
+      && !isTableLabel(next)
+      && !hasNearbyTableNoise(lines, index);
+    if (wrapsHeading) return `${candidate} ${next}`.replace(/[.:;]+$/, '') + '.';
+    if (explicitHeading || !hasNearbyTableNoise(lines, index)) {
+      return `${candidate.replace(/[.:;]+$/, '')}.`;
+    }
+  }
+
   for (let index = 0; index < lines.length - 1; index += 1) {
     const candidate = lines[index].replace(/^\[P[aá]g\.\s*\d+\]\s*/i, '').trim();
     const authorLine = lines[index + 1];
@@ -120,7 +176,7 @@ function referenceFromContent(
     ) continue;
     const administrativeHeading = /\b(?:professor|hor[aá]rio|local|cronograma|avalia[cç][aã]o|m[oó]dulo|semestre|carga hor[aá]ria)\b/i.test(normalizedCandidate);
     const sentenceFragment = /\b(?:conforme|portanto|poder[aã]o|deve|devem|quando|durante|atrav[eé]s|consiste|compreende)\b/i.test(normalizedCandidate);
-    const startsLikeTitle = /^[A-ZÀ-Ý]/.test(candidate);
+    const startsLikeTitle = isLikelyTitle(candidate);
     const looksLikeAuthor =
       authorLine.length <= 120 &&
       !/[.!?]/.test(authorLine) &&
@@ -129,12 +185,15 @@ function referenceFromContent(
       candidate.length >= 12 &&
       candidate.length <= 180 &&
       startsLikeTitle &&
+      !(tableContent && !/^(?:cap[ií]tulo|cap\.|se[cç][aã]o|unidade|m[oó]dulo|fase|parte)\b/i.test(candidate)) &&
+      !(isTableLabel(normalizedCandidate) && hasNearbyTableNoise(lines, index)) &&
       !administrativeHeading &&
       !sentenceFragment &&
       looksLikeAuthor
     ) {
       return `${candidate.replace(/[.:;]+$/, '')}.`;
     }
+
   }
 
   // O nome do arquivo identifica a origem técnica do chunk, mas não é uma
@@ -179,7 +238,6 @@ export function finalizeReferences(
     const reference = referenceFromContent(doc.content, doc.metadata);
     return {
       reference,
-      traced: `${reference}${traceLocation(doc.source, doc.metadata)}`,
     };
   });
   // A camada 3 só é permitida quando nenhum dos trechos trouxe pista
@@ -190,8 +248,8 @@ export function finalizeReferences(
     ? identified.filter((item) => hasMeaningfulOverlap(withoutModelReferences, item.reference))
     : identified;
   if (relevant.length === 0) return withoutModelReferences;
-  const sources = [...new Map(relevant.map((item) => [item.traced, item])).values()].slice(0, 5);
-  const lines = sources.map((item) => `- ${item.traced}`);
+  const sources = [...new Map(relevant.map((item) => [normalizeReferenceText(item.reference), item])).values()].slice(0, 5);
+  const lines = sources.map((item) => `- ${item.reference}`);
 
   return `${withoutModelReferences}\n\n**Referências:**\n${lines.join('\n')}`.trim();
 }
