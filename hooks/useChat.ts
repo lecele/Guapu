@@ -50,7 +50,7 @@ export function useChat() {
   const sendMessage = useCallback(
     async (content: string, activeMode?: ChatActionMode) => {
       const trimmed = content.trim();
-      if (!trimmed || isLoading) return;
+      if ((!trimmed && !activeMode) || isLoading) return;
 
       // Adiciona mensagem do usuário imediatamente (UX responsiva)
       const userMessage: Message = {

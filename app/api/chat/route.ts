@@ -690,7 +690,7 @@ export async function POST(req: NextRequest) {
 
     if (
       !SESSION_ID_PATTERN.test(sessionId) ||
-      !question ||
+      (!question && !activeMode) ||
       question.length > 8_000 ||
       (activeMode !== undefined && !['resumo', 'quiz', 'info', 'encerrar'].includes(activeMode))
     ) {

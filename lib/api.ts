@@ -28,7 +28,10 @@ export async function sendChatMessage(
   const payload: ChatRequest = {
     session_id,
     request_id: generateRequestId(),
-    message,
+    // Action Cards são estado estruturado da aplicação. O rótulo continua
+    // visível na bolha do estudante, mas não deve chegar ao modelo como texto
+    // livre equivalente (contrato do redesign v1.3.0).
+    message: activeMode ? '' : message,
     ...(activeMode ? { active_mode: activeMode } : {}),
   };
 
