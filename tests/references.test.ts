@@ -310,4 +310,11 @@ test('reconhece informação administrativa sem confirmação no plano', () => {
     ),
     false,
   );
+  assert.equal(
+    isLikelyInfoInsufficient(
+      'quais são as aulas no dia 16/09?',
+      'Não há registro de atividades agendadas para o dia 16/09. Consulte o plano de ensino no Moodle.',
+    ),
+    true,
+  );
 });

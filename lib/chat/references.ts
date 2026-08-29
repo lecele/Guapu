@@ -38,7 +38,10 @@ export function isLikelyInfoInsufficient(question: string, answer: string): bool
   const asksAdministrativeFact = /\b(?:aula|aulas|atividade|atividades|dia|data|cronograma|hor[aá]rio|hor[aá]rios|professor|professores|docente|docentes|avalia[cç][aã]o|nota|notas|peso|pesos|frequ[eê]ncia|trabalho|trabalhos|plano|conte[uú]do program[aá]tico)\b/i.test(question);
   if (!asksAdministrativeFact) return false;
 
-  const absence = /\b(?:n[aã]o\s+const(?:a|am)|n[aã]o\s+h[aá]|n[aã]o\s+existe(?:m)?|n[aã]o\s+foi\s+encontrad[ao]s?|n[aã]o\s+localiz(?:ei|amos)|n[aã]o\s+encontr(?:ei|amos)|n[aã]o\s+est[aá]\s+dispon[ií]vel|n[aã]o\s+foi\s+poss[ií]vel\s+(?:confirmar|localizar|identificar)|sem\s+registro)\b/i.test(answer);
+  // Não usar `\b` ao fim de termos acentuados (como "há"): em JavaScript
+  // o limite de palavra não considera caracteres Unicode acentuados como
+  // `\w`, fazendo a detecção falhar justamente no texto mais comum do modelo.
+  const absence = /(?:^|\s)(?:n[aã]o\s+const(?:a|am)|n[aã]o\s+h[aá]|n[aã]o\s+existe(?:m)?|n[aã]o\s+foi\s+encontrad[ao]s?|n[aã]o\s+localiz(?:ei|amos)|n[aã]o\s+encontr(?:ei|amos)|n[aã]o\s+est[aá]\s+dispon[ií]vel|n[aã]o\s+foi\s+poss[ií]vel\s+(?:confirmar|localizar|identificar)|sem\s+registro)(?=\s|[.,;:!?)]|$)/i.test(answer);
   const guidance = /\b(?:Moodle|plano de ensino|consult(?:e|ar)|confirmar|comunicado|docente)/i.test(answer);
   return absence && guidance;
 }
@@ -72,7 +75,7 @@ const REFERENCE_STOPWORDS = new Set([
   'material', 'materiais', 'conteudo', 'disciplina', 'fase',
 ]);
 
-function hasMeaningfulOverlap(answer: string, reference: string): boolean {
+function meaningfulOverlapCount(answer: string, reference: string): number {
   const words = (value: string) => new Set(
     value.toLocaleLowerCase('pt-BR')
       .normalize('NFD')
@@ -88,7 +91,11 @@ function hasMeaningfulOverlap(answer: string, reference: string): boolean {
       answerWord.slice(0, 8) === word.slice(0, 8)
     )
   )));
-  return matches.some((word) => word.length >= 7) || matches.length >= 2;
+  return matches.filter((word) => word.length >= 7).length;
+}
+
+function hasMeaningfulOverlap(answer: string, reference: string): boolean {
+  return meaningfulOverlapCount(answer, reference) > 0;
 }
 
 function normalizeReferenceText(value: string): string {
@@ -307,10 +314,14 @@ export function finalizeReferences(
   // bibliográfica melhor. Nunca misture uma referência identificada com
   // rótulos de arquivo ou uma linha de fallback.
   const identified = extracted.filter((item) => item.reference && !isSourceOnlyReference(item.reference));
-  const relevant = identified.filter((item) => hasMeaningfulOverlap(
-    `${relevanceText}\n${withoutModelReferences}`,
-    item.reference,
-  ));
+  const relevant = identified.filter((item) => {
+    // A referência precisa estar relacionada à pergunta ou ter pelo menos
+    // duas pistas distintivas na resposta. Isso evita publicar um documento
+    // apenas porque compartilha palavras genéricas com o texto gerado.
+    const questionMatch = hasMeaningfulOverlap(relevanceText, item.reference);
+    const answerMatchCount = meaningfulOverlapCount(withoutModelReferences, item.reference);
+    return questionMatch || answerMatchCount >= 2;
+  });
   if (relevant.length === 0) {
     // O fallback é uma referência válida quando houve uso efetivo dos
     // materiais, mas nenhum trecho trouxe título, capítulo, autoria ou outro
