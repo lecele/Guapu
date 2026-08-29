@@ -2,7 +2,7 @@
 
 **Data de abertura:** 27/08/2026  
 **Status geral:** em execução  
-**Fase atual:** Fase 2A — qualidade do RAG e velocidade antes da troca de runtime
+**Fase atual:** Fase 5 — interface nova de 27/08/2026
 **Documento de referência:** este arquivo é o controle oficial das próximas etapas.
 
 ## 1. Objetivo
@@ -558,16 +558,17 @@ As evidências de cada fase serão salvas em `documentos/QA/Fase_<numero>/`, sep
 
 | Fase | Status | Data de aprovação | Evidência | Aprovado por |
 |---|---|---|---|---|
-| 0. Contenção e ambiente seguro | Em execução | — | — | — |
+| 0. Contenção e ambiente seguro | Aprovada | 29/08/2026 | `documentos/Baseline_Arquitetura_Fase_0.md` e evidências posteriores | Leonardo |
 | 1. Comparação documental, remoção de antigos e reconciliação Drive ↔ Supabase | Aprovada | 28/08/2026 | `documentos/QA/Fase_1/VERIFICACAO_FINAL_FASE_1_2026-08-28.md` | Leonardo |
-| 2. Recuperação e desempenho | Aprovada | `documentos/QA/BASELINE_FASE_2A_2026-08-28.md` e `documentos/QA/GATE_LIBERACAO_2026-08-28.md` | 28/08/2026 | Leonardo |
-| 2A. Qualidade do RAG e velocidade | Em execução | 28/08/2026 | baseline real em preparação | Leonardo |
-| 3. Referências verificadas | Aguardando | — | — | — |
-| 4. Prompts v1.3 e fluxos | Aguardando | — | — | — |
-| 5. Interface nova | Aguardando | — | — | — |
-| 6. Painel e avaliação | Aguardando | — | — | — |
+| 2. Recuperação e desempenho | Aprovada | 28/08/2026 | `documentos/QA/BASELINE_FASE_2A_2026-08-28.md` e `documentos/QA/GATE_LIBERACAO_2026-08-28.md` | Leonardo |
+| 2A. Qualidade do RAG e velocidade | Aprovada | 28/08/2026 | `documentos/QA/BASELINE_FASE_2A_2026-08-28.md` | Leonardo |
+| 3. Referências verificadas | Aprovada | 28/08/2026 | auditoria formal 9/9 e amostra independente 10/10 no gate | Leonardo |
+| 4. Prompts v1.3 e fluxos | Aprovada tecnicamente | 29/08/2026 | `documentos/QA/Fase_4/VERIFICACAO_FASE_4_2026-08-29.md`; 37 testes locais e 8/8 reais na VPS | Leonardo |
+| 5. Interface nova | Parcial | — | build/deploy aprovados; falta QA visual formal | — |
+| 6. Painel e avaliação | Parcial | — | rota autenticada e métricas reais; falta validação operacional completa | — |
 | 7. Homologação e liberação | Aguardando | — | — | — |
-| 8. Runtime VPS e migração controlada da Vercel | Aguardando | — | — | — |
+| 8. Runtime VPS e migração controlada da Vercel | Aprovada — VPS-only | 29/08/2026 | `documentos/QA/FASE_8_RUNTIME_VPS_EVIDENCIAS_2026-08-29.md` | Leonardo |
+| 9. Operação, recuperação e alertas | Aprovada | 29/08/2026 | `documentos/QA/Fase_9/OPERACAO_EVIDENCIAS_2026-08-29.md` | Leonardo |
 
 ## 10. Condições que impedem a liberação ao cliente
 
@@ -588,4 +589,4 @@ A versão não será considerada pronta se ocorrer qualquer uma das situações 
 
 ## 11. Próxima ação
 
-Executar a **Fase 2A** para medir e corrigir qualidade, referências e latência antes da troca de runtime. A preparação do runtime da VPS poderá avançar em homologação, mas nenhuma troca de DNS ou retirada da Vercel ocorrerá antes de a Fase 2A e a própria Fase 8 serem aprovadas com testes reais e rollback comprovado.
+Executar a **Fase 5** no runtime VPS para validar visualmente a interface nova em desktop e celular. A Fase 6 só avança após a aprovação da Fase 5; a Fase 7 continua bloqueada até o aceite final do cliente.

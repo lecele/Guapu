@@ -6,16 +6,17 @@ Este documento é o controle de evidências para a liberação. Uma fase só pod
 
 | Fase | Situação | Evidência atual | Bloqueio para avançar |
 |---|---|---|---|
-| 0. Contenção e ambiente seguro | Aprovada operacionalmente | Segredos fora do repositório, deploy identificado e rotas protegidas | Manter rollback disponível |
+| 0. Contenção e ambiente seguro | Aprovada | Segredos fora do repositório, deploy identificado, rotas protegidas e rollback disponível | Nenhum bloqueio técnico |
 | 1. Reconciliação Drive ↔ RAG | Aprovada | 119 arquivos vivos, 119 ativos, 57.796 chunks, zero staging/órfãos; verificador estrito e bateria real 9/9 aprovados | Nenhum técnico conhecido |
 | 2. Recuperação e desempenho | Aprovada tecnicamente | Busca semântica e híbrida com fontes corretas dentro de 3 s; cache versionado com teste de mudança/restauração do corpus; bateria real de produção aprovada | Manter a validação end-to-end no Drive como evidência complementar da Fase 2A |
 | 2A. Qualidade e velocidade | Aprovada tecnicamente | Cache versionado, benchmark real, bateria pós-cache, paridade Drive/manifesto e ciclo end-to-end aprovados; `Teste.docx` foi incluído, recuperado com rastreabilidade e removido com job `succeeded`, manifesto removido e zero chunks | Nenhum bloqueio técnico; um teste posterior com documento acadêmico autorizado é recomendado para homologação de conteúdo |
 | 3. Referências verificadas | Aprovada tecnicamente | Regra estrita publicada: somente pistas bibliográficas verificáveis; sem fallback por nome de arquivo; sem referências em recusa, insuficiência ou ruído OCR; auditoria live formal passou em 9/9 e bateria publicada em 8/8 | Nenhum bloqueio técnico; manter a regra nas próximas alterações de prompt/interface |
-| 4. Prompts e fluxos | Parcial | 37 testes locais de fluxo, sessão, prompts e referências aprovados | Homologação completa dos fluxos do cliente em produção |
+| 4. Prompts e fluxos | Aprovada tecnicamente | 37 testes locais e bateria real 8/8 no runtime VPS, registrados em `documentos/QA/Fase_4/VERIFICACAO_FASE_4_2026-08-29.md` | Manter os fluxos na regressão e validar a aceitação final na Fase 7 |
 | 5. Interface | Parcial | Build e deploy aprovados; ajustes responsivos aplicados | QA visual formal em tamanhos móveis e desktop, sem rolagem ou corte |
 | 6. Painel e avaliação | Parcial | `/api/admin/stats` autenticada em HTTP 200; métricas reais e modelo efetivo exibidos | Confirmar cobertura/qualidade em amostra operacional e critérios visuais finais |
-| 7. Homologação e liberação | Bloqueada | Ainda não há aceite final do cliente na versão atual | Requer fases 2A–6 aprovadas e roteiro de aceite executado |
+| 7. Homologação e liberação | Bloqueada | Ainda não há aceite final do cliente na versão atual | Requer fases 4–6 aprovadas e roteiro de aceite executado |
 | 8. Runtime VPS/DNS | Aprovada — VPS-only | Runtime, domínios, serviços críticos, bateria real 8/8 e ponto de recuperação da própria VPS validados em 29/08/2026 | Manter a Vercel preservada, sem tráfego operacional; não é dependência da produção |
+| 9. Operação, recuperação e alertas | Aprovada | Backup externo, restauração isolada, healthcheck, Prometheus e Telegram/Uptime Kuma testados em 29/08/2026 | Manter observação operacional contínua |
 
 ## Evidências reais mais recentes
 
@@ -37,4 +38,4 @@ Este documento é o controle de evidências para a liberação. Uma fase só pod
 
 ## Regra de liberação
 
-O cliente só deve receber a versão para teste controlado depois que os itens marcados como parcial forem validados conforme seus critérios e a homologação final for registrada. A Fase 8 está aprovada no escopo VPS-only; a Vercel permanece apenas preservada no projeto, sem tráfego operacional. Permanecem os critérios das fases 7 e 9.
+O cliente só deve receber a versão para teste controlado depois que os itens marcados como parcial forem validados conforme seus critérios e a homologação final for registrada. As Fases 8 e 9 estão aprovadas; a Vercel permanece apenas preservada no projeto, sem tráfego operacional. Permanecem os critérios das fases 4, 5, 6 e 7.
