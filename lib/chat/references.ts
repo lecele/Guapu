@@ -3,6 +3,7 @@ import type { GenerationMode } from './session-flow';
 export interface RetrievedSource {
   source: string;
   content?: string;
+  similarity?: number;
   metadata?: Record<string, unknown>;
 }
 
@@ -86,12 +87,12 @@ function meaningfulOverlapCount(answer: string, reference: string): number {
   const referenceWords = [...words(reference)].filter((word) => !REFERENCE_STOPWORDS.has(word));
   const matches = referenceWords.filter((word) => [...answerWords].some((answerWord) => (
     answerWord === word || (
-      answerWord.length >= 8 &&
-      word.length >= 8 &&
-      answerWord.slice(0, 8) === word.slice(0, 8)
+      answerWord.length >= 6 &&
+      word.length >= 6 &&
+      answerWord.slice(0, 5) === word.slice(0, 5)
     )
   )));
-  return matches.filter((word) => word.length >= 7).length;
+  return matches.filter((word) => word.length >= 6).length;
 }
 
 function hasMeaningfulOverlap(answer: string, reference: string): boolean {
@@ -145,6 +146,23 @@ function hasTableStructure(lines: string[]): boolean {
   return hasTableMarker && repeatedRows > 0;
 }
 
+/**
+ * Índices remissivos e quadros OCR podem conter vários títulos iniciados por
+ * maiúscula. Eles não são identidade bibliográfica nem evidência da resposta
+ * e não devem virar referências só porque o híbrido os ranqueou alto.
+ */
+function isLikelyStructuredNoise(content?: string): boolean {
+  const lines = (content || '').split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+  if (lines.length < 3) return false;
+  const text = lines.join(' ');
+  const numericTailLines = lines.filter((line) => /\s\d{1,4}(?:\s*[,;]\s*\d{1,4})*\s*$/.test(line)).length;
+  const shortLines = lines.filter((line) => line.split(/\s+/).length <= 8).length;
+  const looksLikeIndex = numericTailLines >= 4 && shortLines / lines.length >= 0.55;
+  const looksLikeTable = /\b(?:classifica[cç][aã]o|descri[cç][aã]o|dura[cç][aã]o do ato|tipo de cirurgia)\b/i.test(text)
+    && lines.filter((line) => /\d/.test(line)).length >= 2;
+  return looksLikeIndex || looksLikeTable;
+}
+
 function appearsInContent(content: string, value: string): boolean {
   const needle = normalizeReferenceText(value);
   if (!needle) return false;
@@ -174,6 +192,14 @@ function isVerifiedCatalogReference(metadata?: Record<string, unknown>): boolean
     && metadata.reference_title.trim().length > 0;
 }
 
+function documentIdentity(doc: RetrievedSource): string {
+  const driveFileId = typeof doc.metadata?.drive_file_id === 'string'
+    ? doc.metadata.drive_file_id.trim()
+    : '';
+  if (driveFileId) return `drive:${driveFileId}`;
+  return `source:${normalizeReferenceText(doc.source)}`;
+}
+
 function referenceFromContent(
   content?: string,
   metadata?: Record<string, unknown>,
@@ -186,16 +212,22 @@ function referenceFromContent(
   // O catálogo é uma identidade bibliográfica curada e vinculada ao
   // drive_file_id. Ela foi conferida no documento e, por isso, continua
   // válida mesmo quando o chunk clínico não repete a folha de rosto.
-  if (isVerifiedCatalogReference(metadata) && isLikelyTitle(storedTitle)) {
+  // Identidades catalogadas foram conferidas antes de serem gravadas. Notas
+  // técnicas oficiais podem ter títulos longos e ainda assim são referências
+  // bibliográficas válidas; não reaplicar o heurístico de título aqui.
+  if (isVerifiedCatalogReference(metadata) && storedTitle.length > 0) {
     const edition = typeof metadata?.reference_edition === 'string' ? metadata.reference_edition.trim() : '';
     const publisher = typeof metadata?.reference_publisher === 'string' ? metadata.reference_publisher.trim() : '';
     const page = Number(metadata?.page_number);
     const period = (value: string) => value.replace(/[.]+$/, '') + '.';
+    const titleAlreadyContainsYear = Boolean(
+      storedYear && new RegExp(`(?:^|\\D)${storedYear.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\$&')}(?:$|\\D)`).test(storedTitle),
+    );
     const author = storedAuthor && storedYear
       ? `${storedAuthor.replace(/[.]+$/, '')} (${storedYear}).`
       : storedAuthor
         ? period(storedAuthor)
-        : (storedYear ? `(${storedYear}).` : '');
+        : (storedYear && !titleAlreadyContainsYear ? `(${storedYear}).` : '');
     return [
       author,
       period(storedTitle),
@@ -322,7 +354,9 @@ export function finalizeReferences(
   relevanceText = text,
 ): string {
   const withoutModelReferences = sanitizeStudentFacingText(removeModelReferences(text)
-    .replace(/\[\s*\d+(?:\s*,\s*\d+)*\s*\]/g, '')
+    // Remove marcadores numéricos herdados da fonte, inclusive os que trazem
+    // subseções, separadores ou indicação de página (ex.: [3, 6.2.3; 4]).
+    .replace(/\[\s*\d+(?:\s*(?:[.,;:]\s*|\s+)(?:\d+(?:\.\d+)*|p\.?\s*\d+))*\s*\]/gi, '')
     .replace(/[ \t]{2,}/g, ' ')
     .replace(/\n[ \t]+\n/g, '\n\n')
     .trim());
@@ -336,23 +370,45 @@ export function finalizeReferences(
     const reference = referenceFromContent(doc.content, doc.metadata);
     return {
       reference,
+      source: doc.source,
+      structuredNoise: isLikelyStructuredNoise(doc.content),
+      documentQuestionMatch: meaningfulOverlapCount(relevanceText, doc.content || '') > 0,
+      similarity: Number(doc.similarity ?? 0),
       key: isVerifiedCatalogReference(doc.metadata)
         ? String(doc.metadata?.reference_key || doc.metadata?.drive_file_id || reference)
         : normalizeReferenceText(reference),
       catalog: isVerifiedCatalogReference(doc.metadata),
     };
   });
+  // Um catálogo verificado só pode ser promovido automaticamente quando toda
+  // a recuperação pertence ao mesmo documento. Se a busca misturar fontes,
+  // a referência precisa ter relação textual com a pergunta/resposta; isso
+  // impede que um livro apenas parecido seja citado em uma resposta baseada
+  // no plano administrativo.
+  const singleDocumentScope = new Set(docs.map(documentIdentity)).size === 1;
+  const sourceScopeMarker = '__SOURCE_SCOPE__';
+  const sourceScopeStart = relevanceText.indexOf(sourceScopeMarker);
+  const explicitSourceScope = sourceScopeStart >= 0
+    ? relevanceText.slice(sourceScopeStart + sourceScopeMarker.length).replace(/__$/u, '')
+    : '';
+  const scopedExtracted = explicitSourceScope
+    ? extracted.filter((item) => item.source === explicitSourceScope)
+    : extracted;
   // A camada 3 só é permitida quando nenhum dos trechos trouxe pista
   // bibliográfica melhor. Nunca misture uma referência identificada com
   // rótulos de arquivo ou uma linha de fallback.
-  const identified = extracted.filter((item) => item.reference && !isSourceOnlyReference(item.reference));
+  const identified = scopedExtracted.filter((item) => item.reference && !isSourceOnlyReference(item.reference) && !item.structuredNoise);
   const relevant = identified.filter((item) => {
     // A referência precisa estar relacionada à pergunta ou ter pelo menos
     // duas pistas distintivas na resposta. Isso evita publicar um documento
     // apenas porque compartilha palavras genéricas com o texto gerado.
     const questionMatch = hasMeaningfulOverlap(relevanceText, item.reference);
     const answerMatchCount = meaningfulOverlapCount(withoutModelReferences, item.reference);
-    return questionMatch || answerMatchCount >= 2 || item.catalog;
+    const explicitSourceMatch = typeof relevanceText === 'string'
+      && relevanceText.includes(`__SOURCE_SCOPE__${item.source}__`);
+    return questionMatch || answerMatchCount >= 2 || (
+      item.catalog && (singleDocumentScope || explicitSourceMatch || item.documentQuestionMatch)
+    );
   });
   if (relevant.length === 0) {
     // O fallback é uma referência válida quando houve uso efetivo dos
@@ -360,7 +416,7 @@ export function finalizeReferences(
     // identificador bibliográfico verificável. Ele não deve aparecer em
     // recusa, conteúdo insuficiente, quiz ou Informações da disciplina.
     if (allowsReferenceFallback(mode) && docs.some((doc) => Boolean(doc.content?.trim()))) {
-      return `${withoutModelReferences}\n\n**Referências:**\n- Informação não disponível no artigo, consultar o Plano de Ensino ou docentes.`.trim();
+      return `${withoutModelReferences}\n\n**Referências**\n- Informação não disponível no artigo, consultar o Plano de Ensino ou docentes.`.trim();
     }
     return withoutModelReferences;
   }
@@ -369,5 +425,5 @@ export function finalizeReferences(
   )).slice(0, 5);
   const lines = sources.map((item) => `- ${item.reference}`);
 
-  return `${withoutModelReferences}\n\n**Referências:**\n${lines.join('\n')}`.trim();
+  return `${withoutModelReferences}\n\n**Referências**\n${lines.join('\n')}`.trim();
 }

@@ -101,16 +101,7 @@ test('usa catálogo bibliográfico verificado quando o chunk clínico não cont�
 });
 
 test('resolve a identidade por drive_file_id para todos os documentos ativos catalogados', () => {
-  const ids = [
-    '19X545ckd-ZnfYbo73Tz2glTklUiDA9qd',
-    '1IEpBXcCPCvgrivRH57lEmK_0i_7Jr-Tf',
-    '1QIm6St6nnOIf7JXFwoXCy6-InqKhF2WI',
-    '1eEE2VGeeqeY0G4xCeqAAmdituf7WsjVv',
-    '1gu0sH0qoUa1kVbqtv0-Zz33OC4vvSEYD',
-    '1hPPWPIJJ6zc-C0Tnihf6fpVwlE13HaoL',
-    '1YUfjf2WG5FonQaOImCsAY6aHSuyK7XNL',
-    '1rsAmg3UK8m_2fP4STqoiB_Zhyktnlw-W',
-  ];
+  const ids = Object.keys(DOCUMENT_REFERENCE_CATALOG);
 
   for (const drive_file_id of ids) {
     const metadata = enrichDocumentReferenceMetadata({ drive_file_id });
@@ -119,7 +110,145 @@ test('resolve a identidade por drive_file_id para todos os documentos ativos cat
     assert.equal(metadata.reference_source, 'catalog');
     assert.ok(typeof metadata.reference_title === 'string' && metadata.reference_title.length > 5);
   }
-  assert.equal(Object.keys(DOCUMENT_REFERENCE_CATALOG).length, 8);
+  assert.equal(Object.keys(DOCUMENT_REFERENCE_CATALOG).length, 67);
+});
+
+test('publica fontes verificadas da pergunta de segurança cirúrgica', () => {
+  const answer = finalizeReferences(
+    'A pausa de cirurgia segura confirma a identidade, o procedimento, o sítio e os pontos críticos antes da incisão.',
+    [
+      {
+        source: 'seguranca_cirurgica__protocolo_cirurgia_segura__protocolo__ministerio_saude_anvisa_fiocruz__2013__v1',
+        content: 'MINISTERIO DA SAUDE. PROTOCOLO PARA CIRURGIA SEGURA. Ministério da Saúde/Anvisa/Fiocruz. 09/07/2013.',
+        similarity: 0.82,
+        metadata: enrichDocumentReferenceMetadata({ drive_file_id: '1JQkYmjfUSx_Nhhh-z2PxKs_RG5s_8p2z', page_number: 6 }),
+      },
+      {
+        source: 'seguranca_cirurgica__cirurgia_segura__manual__oms__2009__v2',
+        content: 'World Health Organization. CIRURGIAS SEGURAS SALVAM VIDAS. MANUAL. 2009.',
+        similarity: 0.81,
+        metadata: enrichDocumentReferenceMetadata({ drive_file_id: '1AgmiMWrMdEsKTJuyY89oN3ldd6w__Pbg', page_number: 197 }),
+      },
+      {
+        source: 'seguranca_cirurgica__praticas_prevencao_retencao_nao_intencional_objetos_apos_cirurgia__nota_tecnica__anvisa__2017__v1',
+        content: 'NOTA TÉCNICA GVIMS/GGTES No 04/2017. Práticas seguras para prevenção de retenção não intencional de objetos após realização de procedimento cirúrgico em serviços de saúde. ANVISA. 2017.',
+        similarity: 0.80,
+        metadata: enrichDocumentReferenceMetadata({ drive_file_id: '1Zr2cWKl5SsHDYTNdiRLLHNFLI0JM2O7v', page_number: 11 }),
+      },
+    ],
+    'livre',
+  );
+  assert.match(answer, /\*\*Referências\*\*/i);
+  assert.doesNotMatch(answer, /\*\*Referências:\*\*/i);
+  assert.match(answer, /Protocolo para Cirurgia Segura/);
+  assert.match(answer, /Cirurgias Seguras Salvam Vidas/);
+  assert.match(answer, /Nota Técnica GVIMS\/GGTES/);
+  assert.doesNotMatch(answer, /Informação não disponível no artigo/);
+});
+
+test('não promove quadro OCR ou índice remissivo a referência', () => {
+  const answer = finalizeReferences(
+    'O checklist de cirurgia segura confirma o paciente, o procedimento e o sítio antes da incisão.',
+    [
+      {
+        source: 'seguranca_cirurgica__cirurgia_segura__manual__oms__2009__v2',
+        content: 'World Health Organization. CIRURGIAS SEGURAS SALVAM VIDAS. MANUAL. 2009.',
+        similarity: 0.81,
+        metadata: enrichDocumentReferenceMetadata({ drive_file_id: '1AgmiMWrMdEsKTJuyY89oN3ldd6w__Pbg', page_number: 197 }),
+      },
+      {
+        source: 'ferida__cuidados_pessoa_com_ferida__protocolo__prefeitura_de_florianopolis__2019__v1.pdf',
+        content: 'Classificação Tipo de cirurgia Descrição\nCirurgia Porte I Duração de até 2 horas.\nCirurgia Porte II Duração de 2 a 4 horas',
+        similarity: 1.9,
+        metadata: { drive_file_id: '15c3UdgWIO_hpDM5qFP0cuoBCxVpwSH4E', page_number: 95 },
+      },
+      {
+        source: 'biblioteca__praticas_recomendadas__livro__sobecc__2013__v6',
+        content: 'Cirurgia segura 185\nCirurgias bariátricas 282\nCirurgias contaminadas 160\nCirurgias limpas 160',
+        similarity: 1.5,
+        metadata: enrichDocumentReferenceMetadata({ drive_file_id: '1YUfjf2WG5FonQaOImCsAY6aHSuyK7XNL', page_number: 378 }),
+      },
+    ],
+    'livre',
+  );
+  assert.match(answer, /Cirurgias Seguras Salvam Vidas/);
+  assert.doesNotMatch(answer, /Duração do Ato|Práticas Recomendadas SOBECC/);
+});
+
+test('prioriza a fonte de estoma e não cita livro lexicalmente parecido', () => {
+  const answer = finalizeReferences(
+    'A pele ao redor do estoma deve ser higienizada e protegida contra vazamentos.',
+    [
+      {
+        source: 'estoma__cuidados_pessoa_estomizada__livro__secretaria_de_saude_minas_gerais__2015__v1.pdf',
+        content: 'A pessoa estomizada deve proteger a pele ao redor do estoma e observar sinais de complicação.',
+        similarity: 2.2,
+        metadata: enrichDocumentReferenceMetadata({ drive_file_id: '1wfGN61loXz7AcLSqxsqWZ1S639SBcymR', page_number: 45 }),
+      },
+      {
+        source: 'biblioteca__tratado_enfermagem_medico_cirurgico__livro__brunner_suddarth__2011__v2.pdf',
+        content: 'Cuidados gerais de enfermagem no pós-operatório.',
+        similarity: 1.6,
+        metadata: enrichDocumentReferenceMetadata({ drive_file_id: '1rsAmg3UK8m_2fP4STqoiB_Zhyktnlw-W', page_number: 75 }),
+      },
+    ],
+    'livre',
+  );
+  assert.match(answer, /Linha de Cuidados da Pessoa Estomizada/);
+  assert.doesNotMatch(answer, /Brunner|Informação não disponível/);
+});
+
+test('usa o catálogo do plano vigente e a página da tabela administrativa', () => {
+  const answer = finalizeReferences(
+    'Conforme o Plano de Ensino 2026-2, a carga horária total é de 216 horas.',
+    [{
+      source: 'administrativo__plano_ensino_INT55224__plano__ufsc__2026_2.pdf',
+      content: 'PLANO DE ENSINO 2026-2. CARGA HORÁRIA: 126 hs teórica; 90 hs teórico-prática; total 216 hs.',
+      metadata: {
+        drive_file_id: '1if-C_IzjQFeg3nPTTcXNWJKT8YooUHIR',
+        page_number: 1,
+        reference_title: 'Plano de Ensino 2026-2 — INT 5224: O cuidado no processo de viver humano II — a condição cirúrgica',
+        reference_year: '2026-2',
+        reference_publisher: 'Universidade Federal de Santa Catarina (UFSC)',
+        reference_source: 'catalog',
+        reference_verified: true,
+        reference_key: '1if-C_IzjQFeg3nPTTcXNWJKT8YooUHIR',
+      },
+    }],
+    'info',
+    true,
+    'Qual é a carga horária e o período do plano de ensino vigente da INT 5224?',
+  );
+
+  assert.match(answer, /Plano de Ensino 2026-2/);
+  assert.match(answer, /p\. 1\./);
+  assert.doesNotMatch(answer, /Brunner|Suddarth|Informação não disponível|\.pdf|\[Fonte:/i);
+});
+
+test('não repete o ano quando ele já faz parte do título catalogado', () => {
+  const output = finalizeReferences(
+    'A disciplina possui carga horária e período definidos no plano vigente.',
+    [{
+      source: 'plano.pdf',
+      content: 'Carga horária total: 216 horas. Semestre 2026-2.',
+      metadata: {
+        drive_file_id: 'plan-current',
+        reference_source: 'catalog',
+        reference_verified: true,
+        reference_title: 'Plano de Ensino 2026-2 — INT 5224: O cuidado no processo de viver humano II',
+        reference_year: '2026-2',
+        reference_publisher: 'Universidade Federal de Santa Catarina (UFSC)',
+        page_number: 1,
+      },
+    }],
+    'livre',
+    true,
+    'carga horária e período do plano vigente',
+  );
+
+  assert.match(output, /Plano de Ensino 2026-2 — INT 5224/);
+  assert.doesNotMatch(output, /\(2026-2\)\. Plano de Ensino 2026-2/);
+  assert.match(output, /Universidade Federal de Santa Catarina \(UFSC\)\. p\. 1\./);
 });
 
 test('deduplica páginas do mesmo documento catalogado', () => {
@@ -160,6 +289,120 @@ test('deduplica páginas do mesmo documento catalogado', () => {
   assert.doesNotMatch(answer, /p\. 751\./);
 });
 
+test('não cita catálogo de livro quando a recuperação mistura um plano administrativo', () => {
+  const answer = finalizeReferences(
+    'A carga horária total do plano vigente é de 216 horas no semestre 2026-2.',
+    [
+      {
+        source: 'biblioteca__tratado_enfermagem_medico_cirurgico__livro__brunner_suddarth__2011__v2.pdf',
+        content: 'Cuidados gerais de enfermagem e avaliação clínica.',
+        metadata: {
+          drive_file_id: 'drive-brunner',
+          reference_key: 'drive-brunner',
+          reference_source: 'catalog',
+          reference_verified: true,
+          reference_title: 'Brunner & Suddarth: Tratado de enfermagem médico-cirúrgica',
+          reference_year: '2014',
+          page_number: 136,
+        },
+      },
+      {
+        source: 'administrativo__plano_ensino_INT55224__plano__ufsc__2026_2.pdf',
+        content: 'Carga horária total de 216 horas. Plano de ensino 2026-2.',
+        metadata: { drive_file_id: 'drive-plano', page_number: 1 },
+      },
+    ],
+    'livre',
+    true,
+    'carga horária e período do plano de ensino vigente da INT 5224',
+  );
+
+  assert.doesNotMatch(answer, /Brunner|Suddarth|p\. 136/i);
+  assert.doesNotMatch(answer, /biblioteca__tratado|\.pdf|\[Fonte:/i);
+});
+
+test('usa catálogo verificado nos documentos clínicos mais relevantes da recuperação', () => {
+  const answer = finalizeReferences(
+    'No pós-operatório imediato, a equipe deve monitorar sinais vitais, respiração e o local cirúrgico.',
+    [
+      {
+        source: 'aula-interna.pdf',
+        content: 'Monitorar sinais vitais, respiração e local cirúrgico.',
+        similarity: 0.82,
+        metadata: {
+          drive_file_id: 'drive-poi',
+          reference_key: 'drive-poi',
+          reference_source: 'catalog',
+          reference_verified: true,
+          reference_title: 'Cuidado de enfermagem ao paciente cirúrgico no período pós-operatório',
+          page_number: 1,
+        },
+      },
+      {
+        source: 'livro-não-relacionado.pdf',
+        content: 'Trecho catalogado, mas abaixo do limiar de relevância.',
+        similarity: 0.71,
+        metadata: {
+          drive_file_id: 'drive-outro',
+          reference_key: 'drive-outro',
+          reference_source: 'catalog',
+          reference_verified: true,
+          reference_title: 'Livro não relacionado',
+          page_number: 10,
+        },
+      },
+    ],
+    'livre',
+    true,
+    'cuidados de enfermagem no pós-operatório imediato',
+  );
+
+  assert.match(answer, /Cuidado de enfermagem ao paciente cirúrgico no período pós-operatório/);
+  assert.doesNotMatch(answer, /Livro não relacionado|Informação não disponível|\.pdf/i);
+});
+
+test('preserva a referência do documento explicitamente solicitado quando a busca traz ruído', () => {
+  const answer = finalizeReferences(
+    'As etapas de limpeza e enxágue devem seguir a sequência técnica indicada no documento.',
+    [
+      {
+        source: 'biblioteca__praticas_recomendadas__livro__sobecc__2013__v6',
+        content: 'Limpeza e enxágue de produtos para saúde.',
+        similarity: 0.76,
+        metadata: {
+          drive_file_id: 'drive-sobecc',
+          reference_key: 'drive-sobecc',
+          reference_source: 'catalog',
+          reference_verified: true,
+          reference_title: 'Práticas Recomendadas SOBECC',
+          reference_year: '2013',
+          reference_edition: '6ª ed.',
+          page_number: 122,
+        },
+      },
+      {
+        source: 'infeccao_sitio_cirurgico__rdc_15',
+        content: 'Desinfecção e processamento de produtos para saúde.',
+        similarity: 0.79,
+        metadata: {
+          drive_file_id: 'drive-ruido',
+          reference_key: 'drive-ruido',
+          reference_source: 'catalog',
+          reference_verified: true,
+          reference_title: 'RDC 15 — Boas práticas',
+          page_number: 4,
+        },
+      },
+    ],
+    'livre',
+    true,
+    'etapas de limpeza e enxágue\n__SOURCE_SCOPE__biblioteca__praticas_recomendadas__livro__sobecc__2013__v6__',
+  );
+
+  assert.match(answer, /- \(2013\)\. Práticas Recomendadas SOBECC\. 6ª ed\. p\. 122\./);
+  assert.doesNotMatch(answer, /RDC 15|Informação não disponível/);
+});
+
 test('não transforma células repetidas de uma tabela em título de referência', () => {
   const answer = finalizeReferences(
     'A limpeza e o enxágue dependem da classificação do produto e da qualidade da água.',
@@ -185,7 +428,7 @@ Limpeza`,
   );
 
   assert.doesNotMatch(answer, /Enxágue Enxágue Enxágue/i);
-  assert.match(answer, /\*\*Referências:\*\*/i);
+  assert.match(answer, /\*\*Referências\*\*/i);
   assert.match(answer, /- Informação não disponível no artigo, consultar o Plano de Ensino ou docentes\./i);
   assert.doesNotMatch(answer, /biblioteca__praticas|\.pdf|\[Fonte:/i);
 });
@@ -324,7 +567,7 @@ test('ignora fragmentos de frases como se fossem referências', () => {
     'livre',
   );
 
-  assert.match(answer, /\*\*Referências:\*\*/i);
+  assert.match(answer, /\*\*Referências\*\*/i);
   assert.match(answer, /- Informação não disponível no artigo, consultar o Plano de Ensino ou docentes\./i);
   assert.doesNotMatch(answer, /domicílio|Após a alta|artigo\.pdf/i);
 });
@@ -336,7 +579,7 @@ test('usa fallback exato quando o material foi usado, mas não traz identificado
     'livre',
   );
 
-  assert.match(answer, /\*\*Referências:\*\*\n- Informação não disponível no artigo, consultar o Plano de Ensino ou docentes\./i);
+  assert.match(answer, /\*\*Referências\*\*\n- Informação não disponível no artigo, consultar o Plano de Ensino ou docentes\./i);
   assert.doesNotMatch(answer, /manual-interno\.pdf/i);
 });
 
@@ -347,7 +590,7 @@ test('ignora cabeçalho OCR de referências como se fosse capítulo', () => {
     'livre',
   );
 
-  assert.match(answer, /\*\*Referências:\*\*\n- Informação não disponível no artigo, consultar o Plano de Ensino ou docentes\./i);
+  assert.match(answer, /\*\*Referências\*\*\n- Informação não disponível no artigo, consultar o Plano de Ensino ou docentes\./i);
   assert.doesNotMatch(answer, /10 91|artigo\.pdf/i);
 });
 
@@ -371,6 +614,17 @@ test('remove marcadores numéricos herdados dos documentos', () => {
   );
   assert.doesNotMatch(answer, /\[\s*\d/);
   assert.match(answer, /normas da ABNT incluem etapas específicas/);
+});
+
+test('remove marcadores numéricos compostos com subseção e página', () => {
+  const answer = finalizeReferences(
+    'A pausa cirúrgica revisa os pontos críticos [3, 6.2.3; 3, 6.2.4] e a segurança anestésica [4, p. 196].',
+    [],
+    'livre',
+    false,
+  );
+  assert.doesNotMatch(answer, /\[\s*\d+[\d\s.,;:pa-z]*\]/i);
+  assert.match(answer, /A pausa cirúrgica revisa os pontos críticos\s+e a segurança anestésica\s+\./);
 });
 
 test('remove jargão interno antes de exibir a resposta ao estudante', () => {
