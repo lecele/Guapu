@@ -130,3 +130,13 @@ Critério de encerramento deste incidente: publicar após backup remoto dos dois
 - Pergunta curta `professores`, no fluxo Informações, em duas sessões independentes: request IDs `7f45f57b-90de-4770-a0a7-64cf18ef767a` e `555f8ef0-e96e-4f9a-aa93-cd05f13c9361`. Ambas retornaram os sete nomes completos, `sources_found=12`, referência única do plano vigente na p. 22 e cabeçalho `**Referências**` sem dois-pontos.
 - Latências observadas: 6.716 ms e 2.319 ms. A primeira chamada incluiu a recuperação fria; a segunda beneficiou-se do caminho aquecido. O resultado textual foi idêntico.
 - O layout móvel foi contido no CSS publicado com limites de largura e `min-width: 0` nos contêineres de mensagem/rodapé. A validação por emulação visual automatizada permanece limitada nesta sessão; a inspeção estática não encontrou largura fixa nesses elementos.
+
+## Revalidação da segunda rodada do cliente — 2026-08-31
+
+A planilha `4182e4c3.xlsx` e o PDF `segunda-rodada-4182e4c3.pdf` registraram 22/29 aprovados e sete falhas. A reprodução no runtime publicado confirmou uma dessas falhas: `Responda novamente de forma concisa.` era tratado como fora de escopo quando enviado após um resumo. A causa foi a ausência dessa formulação no reconhecimento de intenção e na reconstrução de sessão.
+
+Correção controlada publicada no commit `c5c7084`: inclusão das formulações `responda novamente de forma concisa` e `responda de forma concisa` em `lib/chat/session-flow.ts` e `lib/chat/session-store.ts`, com teste de regressão em `tests/session-flow.test.ts`. O backup remoto foi movido para fora do contexto de build em `/opt/guapu-backups/20260831-concise/` após um primeiro build abortado; nenhum container foi recriado durante o aborto.
+
+Evidências após a correção: `npm run test:flow` passou em 60/60; `npm run build` local e Docker passaram; app e painel ficaram `healthy`; Supabase conectado; Nginx válido; worker e timer ativos. No app publicado, o fluxo completo de resumo sobre Feridas seguido de `Responda novamente de forma concisa.` produziu um único parágrafo curto, manteve o tema, preservou a frase de encerramento e exibiu referências coerentes. Também foram revalidados: referências de infecção com cabeçalho `Referências` sem dois-pontos; fallback fora do escopo sem referências; identidade do Guapu; início e troca de tema no quiz sem referências; e recusa de resposta pronta para prova.
+
+Os seis demais casos da planilha continuam classificados como pendentes de reprodução específica. O relatório externo fornece apenas o título e uma mensagem resumida, sem os prompts completos nem as respostas esperadas; portanto, não foi feita alteração especulativa em referências, identidade, quiz, fallback, guardrails ou detecção de nível.
