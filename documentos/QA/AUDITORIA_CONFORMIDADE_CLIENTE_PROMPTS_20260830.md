@@ -122,3 +122,11 @@ Atualização final: os dois bloqueios foram resolvidos pelo pooler IPv4. O livr
 - Publicação: pendente de revalidação Tailscale SSH. O acesso remoto devolveu `Tailscale SSH requires an additional check` com link de autenticação. Até essa revalidação, a correção não é declarada publicada e a lista de sete não é declarada validada no runtime.
 
 Critério de encerramento deste incidente: publicar após backup remoto dos dois arquivos, repetir duas perguntas em sessões independentes, confirmar os sete nomes e uma referência única ao plano vigente, verificar `GET /api/health`, e validar o bundle/UI em viewport móvel sem overflow horizontal.
+
+### Validação final publicada — 2026-08-31
+
+- Deploy publicado na VPS após backup em `/opt/guapu-app/backups/20260831-professores/` e rollback adicional em `/opt/guapu-app/backups/20260831-professores-final/`.
+- `GET /api/health`: `status=healthy`, `supabase=connected`; `guapu-app` e `guapu-panel` healthy; `guapu-drive-sync-worker.service` e `guapu-drive-sync-queue.timer` ativos.
+- Pergunta curta `professores`, no fluxo Informações, em duas sessões independentes: request IDs `7f45f57b-90de-4770-a0a7-64cf18ef767a` e `555f8ef0-e96e-4f9a-aa93-cd05f13c9361`. Ambas retornaram os sete nomes completos, `sources_found=12`, referência única do plano vigente na p. 22 e cabeçalho `**Referências**` sem dois-pontos.
+- Latências observadas: 6.716 ms e 2.319 ms. A primeira chamada incluiu a recuperação fria; a segunda beneficiou-se do caminho aquecido. O resultado textual foi idêntico.
+- O layout móvel foi contido no CSS publicado com limites de largura e `min-width: 0` nos contêineres de mensagem/rodapé. A validação por emulação visual automatizada permanece limitada nesta sessão; a inspeção estática não encontrou largura fixa nesses elementos.
