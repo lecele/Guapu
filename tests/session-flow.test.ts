@@ -48,6 +48,14 @@ test('pedido de concisão não vira aprofundamento', () => {
   assert.equal(decision.stateAfter.state, 'RESUMO_CONCLUIDO');
 });
 
+test('reconhece o pedido completo de responder novamente de forma concisa', () => {
+  const decision = resolveTurn(
+    state({ state: 'RESUMO_CONCLUIDO', mode: 'resumo', currentTopic: 'hemostasia' }),
+    'Responda novamente de forma concisa',
+  );
+  assert.equal(decision.generationMode, 'resumo_reformular');
+});
+
 test('escolher outro tema limpa o tema atual', () => {
   const decision = resolveTurn(state({ state: 'RESUMO_CONCLUIDO', mode: 'resumo', currentTopic: 'hemostasia' }), 'Escolher outro tema');
   assert.equal(decision.stateAfter.state, 'RESUMO_AGUARDANDO_TEMA');

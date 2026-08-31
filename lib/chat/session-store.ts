@@ -75,7 +75,7 @@ function isSchemaCompatibilityError(error: DatabaseErrorLike): boolean {
 }
 
 function lastTopicFromHistory(history: ChatHistoryItem[]): string {
-  const ignored = /^(?:[a-d]|menu|voltar|in[ií]cio|resumo|simulado|quiz|informa[cç][oõ]es|encerrar|aprofundar|oi|ol[aá]|seja mais concis[oa]|mais concis[oa]|resuma mais|resuma isso|simplifique|resposta mais curta)$/i;
+  const ignored = /^(?:[a-d]|menu|voltar|in[ií]cio|resumo|simulado|quiz|informa[cç][oõ]es|encerrar|aprofundar|oi|ol[aá]|seja mais concis[oa]|mais concis[oa]|responda novamente de forma concis[oa]|responda de forma concis[oa]|resuma mais|resuma isso|simplifique|resposta mais curta)$/i;
   const inlinePrefix = /^(?:(?:quero|queria)\s+(?:um\s+)?|fazer\s+)?(?:resumo(?:\s+de\s+conte[uú]do)?|quiz(?:\s+da\s+disciplina)?|simulado(?:\s+de\s+prova)?|op[cç][aã]o\s+[12]|[12])\s*(?:sobre|de|da|do|com|-|:)?\s*/i;
   for (const message of [...history].reverse()) {
     if (message.role !== 'user') continue;

@@ -107,7 +107,7 @@ export function detectFlowIntent(text: string): FlowIntent {
   if (/^(4|opcao 4|encerrar sessao|encerrar|sair|tchau|bye|adeus|finalizar)$/.test(norm)) return 'farewell';
   if (/^(aprofundar|aprofundar este tema|aprofundar mais|aprofundar o tema)$/.test(norm)) return 'aprofundar';
   if (/^(escolher outro tema|outro tema|mudar tema|trocar tema)$/.test(norm)) return 'outro_tema';
-  if (/^(seja mais concis[oa]|mais concis[oa]|resuma mais|resuma isso|simplifique|explique de outra forma|resposta mais curta|mais curto|mais curta)$/.test(norm)) return 'reformular_conciso';
+  if (/^(seja mais concis[oa]|mais concis[oa]|responda novamente de forma concis[oa]|responda de forma concis[oa]|resuma mais|resuma isso|simplifique|explique de outra forma|resposta mais curta|mais curto|mais curta)$/.test(norm)) return 'reformular_conciso';
 
   const words = norm.split(/\s+/).filter(Boolean);
   if (
