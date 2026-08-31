@@ -537,8 +537,9 @@ function isProfessorListQuestion(text: string): boolean {
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .toLocaleLowerCase('pt-BR');
-  return /\b(?:professor|professores|docente|docentes)\b/.test(normalized)
-    && /\b(?:quem|quais|lista|listar|nomes|sao|são)\b/.test(normalized);
+  // A opção do menu envia apenas “professores”; no modo Informações isso já
+  // identifica inequivocamente a consulta da lista do plano vigente.
+  return /\b(?:professor|professores|docente|docentes)\b/.test(normalized);
 }
 
 function buildPlanLoadPeriodResponse(): string {
