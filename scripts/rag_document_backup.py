@@ -72,11 +72,13 @@ def _normalize_db_row(row: dict[str, Any]) -> dict[str, Any]:
 
 def _load_db_rows(
     connection: psycopg.Connection,
-    sources: list[str],
+    sources: list[str] | None,
     *,
     legacy_only: bool,
 ) -> list[dict[str, Any]]:
     condition = "AND NOT (metadata ? 'drive_file_id')" if legacy_only else ""
+    source_condition = "AND source = ANY(%s)" if sources is not None else ""
+    parameters = (sources,) if sources is not None else ()
     with connection.cursor(row_factory=dict_row) as cursor:
         cursor.execute(
             f"""
@@ -87,11 +89,12 @@ def _load_db_rows(
                    metadata,
                    created_at
             FROM public.documents
-            WHERE source = ANY(%s)
+            WHERE TRUE
+              {source_condition}
               {condition}
             ORDER BY id
             """,
-            (sources,),
+            parameters,
         )
         return [_normalize_db_row(dict(row)) for row in cursor.fetchall()]
 
@@ -102,6 +105,7 @@ def write_backup(
     *,
     sources: list[str],
     legacy_only: bool,
+    all_legacy: bool = False,
 ) -> dict[str, Any]:
     if path.exists():
         raise FileExistsError(f"O backup já existe: {path}")
@@ -115,6 +119,7 @@ def write_backup(
         "table": "public.documents",
         "sources": sorted(sources),
         "legacy_only": legacy_only,
+        "all_legacy": all_legacy,
     }
     footer = {
         "type": "footer",
@@ -169,16 +174,22 @@ def read_backup(path: Path) -> tuple[dict[str, Any], list[dict[str, Any]], dict[
 
 
 def command_backup(arguments: argparse.Namespace) -> None:
-    sources = sorted(set(arguments.source))
+    requested_sources = None if arguments.all_legacy else sorted(set(arguments.source or []))
     with psycopg.connect(_database_url()) as connection:
-        rows = _load_db_rows(connection, sources, legacy_only=arguments.legacy_only)
+        rows = _load_db_rows(
+            connection,
+            requested_sources,
+            legacy_only=arguments.legacy_only or arguments.all_legacy,
+        )
     if not rows:
         raise SystemExit("Nenhuma linha encontrada; backup não criado.")
+    sources = sorted({str(row["source"]) for row in rows if row.get("source") is not None})
     summary = write_backup(
         arguments.output.resolve(),
         rows,
         sources=sources,
-        legacy_only=arguments.legacy_only,
+        legacy_only=arguments.legacy_only or arguments.all_legacy,
+        all_legacy=arguments.all_legacy,
     )
     print(f"backup_path={arguments.output.resolve()}")
     print(f"row_count={summary['row_count']}")
@@ -205,7 +216,7 @@ def command_delete(arguments: argparse.Namespace) -> None:
             f"Contagem informada ({arguments.expected_count}) difere do backup ({expected_count})."
         )
 
-    sources = list(header["sources"])
+    sources = None if header.get("all_legacy") else list(header["sources"])
     legacy_only = bool(header.get("legacy_only"))
     ids = [row["id"] for row in backup_rows]
     with psycopg.connect(_database_url()) as connection:
@@ -280,7 +291,9 @@ def build_parser() -> argparse.ArgumentParser:
     commands = parser.add_subparsers(dest="command", required=True)
 
     backup = commands.add_parser("backup")
-    backup.add_argument("--source", action="append", required=True)
+    selection = backup.add_mutually_exclusive_group(required=True)
+    selection.add_argument("--source", action="append")
+    selection.add_argument("--all-legacy", action="store_true")
     backup.add_argument("--output", type=Path, required=True)
     backup.add_argument("--legacy-only", action="store_true")
     backup.set_defaults(handler=command_backup)

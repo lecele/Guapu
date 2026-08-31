@@ -96,7 +96,7 @@ test('usa catálogo bibliográfico verificado quando o chunk clínico não cont�
     'controle de infecção no perioperatório',
   );
 
-  assert.match(answer, /- \(2013\)\. Práticas Recomendadas SOBECC\. 6ª ed\. p\. 35\./);
+  assert.match(answer, /- Práticas Recomendadas SOBECC\. \(2013\)\. 6ª ed\. p\. 35\./);
   assert.doesNotMatch(answer, /Informação não disponível no artigo|origem-tecnica|\.pdf/i);
 });
 
@@ -110,7 +110,22 @@ test('resolve a identidade por drive_file_id para todos os documentos ativos cat
     assert.equal(metadata.reference_source, 'catalog');
     assert.ok(typeof metadata.reference_title === 'string' && metadata.reference_title.length > 5);
   }
-  assert.equal(Object.keys(DOCUMENT_REFERENCE_CATALOG).length, 67);
+  assert.equal(Object.keys(DOCUMENT_REFERENCE_CATALOG).length, 119);
+});
+
+test('mantém os quatro materiais internos como identidades parciais comprovadas', () => {
+  const partialIds = [
+    '1uC-_-TFRVx4pPW90wwfm0nS8CzkzdcMY',
+    '1a0YMt3q7p70f5iFaX_qQJ1RHouEvalYA',
+    '1_VSuj-wh7VOliXi2M_7idLkb1jEAk5Yn',
+    '1Tm4GYvbkUYo315CYRF4ssgWIoAdjIC-H',
+  ];
+  for (const drive_file_id of partialIds) {
+    const metadata = enrichDocumentReferenceMetadata({ drive_file_id });
+    assert.equal(metadata.reference_confidence, 'partial');
+    assert.equal(metadata.reference_verified, true);
+    assert.equal(metadata.reference_key, drive_file_id);
+  }
 });
 
 test('publica fontes verificadas da pergunta de segurança cirúrgica', () => {
@@ -249,6 +264,28 @@ test('não repete o ano quando ele já faz parte do título catalogado', () => {
   assert.match(output, /Plano de Ensino 2026-2 — INT 5224/);
   assert.doesNotMatch(output, /\(2026-2\)\. Plano de Ensino 2026-2/);
   assert.match(output, /Universidade Federal de Santa Catarina \(UFSC\)\. p\. 1\./);
+});
+
+test('não começa a referência pela data quando não há autor catalogado', () => {
+  const output = finalizeReferences(
+    'A prevenção de infecções exige cuidados nas fases perioperatórias.',
+    [{
+      source: 'artigo.pdf',
+      content: 'A prevenção de infecções exige cuidados nas fases perioperatórias.',
+      metadata: {
+        drive_file_id: 'article-without-author',
+        reference_source: 'catalog',
+        reference_verified: true,
+        reference_title: 'O papel do enfermeiro na prevenção de infecção no sítio cirúrgico',
+        reference_year: '2020',
+        reference_publisher: 'Brazilian Journal of Health Review, 3(6), 16969-16977',
+        page_number: 2,
+      },
+    }],
+    'livre',
+  );
+  assert.match(output, /- O papel do enfermeiro na prevenção de infecção no sítio cirúrgico\. \(2020\)\. Brazilian Journal/);
+  assert.doesNotMatch(output, /- \(2020\)\./);
 });
 
 test('deduplica páginas do mesmo documento catalogado', () => {
@@ -399,7 +436,7 @@ test('preserva a referência do documento explicitamente solicitado quando a bus
     'etapas de limpeza e enxágue\n__SOURCE_SCOPE__biblioteca__praticas_recomendadas__livro__sobecc__2013__v6__',
   );
 
-  assert.match(answer, /- \(2013\)\. Práticas Recomendadas SOBECC\. 6ª ed\. p\. 122\./);
+  assert.match(answer, /- Práticas Recomendadas SOBECC\. \(2013\)\. 6ª ed\. p\. 122\./);
   assert.doesNotMatch(answer, /RDC 15|Informação não disponível/);
 });
 
@@ -634,6 +671,11 @@ test('remove jargão interno antes de exibir a resposta ao estudante', () => {
 
   assert.doesNotMatch(answer, /RAG|contexto recuperado|chunks?/i);
   assert.match(answer, /materiais da disciplina/);
+});
+
+test('remove marcadores numerados de materiais consultados', () => {
+  const answer = sanitizeStudentFacingText('Conduta baseada nos materiais consultados 1 e (fontes consultadas 2).');
+  assert.equal(answer, 'Conduta baseada nos materiais consultados 1 e.');
 });
 
 test('reconhece informação administrativa sem confirmação no plano', () => {

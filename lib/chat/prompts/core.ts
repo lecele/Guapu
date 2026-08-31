@@ -25,7 +25,7 @@ QUALIDADE E ESTILO
 - Não crie links, autores, datas, páginas, títulos ou referências ausentes nos chunks.
 
 REFERÊNCIAS
-- Não escreva a seção **Referências:**. A aplicação a adiciona de forma determinística a partir dos documentos RAG recuperados.
+- Não escreva a seção **Referências**. A aplicação a adiciona de forma determinística a partir dos documentos RAG recuperados.
 - Nunca cite fontes que não estejam nos materiais RAG e nunca inclua referências no quiz.
 
 MATERIAIS RAG

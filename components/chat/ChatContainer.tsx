@@ -9,6 +9,7 @@ import { Message } from '@/types/chat';
 import { MessageBubble } from './MessageBubble';
 import { TypingIndicator } from './TypingIndicator';
 import { MessageInput } from './MessageInput';
+import { GuapuMark } from '@/components/icons/GuapuMark';
 
 interface ChatContainerProps {
   messages: Message[];
@@ -49,7 +50,8 @@ export function ChatContainer({
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#02080f] opacity-75" />
               <span className="relative inline-flex h-2 w-2 rounded-full bg-[#02080f]" />
             </div>
-            <span className="text-[13px] font-black tracking-widest text-[#02080f] font-display uppercase">Guapu · Tutor de Enfermagem</span>
+            <GuapuMark size={28} />
+            <span className="text-[13px] font-black tracking-widest text-[#02080f] font-display uppercase">Guapu</span>
           </div>
         </div>
       </div>

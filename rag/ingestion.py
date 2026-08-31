@@ -916,14 +916,50 @@ def _load_drive_manifest() -> list[dict]:
 
 def _load_indexed_drive_file_ids() -> set[str]:
     """Retorna somente IDs que possuem ao menos um chunk atualmente ativo."""
-    response = get_supabase_client().rpc("get_rag_drive_file_states").execute()
-    if getattr(response, "error", None):
-        raise RuntimeError(f"DRIVE_SYNC_INTEGRITY_QUERY_FAILED: {response.error}")
-    return {
-        str(row["drive_file_id"])
-        for row in (response.data or [])
-        if int(row.get("active_chunks") or 0) > 0
-    }
+    client = get_supabase_client()
+    try:
+        response = client.rpc("get_rag_drive_file_states").execute()
+        if getattr(response, "error", None):
+            raise RuntimeError(f"DRIVE_SYNC_INTEGRITY_QUERY_FAILED: {response.error}")
+        return {
+            str(row["drive_file_id"])
+            for row in (response.data or [])
+            if int(row.get("active_chunks") or 0) > 0
+        }
+    except Exception as exc:
+        # A single GROUP BY over the full documents JSONB column can exceed
+        # the hosted statement timeout as the corpus grows. Fall back to the
+        # same source of truth in stable pages; this is read-only and avoids
+        # treating a transient timeout as a sync failure.
+        message = str(exc).lower()
+        if "57014" not in message and "statement timeout" not in message:
+            raise
+        logger.warning(
+            "drive_states_rpc_timeout_fallback",
+            error=str(exc),
+            page_size=1000,
+        )
+        indexed: set[str] = set()
+        offset = 0
+        page_size = 1000
+        while True:
+            page = (
+                client.table("documents")
+                .select("metadata")
+                .order("id")
+                .range(offset, offset + page_size - 1)
+                .execute()
+                .data
+                or []
+            )
+            for row in page:
+                metadata = row.get("metadata") or {}
+                if metadata.get("drive_file_id") and metadata.get("rag_status", "active") == "active":
+                    indexed.add(str(metadata["drive_file_id"]))
+            if len(page) < page_size:
+                break
+            offset += page_size
+        return indexed
 
 
 def _manifest_payload(file_info: dict, result: IngestionResult) -> dict:

@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test:flow": "node --test --experimental-strip-types tests/session-flow.test.ts tests/session-store.test.ts tests/mode-prompts.test.ts tests/references.test.ts tests/admin-session-scope.test.ts",
+    "test:flow": "node --test --experimental-strip-types tests/session-flow.test.ts tests/session-store.test.ts tests/mode-prompts.test.ts tests/references.test.ts tests/admin-session-scope.test.ts tests/course-catalog.test.ts",
     "test:acceptance": "node scripts/run-acceptance.mjs"
   },
   "dependencies": {

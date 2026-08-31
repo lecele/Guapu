@@ -112,7 +112,7 @@ function AgentBubble({ content, sessionId, requestId, responseKind }: {
     }
 
     if (/refer[êe]ncias:/i.test(text)) {
-      text = text.replace(/(?:\*\*Refer[êe]ncias:?\*\*|Refer[êe]ncias:?)\s*(?:•|-|\*)?\s*/i, '**Referências:**\n\n- ');
+      text = text.replace(/(?:\*\*Refer[êe]ncias:?\*\*|Refer[êe]ncias:?)\s*(?:•|-|\*)?\s*/i, '**Referências**\n\n- ');
       text = text.replace(/(\n- [^\n]+)\s+(?:•|-|\*)\s*(Refer[êe]ncia:)/gi, '$1\n- $2');
     }
     return text;

@@ -10,6 +10,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 from pathlib import Path
 from time import sleep
 from urllib.error import HTTPError
@@ -131,7 +132,7 @@ def main() -> None:
             forbidden = scenario["forbidden_source"]
             answer = str(stored.get("content", ""))
             has_context = bool(metadata.get("has_context"))
-            has_references = "**Referências:**" in answer
+            has_references = bool(re.search(r"\*\*Referências:?\*\*", answer, re.IGNORECASE))
             has_reference_fallback = "Informação não disponível no artigo" in answer
             error_code = metadata.get("error_code")
             error_code_ok = (
@@ -139,11 +140,19 @@ def main() -> None:
                 if scenario["expects_context"]
                 else error_code == "NO_RELEVANT_CONTEXT"
             )
+            # `fallback_used` também registra troca controlada de modelo
+            # (`PRIMARY_MODEL_FAILED`). Isso não é fallback de conteúdo quando
+            # a resposta tem contexto, referências e `error_code=null`.
+            fallback_ok = (
+                error_code is None
+                if scenario["expects_context"]
+                else bool(metadata.get("fallback_used"))
+            )
             passed = (
                 not response.get("error")
                 and error_code_ok
                 and has_context is scenario["expects_context"]
-                and bool(metadata.get("fallback_used")) is scenario["expects_fallback"]
+                and fallback_ok
                 and (required is None or any(source_matches(source, required) for source in sources))
                 and forbidden not in sources
                 and forbidden not in answer

@@ -4,8 +4,8 @@ Versão independente do assistente educacional da disciplina INT 5224 - *O cuida
 
 ## Produção
 
-- Chat: https://guapu.vercel.app
-- Painel administrativo protegido: https://guapu-painel.vercel.app
+- Chat: https://guapu.agentesnasaude.com.br
+- Painel administrativo protegido: disponível no runtime da VPS
 - Banco e RAG: Supabase com pgvector
 - Sincronização de documentos: worker persistente na VPS
 
@@ -18,6 +18,14 @@ Versão independente do assistente educacional da disciplina INT 5224 - *O cuida
 - **Qualidade:** cada resposta com RAG é avaliada em segundo plano usando os mesmos trechos recuperados. A avaliação não aumenta o tempo de resposta do estudante.
 - **Painel:** exibe conversas reais, telemetria de embedding/recuperação/geração, fontes RAG, avaliação automática e avaliações por estrelas. Sessões sintéticas de QA são excluídas das métricas, mas permanecem no banco para auditoria.
 - **Drive:** a VPS detecta arquivos novos, alterados e removidos, registra o manifesto e atualiza ou elimina apenas os chunks afetados. O chat não espera esse processamento.
+
+## Catálogo bibliográfico
+
+O catálogo versionado em [`reference_catalog.json`](reference_catalog.json) reúne os **119 documentos** do acervo reconciliado. Cada entrada usa o `drive_file_id` como chave e registra, quando comprovados no original/chunks, título, autor(es), ano, editora/instituição, status de verificação e a chave usada para propagar a referência aos chunks.
+
+Os documentos sem identidade bibliográfica suficiente permanecem explicitamente pendentes; eles continuam pesquisáveis pelo conteúdo, mas não recebem uma referência editorial inventada. A documentação, evidências e pendências ficam em [`documentos/QA`](documentos/QA), especialmente no [relatório de catalogação](documentos/QA/RELATORIO_CATALOGACAO_100_DOCUMENTOS_20260830.md) e no [relatório de auditoria do cliente](documentos/QA/AUDITORIA_CONFORMIDADE_CLIENTE_PROMPTS_20260830.md).
+
+Perguntas administrativas críticas do plano vigente, como a lista de professores, usam o catálogo estruturado do plano somente depois que a recuperação confirma a fonte ativa. Isso garante a mesma resposta no desktop, celular e API.
 
 ## Operação do Drive
 

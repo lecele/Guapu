@@ -42,3 +42,18 @@ A integração adicional do executor de homologação com o Telegram/Elle foi de
 ## Critério de saída
 
 A Fase 7 permanece aberta. Ela será marcada como aprovada somente após o registro da homologação interna conduzida por Leonardo, com a versão publicada identificada e sem falha crítica pendente.
+
+## Atualização da validação ao vivo — 30/08/2026
+
+- Acesso à VPS revalidado via Tailscale; app e painel responderam HTTP 200 nos endpoints públicos de saúde.
+- A bateria real de referências executada no runtime publicado passou em **6/6**: duas repetições do plano vigente, duas do glossário DOCX e duas do cenário de plano antigo bloqueado.
+- Nos casos fundamentados, as fontes retornadas foram compatíveis com a pergunta e a seção de referências foi gerada. No caso do glossário, a fonte retornada foi `glossario.docx`; no caso do plano vigente, a fonte foi o plano 2026-2. O plano antigo retornou `NO_RELEVANT_CONTEXT`, sem fonte ou referência indevida.
+- Latências observadas nessa bateria: 0,890 s a 7,625 s; P50 de 2,922 s e P95 aproximado de 3,616 s. A amostra confirma o funcionamento, mas a medição operacional maior continua sendo uma melhoria de acompanhamento.
+- A bateria técnica passou; o único item ainda necessário para fechar formalmente esta fase é o aceite funcional de Leonardo, atuando como cliente, registrado com a versão publicada.
+
+## Correção administrativa e referências — 30/08/2026
+
+- O fluxo de carga horária/período do plano vigente foi corrigido para usar os dados conferidos no chunk ativo da p. 1, sem geração livre de números pelo modelo.
+- A bateria real repetida no domínio publicado passou em **6/6**: plano vigente (2/2), glossário DOCX (2/2) e bloqueio do plano antigo (2/2).
+- As referências do plano vigente ficaram restritas ao documento administrativo correto, com página 1; o Brunner não apareceu nessa resposta. O plano antigo continuou sem contexto e sem referência.
+- O aceite técnico está aprovado; permanece pendente apenas a homologação funcional final de Leonardo, atuando como cliente.

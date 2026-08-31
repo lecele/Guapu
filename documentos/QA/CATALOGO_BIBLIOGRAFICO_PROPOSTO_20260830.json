@@ -1,0 +1,2002 @@
+{
+  "generated_at": "2026-08-30",
+  "scope": "Documentos ativos do manifesto do Google Drive sem identidade no catálogo local do runtime. Campos só são preenchidos quando confirmados literalmente no conteúdo; nesta rodada automática nenhum campo foi promovido sem revisão humana. Nome de arquivo, caminho e extensão não foram usados como fonte bibliográfica.",
+  "manifest_documents": 119,
+  "runtime_catalog_verified_documents": 19,
+  "persistent_catalog_verified_documents": 18,
+  "pending_documents": 100,
+  "status_counts": {
+    "verified": 0,
+    "partial": 25,
+    "unresolved": 75
+  },
+  "persistent_catalog_difference": {
+    "runtime_only_drive_file_ids": [
+      "1wfGN61loXz7AcLSqxsqWZ1S639SBcymR"
+    ],
+    "note": "A identidade existe no catálogo do runtime, mas não foi encontrada como verificada na tabela persistente durante esta coleta. Não foi alterada por esta auditoria."
+  },
+  "entries": [
+    {
+      "drive_file_id": "16j4EkVAvJLsAr-Fd0CzC6kbgYf9m1_Bx",
+      "mime_type": "application/pdf",
+      "status": "partial",
+      "confirmed_fields": {},
+      "observed_title_candidate": "Arq. Catarin Med. 2018 abr-jun; 47(2):13-22 ARTIGO ORIGINAL AVALIAÇÃO DAS SENSAÇÕES REFERIDAS PELO PACIENTE APÓS SEDAÇÃO PARA ANESTESIA REGIONAL",
+      "evidence_pages": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "submetidos a anestesia regional associados ou não a sedação. Foi realizado um estudo transversal onde foram entrevistados 184 pacientes no pós-operatório imediato. Informações demográficas e sensitivas foram coletadas e a análise estatística realizada utilizando o programa SPSS® versão 17.0. Os dados foram descritos utilizando prevalência eaplicados os testes do qui-quadrado ou índice de correlação de Pearson, com p<0,05. O risco relativo em relação ao gênero e ao uso de opióide como parte da sedação foi estimado com intervalo de confiança de 95%. Estudo aprovado pelo Comitê de Ética em Pesquisa do Hospital Governador Celso Ramos. Dos 184 pacientes, 53% relataram algum estímulo sensitivo ou ",
+      "sampled_chunks": 17,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "O candidato de título foi extraído do conteúdo e deve ser conferido nas páginas indicadas antes de ser usado pelo app."
+      ]
+    },
+    {
+      "drive_file_id": "1qm9DPpaum7YUlIiYiD8cjibHvnHSHvY6",
+      "mime_type": "application/pdf",
+      "status": "unresolved",
+      "confirmed_fields": {},
+      "observed_title_candidate": null,
+      "evidence_pages": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "risco. O objetivo deste estudo foi identificar variáveis preditivas evidenciando o perfil de pacientes com maior risco. de dor em sala de recuperação pós-anestésica, independentemen- Descritores: Anestesia, Enfermagem perioperatória, Período pós- te de sua intensidade. -operatório, Procedimentos cirúrgicos eletivos, Sala de recuperação. MÉTODOS: Estudo observacional e transversal com dados pri- mários, com 98 pacientes adultos submetidos a cirurgia eletiva. A ABSTRACT dor foi avaliada utilizando a escala numérica. Os pacientes foram divididos em dois grupos pela sua presença ou ausência de dor. BACKGROUND AND OBJECTIVES: Pain is one of the most Além disso, foram coletadas informações pré, in",
+      "sampled_chunks": 40,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "A amostra não apresentou título bibliográfico confiável; revisar OCR e as primeiras páginas do documento."
+      ]
+    },
+    {
+      "drive_file_id": "14JMPrRcdyR0xl1N90XQ5tOLfARHnmgOW",
+      "mime_type": "application/pdf",
+      "status": "unresolved",
+      "confirmed_fields": {},
+      "observed_title_candidate": null,
+      "evidence_pages": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "E-mail: luanaoliveira2306@gmail.com Daiana Moreira Gomes ORCID: https://orcid.org/0000-0001-9387-0619 Associação Brasileira de Enfermeiros cientistas, Brasil E-mail: daigomes_87@hotmail.com Priscila Gramata da Silva Vitorino ORCID: https://orcid.org/0000-0002-1201-6945 Associação Brasileira de Enfermeiros cientistas, Brasil E-mail: Prigramaenf@yahoo.com.br Resumo O objetivo deste trabalho foi descrever os riscos associados à anestesia no paciente oncológico e os cuidados de enfermagem durante anestesia no paciente oncológico. A pesquisa é uma revisão bibliográfica de abordagem descritiva e qualitativa. Foi realizada nos Bancos de dados do Google Acadêmico, BVS (biblioteca virtual em saúde) e",
+      "sampled_chunks": 21,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "A amostra não apresentou título bibliográfico confiável; revisar OCR e as primeiras páginas do documento."
+      ]
+    },
+    {
+      "drive_file_id": "1gBvFE2DRjXYHLP-Qspksx7t3GiBEfyjI",
+      "mime_type": "application/pdf",
+      "status": "unresolved",
+      "confirmed_fields": {},
+      "observed_title_candidate": null,
+      "evidence_pages": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "iaas (cid:142)readces i(cid:146)ifsV ipods ea neestsiaT Assi(cid:144)stnciad eEne frmagedm uraneot Aneestsiag eral procedimenoat ne(cid:142)stsico Bloqueiores gionais Pr(cid:135)itcares comendada(cos mpe(cid:144)tnciad o Aneestsial ocal enefrmeirob rasileiroea m neestsia) Aparelhod ea neestsiaemo niotra(cid:141)(cid:139)o Considera(cid:141)(cid:155)es (cid:222) nais dop acienet saincr(cid:144)feRe Principa(cid:135)ifrmas couis tlizadoeas m neestsia Ane(cid:142)stsicois nala(cid:151)trios uilnco iscs(cid:142)ineto antemdie, o procraineDsaes ma INROTDU(cid:130)(cid:204)O n-ema proprisaseinet a, aascs(cid:142)inet-ao pr(cid:142)(cid:139)(cid:141)ailva aa m, besaseinet ao da(cid:139)(cid:141)rau",
+      "sampled_chunks": 31,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "A amostra não apresentou título bibliográfico confiável; revisar OCR e as primeiras páginas do documento."
+      ]
+    },
+    {
+      "drive_file_id": "1nibYV0oDN8fWL_sVezweYwDXVQ4-7J-p",
+      "mime_type": "application/pdf",
+      "status": "unresolved",
+      "confirmed_fields": {},
+      "observed_title_candidate": null,
+      "evidence_pages": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "(BDENF) e United States National Library of Medicine (NLM) and National Institutes of Health (PubMed) no período de 2006 a 2016. Resultados: A amostra resultou em 30 artigos. As complicações cirúrgicas mais prevalentes foram dor, náuseas, hipotermia, retenção urinária, dessaturação e hipertensão. As inter- venções de enfermagem foram citadas em dois estudos, expressas por administração de medicamentos, oxigenioterapia, instalação de manta térmica, obser- vação, monitoramento de sinais vitais e realização de curativos. Conclusão: Esta revisão demonstrou que há necessidade de estudos com evidências científi- cas sobre a temática e maior enfoque nas intervenções de enfermagem (Nursing Intervent",
+      "sampled_chunks": 23,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "A amostra não apresentou título bibliográfico confiável; revisar OCR e as primeiras páginas do documento."
+      ]
+    },
+    {
+      "drive_file_id": "1nS-uUqHc6djf4-sf_oCg89yeyX7U1Vqh",
+      "mime_type": "application/pdf",
+      "status": "unresolved",
+      "confirmed_fields": {},
+      "observed_title_candidate": null,
+      "evidence_pages": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "1 Universidade de São Paulo, Escola de an electronic questionnaire consisting of socio-demographic, professional practice, knowledge Enfermagem, Departamento de Enfermagem in anesthesia, patient safety, and professional practice questions, conducted from January to Médico-Cirúrgica, São Paulo, SP, Brasil. March 2019 with operating room nurses. Results: One hundred nurses participated, 89 (89%) being women, with a mean age of 41.09 years (SD = 9.36), time of undergraduate completion of 14.33 years (SD = 8.34). The average attendance was 4.69 operating rooms (SD = 2.07) per nurse, with an emphasis on action before induction (49; 49%). Professionals reported performance of simultaneous activiti",
+      "sampled_chunks": 33,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "A amostra não apresentou título bibliográfico confiável; revisar OCR e as primeiras páginas do documento."
+      ]
+    },
+    {
+      "drive_file_id": "1lyRAPNXfNubucSWp6tbrE_fjNCFh3fTd",
+      "mime_type": "application/pdf",
+      "status": "unresolved",
+      "confirmed_fields": {},
+      "observed_title_candidate": null,
+      "evidence_pages": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "Revista Latino-Americana de Enfermagem E-ISSN: 1518-8345 rlae@eerp.usp.br Universidade de São Paulo Brasil de Santana Lemos, Cassiane; de Brito Poveda, Vanessa; de Cassia Giane Peniche, Aparecida Construção e validação de um protocolo assistencial de enfermagem em anestesia Revista Latino-Americana de Enfermagem, vol. 25, 2017, pp. 1-13 Universidade de São Paulo Ribeirão Preto, Brasil Disponível em: http://www.redalyc.org/articulo.oa?id=281449566126 Como citar este artigo Número completo Sistema de Informação Científica Mais artigos Rede de Revistas Científicas da América Latina, Caribe , Espanha e Portugal Home da revista no Redalyc Projeto acadêmico sem fins lucrativos desenvolvido no âmbi",
+      "sampled_chunks": 22,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "A amostra não apresentou título bibliográfico confiável; revisar OCR e as primeiras páginas do documento."
+      ]
+    },
+    {
+      "drive_file_id": "1rPHkdjmqyCHJYZZBJuYbFpTkSXo1gItE",
+      "mime_type": "application/pdf",
+      "status": "unresolved",
+      "confirmed_fields": {},
+      "observed_title_candidate": null,
+      "evidence_pages": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "Introdução à Anestesia A anestesia é um procedimento realizado para suprimir a sensação de dor durante um procedimento cirúrgico. A palavra \"anestesia\" tem origem no grego e significa \"privação da sensação\". Seu objetivo principal é promover a ausência de dor, proporcionar relaxamento muscular e criar condições favoráveis para que os médicos-cirurgiões possam realizar a cirurgia de forma eficaz. Ela pode ser classificada em dois tipos: com a preservação da consciência (anestesia local e regional) e com perda de consciência (anestesia geral). Procedimento Anestésico O processo anestésico envolve várias fases, desde a avaliação pré-anestésica até a recuperação pós-anestésica imediata. A avalia",
+      "sampled_chunks": 12,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "A amostra não apresentou título bibliográfico confiável; revisar OCR e as primeiras páginas do documento."
+      ]
+    },
+    {
+      "drive_file_id": "1uLOguHlm-IuiJ7nqv-j7m1u7bKPTm3cx",
+      "mime_type": "application/pdf",
+      "status": "unresolved",
+      "confirmed_fields": {},
+      "observed_title_candidate": null,
+      "evidence_pages": [
+        4,
+        5
+      ],
+      "evidence_excerpt": "DIREÇÃO EDITORIAL Gláucia Maria Moraes de Oliveira Olga Ferreira de Souza Fernando Eugênio dos Santos Cruz Filho Evandro Tinoco Mesquita Cesar Gerson Pereira Subieta REVISÃO ACADÊMICA Maria Lucia Brandão PROJETO GRÁFICO Conecte Estúdio Design CAPA Alessandra Herrero | Conecte Estúdio Design DIAGRAMAÇÃO Jefferson Montessi | Conecte Estúdio Design EDITORES DE ÁREA Emergências Evandro Tinoco Mesquita Vinício Elia Soares Unidade Coronariana Marco Antonio de Mattos Ricardo Mourilhe Rocha Doença Isquêmica / Doença Crônica Fernando Oswaldo Dias Rangel Roberto Esporcatte Arritmias Fernando Eugênio dos Santos Cruz Filho Olga Ferreira de Souza Doença Reumática e Valvar Cynthia Karla Magalhães Maria Eu",
+      "sampled_chunks": 2,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "A amostra não apresentou título bibliográfico confiável; revisar OCR e as primeiras páginas do documento."
+      ]
+    },
+    {
+      "drive_file_id": "1uC-_-TFRVx4pPW90wwfm0nS8CzkzdcMY",
+      "mime_type": "application/pdf",
+      "status": "unresolved",
+      "confirmed_fields": {},
+      "observed_title_candidate": null,
+      "evidence_pages": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "acigrúric acinílc 2 SIC Resumão revalida 1 Doença do refluxo gastroesofágico 1. Epidemiologia Em dados norte americanos, pirose 1 vez por semana ocorre em 20% da população. A preva- lência na população brasileira chega a 12%. 2. Fisiopatologia A DRGE surge da quebra do equilíbrio entre os fatores de proteção e de agressão, em as- sociação à falha dos mecanismos de contenção do refluxo. A extensão dos sintomas e a injúria mucosa são proporcionais à frequência dos eventos de refluxo, à duração da acidificação da mucosa e à potência cáustica do fluido refluído. A barreira contra o refluxo, na junção esofa- gogástrica, é fisiológica e anatomicamente complexa, e a sua incompetência se deve, basic",
+      "sampled_chunks": 12,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "A amostra não apresentou título bibliográfico confiável; revisar OCR e as primeiras páginas do documento."
+      ]
+    },
+    {
+      "drive_file_id": "18vXR395kiMezxuA4TcaQQJUmwOUsq8Bb",
+      "mime_type": "application/pdf",
+      "status": "unresolved",
+      "confirmed_fields": {},
+      "observed_title_candidate": null,
+      "evidence_pages": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "/ 8 1 , uma o b s eu eu e d m e ê g uma m r e f n A meiro ENFERMAGEM DIAGNÓSTICOS em, Definições e Classificação 2021-2023 Décima Segunda Edição Para acessar o conteúdo de mídia adicional disponível com este e-book via Thieme MedOne, Use o código e siga as instruções fornecidas no final do e-book. NANDA International, Inc. Diagnósticos de Enfermagem Definições e Classificação 202 1 - 2023 Décima Segunda Edição Editado por T. Heather Herdman, PhD, RN, FNI, FAAN Shigemi Kamitsuru, PhD, RN, FNI Camila Takáo Lopes, PhD, RN, FNI Thieme Nova York • Stuttgart • Delhi • Rio de Janeiro Os dados de catalogação na publicação da Biblioteca do Congresso estão disponíveis no editor. Para obter informações",
+      "sampled_chunks": 9,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "A amostra não apresentou título bibliográfico confiável; revisar OCR e as primeiras páginas do documento."
+      ]
+    },
+    {
+      "drive_file_id": "15cHzlZGfKjdm_Ml92ZMUUPQBSK-VoCzX",
+      "mime_type": "application/pdf",
+      "status": "unresolved",
+      "confirmed_fields": {},
+      "observed_title_candidate": null,
+      "evidence_pages": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "http://materialdeenfermagem.4shared.com EXPEDIENTE Editor Responsável Italo Amadio Coordenadora de produção editorial Katia F. Amadio Assistente Editorial Edna Emiko Nomura Organização Deocleciano Torrieri Guimarães Colaboração na Atualização Eduardo Mokagel Guimarães Preparação Kimie Imai Projeto Gráfico Jairo Souza Revisão Kimie Imai Sandra Garcia Cortez Diagramação Art Feita Designer Gráfico Dados Internacionais de Catalogação na Publicação (CIP) (Câmara Brasileira do Livro, SP, Brasil) Dicionário de termos médicos e de enfermagem / organização Deocleciano Torrieri Guimarães. – 1. ed. – São Paulo : Rideel, 2002. ISBN 978-85-339-0525-2 1. Enfermagem – Dicionários 2. Medicina – Dicionários ",
+      "sampled_chunks": 11,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "A amostra não apresentou título bibliográfico confiável; revisar OCR e as primeiras páginas do documento."
+      ]
+    },
+    {
+      "drive_file_id": "1yqwQggFm8jU0UjF-FqHRp9ga3TKYfxhc",
+      "mime_type": "application/pdf",
+      "status": "unresolved",
+      "confirmed_fields": {},
+      "observed_title_candidate": null,
+      "evidence_pages": [
+        1,
+        3,
+        5
+      ],
+      "evidence_excerpt": "NNEIEIST TALBER BRLR ASIEIAASRCEDCIAELTSOIADBENIENE IE EFT RNLDCAL¥ ESPOSABIIADSOI E USAPESQIE ENN ¥ SIO ALTHSPIO ENEREMFMAG AeCIm ARLGDOOI PROCEDIMENTOS EM UNIDADE SEMI-INTENSIVA Rita de C(cid:135)ssia Ribeiro de Macedo Alexandre Pazetto Balsanelli Flavia Fernanda Franco Edson Am(cid:142)rico Sant Ana eMnola ACIEM ARLGENEREM DOOFMAGI procedimenoeuts m nidadese mi-inetnsiva ACIEM ARLGENEREM DOOFMAGI procedimenoeuts m nidadese mi-inetnsiva ADRRANZOESOGI Riadt eC (cid:135)ssiaR ibeirod eMa cedo Coordenadorad eEne frmagedm aU nidadeSe mi-inetnsivaeC oronarianad o Me mbHAE.rodI oC omi(cid:144)Ct ien(cid:146)t (cid:222) cod oD epaartmenodt eEne frmagedm a Socesp. AlexandrePaoBa zet ltsanelli do H",
+      "sampled_chunks": 4,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "A amostra não apresentou título bibliográfico confiável; revisar OCR e as primeiras páginas do documento."
+      ]
+    },
+    {
+      "drive_file_id": "1qdnqA_uxbTzakZ1sv3nSpObmOGMH_PF3",
+      "mime_type": "application/pdf",
+      "status": "partial",
+      "confirmed_fields": {},
+      "observed_title_candidate": "GUIA DE BOLSO Guia de Exame Físico ENFERMAGEM PARA",
+      "evidence_pages": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "Além destAs cArActerísticAs práticAs: • Maisde150ilustraçõescoloridasrepresentandocomclarezaaanatomiae afisiologiajuntamentecomastécnicasdeexame. • Formatoemduascolunascomasdescriçõesconcisasdosachados anormaiserespectivospadrõesdenormalidade. • Coberturadaavaliaçãodadorconsiderandoadorcomooquintosinalvital. ClassificaçãodeArquivoRecomendada ENFERMAGEM SEMIOLOGIA EXAMEFÍSICO www.elsevier.com.br/enfermagem J ARVIS GUIA DE BOLSO Guia de Exame Físico ENFERMAGEM PARA Tradução da 6ªedição JARVIS GuiadeExameFísicoparaENFERMAGEM 6ªedição GUIA DE BOLSO guia bolso enferm B nova:Layout 1 3/6/12 3:19 PM Page 1 Guia de exame físico PARA enfermAgem guiA de bolso CarolynJarvis,PhD,APN,CNP•6ªedição e ncont",
+      "sampled_chunks": 10,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "O candidato de título foi extraído do conteúdo e deve ser conferido nas páginas indicadas antes de ser usado pelo app."
+      ]
+    },
+    {
+      "drive_file_id": "1LlsbycBZNCPGzO4vAndxTBUKLVLsiZa7",
+      "mime_type": "application/pdf",
+      "status": "unresolved",
+      "confirmed_fields": {},
+      "observed_title_candidate": null,
+      "evidence_pages": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "DIRETRIZES BRASILEIRAS DE Ventilação Mecânica 2013 VERSãO ELETRôNICA OfICIAL – AMIb E SbPT Um dos eventos mais esperados da AMIB para este ano foi o Fórum de Diretrizes Brasileiras em Ventilação Mecânica. Não só pela importância do material que seria publicado a partir deste encontro, As Diretrizes Brasileiras da AMIB e SBPT, mas pela preparação e organização de um evento que iria reunir 59 especialistas multiprofissionais de todo pais. A responsabilidade era muito grande e com a parce- ria com a Sociedade Brasileira de Pneumologia e Tisiologia, tudo transcorreu como desejado. Foi uma excelente oportunidade para conhecer novos colegas que estão se dedicando a prática clínica e principalmente",
+      "sampled_chunks": 14,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "A amostra não apresentou título bibliográfico confiável; revisar OCR e as primeiras páginas do documento."
+      ]
+    },
+    {
+      "drive_file_id": "1U34n6mhBI7TKPrrOJH77dErEq4MyOXTR",
+      "mime_type": "application/pdf",
+      "status": "partial",
+      "confirmed_fields": {},
+      "observed_title_candidate": "PREVENÇÃO E TRATAMENTO DA OBESIDADE",
+      "evidence_pages": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "PREVENÇÃO E TRATAMENTO DA OBESIDADE 1 0 a ç õ e s n u t r i c i o n a i s p r át i c a s Elaborado pelo Departamento de Nutrição da Abeso: ANA MAriA Pit A Lot teNberg CL ArissA Hiw AtAsHi Fujiw ArA MôNiCA beyruti reNA tA bressAN 10 ações nutricionais práticas í n d i c e 1 2 3 4 limite o Consumo Coma mais Preste atenção de alimentos monitore o seu alimentos in natura na quantidade ProCessados Peso e faça um e minimamente e na qualidade e evite o de diário alimentar ProCessados ultraProCessados página 3 página 4 página 5 página 7 5 6 7 8 Planeje Cozinhe semPre Planeje refeições esteja e organize que Possível fora de Casa Com a mente suas ComPras e Congele ou dias de eventos Presente página 9 ",
+      "sampled_chunks": 5,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "O candidato de título foi extraído do conteúdo e deve ser conferido nas páginas indicadas antes de ser usado pelo app."
+      ]
+    },
+    {
+      "drive_file_id": "1P43NFM7XoK2UXMhagEztOGYD8_r9OKZM",
+      "mime_type": "application/pdf",
+      "status": "unresolved",
+      "confirmed_fields": {},
+      "observed_title_candidate": null,
+      "evidence_pages": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "significativo com métodos de perda de peso não cirúrgicos. Porém, ainda que exista diversas técnicas, pouco se é discutido sobre elas. Neste contexto, o objetivo deste trabalho foi explorar as novas técnicas cirúrgicas personalizadas para pacientes indicados para bariátrica, considerando ainda a robótica como apoio a essas técnicas. Trata-se de uma revisão integrativa dos últimos 10 anos (2013 a 2023) e que utilizou três bases de dados bibliográficas. Foram utilizados, 21 artigos para compor a revisão. Dentre as técnicas existentes de cirurgia bariátrica, destacam-se a mini Gastric by- pass, a Duodenal Switch e a Single-Anastomosis Duodenal Switch (SADS). Pode-se concluir, também, que a robó",
+      "sampled_chunks": 27,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "A amostra não apresentou título bibliográfico confiável; revisar OCR e as primeiras páginas do documento."
+      ]
+    },
+    {
+      "drive_file_id": "1I5nkO-d9qMt_s1r3x4cPCJt29IgkIhtl",
+      "mime_type": "application/pdf",
+      "status": "partial",
+      "confirmed_fields": {},
+      "observed_title_candidate": "Cirurgia Bariátrica: Indicações e Técnicas Cirúrgicas",
+      "evidence_pages": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "crescente. a cirurgia bariátrica na população adulta é um campo dinâmico e complexo, onde as técnicas, indicações, contraindicações, complicações e a evolução histórica se entrelaçam de maneira intrincada. A literatura examinada revela a necessidade contínua de abordagens personalizadas e multidisciplinares, considerando não apenas os aspectos físicos, mas também os psicológicos e sociais dos pacientes submetidos a essa intervenção. as técnicas cirúrgicas na abordagem da obesidade apresentam particularidades que devem ser cuidadosamente avaliadas pelos profissionais de saúde. A literatura revisada fornece subsídios valiosos para embasar decisões clínicas, evidenciando os benefícios e as cons",
+      "sampled_chunks": 15,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "O candidato de título foi extraído do conteúdo e deve ser conferido nas páginas indicadas antes de ser usado pelo app."
+      ]
+    },
+    {
+      "drive_file_id": "1bAv0yjFJyAn6T--LXc3KCNFEsIt3wiTF",
+      "mime_type": "application/pdf",
+      "status": "partial",
+      "confirmed_fields": {},
+      "observed_title_candidate": "E METABÓLICA Por Departamento De Cirurgia BariátriC a Guia para entender o tratamento com",
+      "evidence_pages": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "Guia para entender o tratamento com CIRURGIA BARIÁTRICA E METABÓLICA Por Departamento De Cirurgia BariátriC a Guia para entender o tratamento com CIRURGIA BARIÁTRICA E METABÓLICA DePartamento De Cirurgia BariátriCa Denis p ajecki (coordenador) Jacqueline riz zolli Luiz Berti Carina rossoni Guia para entender o tratamento com CIRURGIA BARIÁTRICA E METABÓLICA Í n d i c e 05 10 15 17 23 04 09 17 O que é as principais atividade física: O tratamentO cOmOrbidades qual a melhOr OpçãO? cirúrgicO 10 18 22 da Obesidade? pré-requisitOs O que é a que dOenças e avaliações síndrOme de dumping? assOciadas 05 a escOlha à Obesidade 13 19 da técnica sete pOntOs a questãO pOdem melhOrar para ficar prOntO da hi",
+      "sampled_chunks": 5,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "O candidato de título foi extraído do conteúdo e deve ser conferido nas páginas indicadas antes de ser usado pelo app."
+      ]
+    },
+    {
+      "drive_file_id": "1daAAVEUbXVkW77c7qhpW1jJx0MuWsMNj",
+      "mime_type": "application/pdf",
+      "status": "partial",
+      "confirmed_fields": {},
+      "observed_title_candidate": "Brazilian Journal of Health Review 20743 ISSN: 2595-6825 Cirurgia bariátrica: uma revisão bibliográfica",
+      "evidence_pages": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "Endereço: Av. T-13, 692, St. Bela Vista, Goiânia - GO, CEP: 74823-400 E-mail: lininhaborges@hotmail.com Mayara Cristina Siqueira Faria Graduanda em Medicina Instituição: Centro Universitário São Lucas Endereço: Rua Alexandre Guimarães, 1927, Areal, Porto Velho – RO E-mail: mayaracsf11@gmail.com Emanuela Proença Nogueira Graduanda em Medicina Instituição: Universidade Nove de Julho Campus (UNINOVE) - Campus Bauru Endereço: Rua Nicolau Assis, 15, Jardim Panorama, Bauru – SP, CEP: 17011-102 E-mail: manu.recados@gmail.com Leandro Silva de Moraes Preto Graduando em Medicina Instituição: Universidade São Francisco (USF) Endereço: Av. São Francisco de Assis, 218, Cidade Universitária, Bragança Paul",
+      "sampled_chunks": 16,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "O candidato de título foi extraído do conteúdo e deve ser conferido nas páginas indicadas antes de ser usado pelo app."
+      ]
+    },
+    {
+      "drive_file_id": "133kL-UwvYfUO3tFNwnfryDUY_RmpK5gH",
+      "mime_type": "application/pdf",
+      "status": "unresolved",
+      "confirmed_fields": {},
+      "observed_title_candidate": null,
+      "evidence_pages": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "desvio gástrico em Y de Roux e o desvio duodenal (técnicas malabsortivas). A revisão revelou que as técnicas malabsortivas oferecem uma perda de peso mais significativa e uma maior redução das comorbidades associadas à obesidade, como diabetes tipo 2 e hipertensão, em comparação com as técnicas restritivas. No entanto, essas técnicas malabsortivas estão associadas a um aumento do risco de complicações nutricionais. As inovações tecnológicas, como a laparoscopia avançada e a cirurgia robótica, têm contribuído para melhorias nos resultados cirúrgicos e na recuperação dos pacientes. A escolha da técnica cirúrgica deve ser baseada em uma avaliação individualizada dos benefícios e riscos, com con",
+      "sampled_chunks": 16,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "A amostra não apresentou título bibliográfico confiável; revisar OCR e as primeiras páginas do documento."
+      ]
+    },
+    {
+      "drive_file_id": "1asX74LMu-mPVLx0kJ9HqoX_R2LgPIctF",
+      "mime_type": "application/pdf",
+      "status": "unresolved",
+      "confirmed_fields": {},
+      "observed_title_candidate": null,
+      "evidence_pages": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "descritores de ciências da saúde relacionados ao Catiana Pinto dos Santos5 tema, como “Obesity, Morbid”, “Bariatric Surgery” e Graduada em Medicina “Anesthesia”. Os resultados mostraram que a escolha adequada da técnica cirúrgica e anestésica Rachel Fernandes Álvares6 melhora significativamente a segurança, reduz Graduada em Medicina complicações intra e pós-operatórias e otimiza os desfechos clínicos em pacientes com obesidade Natália Seixas de Melo7 mórbida submetidos à cirurgia bariátrica. Graduada em Medicina Aliandro Willy Duarte Magalhães8 Graduado em Medicina Marília Cavalcante Chaves9 Graduada em Medicina Victor Santana de Oliveira10 Graduado em Medicina Lorenna da Silva Santos Canta",
+      "sampled_chunks": 13,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "A amostra não apresentou título bibliográfico confiável; revisar OCR e as primeiras páginas do documento."
+      ]
+    },
+    {
+      "drive_file_id": "1rZB8ydMuHYnWCe_r-NQEn5XT_Ynh3M6w",
+      "mime_type": "application/pdf",
+      "status": "unresolved",
+      "confirmed_fields": {},
+      "observed_title_candidate": null,
+      "evidence_pages": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "E-mail: lara.mosermartins@gmail.com Jeanne Aparecida Malaquias Graduada em Medicina Instituição: Centro Universitário de Caratinga (UNEC) Endereço: Rua Eli Seabra Filho, 405, Belo Horizonte - MG E-mail: jeanne-med@hotmail.com Rejane Gomes Pereira Tófani Graduanda em Medicina Instituição: Universidade José do Rosário Vellano (UNIFENAS) – Belo Horizonte Endereço: Rua Castelo de Lamego, 323, Castelo, Belo Horizonte - MG E-mail: rejanegpbh@hotmail.com Vinicius Balbino Lago Cunha Graduando em Medicina Instituição: Universidade José do Rosário Vellano (UNIFENAS) – Belo Horizonte Endereço: Rua Alagoas, 581, Funcionários - Belo Horizonte E-mail: vbalbino85@gmail.com Stephanie Figueiredo de Barros Mo",
+      "sampled_chunks": 14,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "A amostra não apresentou título bibliográfico confiável; revisar OCR e as primeiras páginas do documento."
+      ]
+    },
+    {
+      "drive_file_id": "143CGBAnOovTJzVyaoxGVsz1ipFVRYbHo",
+      "mime_type": "application/pdf",
+      "status": "unresolved",
+      "confirmed_fields": {},
+      "observed_title_candidate": null,
+      "evidence_pages": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "mostra-se mais difícil se comparado aos demais pacientes devido is more difficult in this population due to anatomical and a alterações anatômicas e fisiológicas causadas pelo excesso de physiological changes caused by excess fat. Obese patients have gordura. O paciente obeso possui alterações na função pulmonar pulmonary alterations that may lead to faster desaturation, which que favorecem uma dessaturação mais rápida do que as demais makes this group more susceptible to complications during pessoas, o que torna esse grupo mais suscetível a complicações tracheal intubation. Objective: To understand which factors are durante a intubação orotraqueal. Objetivo: Compreender quais responsible fo",
+      "sampled_chunks": 25,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "A amostra não apresentou título bibliográfico confiável; revisar OCR e as primeiras páginas do documento."
+      ]
+    },
+    {
+      "drive_file_id": "1Zs9Egj29vROqQ5Jc_drE6Jr5-0_ai4j6",
+      "mime_type": "application/pdf",
+      "status": "unresolved",
+      "confirmed_fields": {},
+      "observed_title_candidate": null,
+      "evidence_pages": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "Perinatal pela National Perinatal um corpo feio e limitado, doente, frágil e fracassado pelas frustrações dos diversos Epidemiology; Professor do Programa tratamentos. A cirurgia bariátrica representa um renascimento, retorno ao convívio social de Pós-graduação em Saúde Coletiva e não ser diferente das outras pessoas. Ainda há um longo caminho a ser percorrido para da UFMA. aasilva@elo.com.br atingir a satisfação, porém a cirurgia foi um dos grandes passos para o alcance de uma mudança que representa um passado próximo e um futuro não muito distante. 3 Doutor em Gastroenterologia Cirúrgia pela Universidade Federal de São PALAVRAS-CHAVE: Obesidade mórbida; Cirurgia bariátrica; Corpo Adiposo. ",
+      "sampled_chunks": 25,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "A amostra não apresentou título bibliográfico confiável; revisar OCR e as primeiras páginas do documento."
+      ]
+    },
+    {
+      "drive_file_id": "1OhZNLuFYSKQFvrT7E2q8OSEkKd9YIByq",
+      "mime_type": "application/pdf",
+      "status": "unresolved",
+      "confirmed_fields": {},
+      "observed_title_candidate": null,
+      "evidence_pages": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "obesidade conTrolada Para você entender uma nova forma de classificar a obesidade, baseada na trajetória do Peso Esta é Uma pUblicação obesidade conTrolada Para você entender uma nova forma de classificar a obesidade, baseada na trajetória do Peso reaLiZação edição lúcia Helena de oliveira Projeto gráfico GuilHerme freiT as design ariel berTHoldo ecidnÍ E-BOOK Obesidade cOntrOlada 04 13 Introdução quando se perde um pouco de peso 05 15 o que é obesIdade a proposta baseada 07 na trajetórIa do peso o desafIo de manter 17 o resultado dIversos cenárIos 10 21 19 a classIfIcação observações consIderações da obesIdade muIto Importantes fInaIs 3 ABESO | SBEM E-BOOK Obesidade cOntrOlada Introdução De",
+      "sampled_chunks": 8,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "A amostra não apresentou título bibliográfico confiável; revisar OCR e as primeiras páginas do documento."
+      ]
+    },
+    {
+      "drive_file_id": "1CIiqKR9iSXmJhaK_EiIc_zNjJCEBWEWB",
+      "mime_type": "application/pdf",
+      "status": "unresolved",
+      "confirmed_fields": {},
+      "observed_title_candidate": null,
+      "evidence_pages": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "performed in July 2019 using the PubMed, Scopus, Web of Science and Cochrane Library electronic databases. The review focused on the results of RCTs, although observational studies, meta-analyses, reviews, guidelines and other reports discussing the perioperative care of obese patients were also considered.Whendatafromobesepatientswerenotavailable,relevantdatafromnon-obesepopulations wereused. Results and conclusion: Obese patients require comprehensive preoperative evaluation. Experienced medical teams, appropriate equipment and monitoring, careful anaesthetic management, and an ade- quate perioperative ventilation strategy may improve postoperative outcomes. Additional perioperative precau",
+      "sampled_chunks": 28,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "A amostra não apresentou título bibliográfico confiável; revisar OCR e as primeiras páginas do documento."
+      ]
+    },
+    {
+      "drive_file_id": "1YZBXloGp4a2-hYLNDvlzZe-RwqQ_82bG",
+      "mime_type": "application/pdf",
+      "status": "unresolved",
+      "confirmed_fields": {},
+      "observed_title_candidate": null,
+      "evidence_pages": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "O pós-OperatóriO da cirurgia bariátrica Um guia para resolver as principais dúvidas dos pacientes elaborado pelo Departamento de cirurgia bariátrica da abeso Jacqueline rizzolli (coordenadora), denis p ajecki, Álvaro albano e sylka rodovalho O pós-OperatóriO da cirurgia bariátrica Um guia para resolver as principais dúvidas dos pacientes elaborado pelo Departamento de cirurgia bariátrica da abeso Jacqueline rizzolli (coordenadora), denis p ajecki, Álvaro albano e sylka rodovalho reaLiZaçã O ediçãO Lúcia HeLena De OLiveira prOJet O grÁficO guiLHerme Freitas design arieL bertHOLDO Dados Internacionais de Catalogação na Publicação (CIP) (Câmara Brasileira do Livro, SP, Brasil) Pajecki, Denis O ",
+      "sampled_chunks": 5,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "A amostra não apresentou título bibliográfico confiável; revisar OCR e as primeiras páginas do documento."
+      ]
+    },
+    {
+      "drive_file_id": "10fr5jLhUgQBUgPEg_NfvH_oNCrqmwo_S",
+      "mime_type": "application/pdf",
+      "status": "partial",
+      "confirmed_fields": {},
+      "observed_title_candidate": "Cirurgia Bariátrica: Técnicas e Resultados: Revisão das técnicas cirúrgicas no tratamento da",
+      "evidence_pages": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "aqueles que não responderam a abordagens conservadoras. Esta revisão abordou as técnicas bariátricas mais comuns, incluindo Bypass gástrico em Y-de-Roux, Gastrectomia vertical (sleeve), Banda gástrica ajustável e Desvio biliopancreático com duodenal switch. Cada técnica foi analisada em relação à sua eficácia, perfil de segurança e possíveis complicações. Os resultados mostram que, embora todos os procedimentos sejam eficazes na indução de perda de peso significativa, eles apresentam variáveis graus de complicações e benefícios metabólicos. Notavelmente, muitos dos procedimentos não apenas facilitam a perda de peso, mas também induzem melhorias significativas ou remissão de comorbidades, com",
+      "sampled_chunks": 15,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "O candidato de título foi extraído do conteúdo e deve ser conferido nas páginas indicadas antes de ser usado pelo app."
+      ]
+    },
+    {
+      "drive_file_id": "1oRkNX9x71DIl6EunfzmAPyGiXsbUUyW7",
+      "mime_type": "application/pdf",
+      "status": "unresolved",
+      "confirmed_fields": {},
+      "observed_title_candidate": null,
+      "evidence_pages": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "TranSTornoS alimenTareS e obesiDaDe Criado pelo Departamento De psiquiatria e transtornos alimentares adriano Segal, p riscilla Gil, José C. appolinário e ana Clara Floresi Está é Uma pUblicação da abEso TranSTornoS alimenTareS e obesiDaDe Criado pelo Departamento De psiquiatria e transtornos alimentares adrianoSegal (coordenador), p riscilla Gil, José C. appolinário e ana Clara Floresi realiZação edição lúcia Helena De oliveira proJeT o GráFiCo GuilHerme Freitas deSiGn ariel bertHolDo ecidnÍ E-BOOK TransTornos alimenTares e obesidade 04 08 13 Introdução síndromE do comEr noturno Escalas dE 05 avalIação 09 EntEnda EssEs 14 três sIntomas BulImIa nErvosa conclusõEs 06 11 15 transtorno dE compu",
+      "sampled_chunks": 8,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "A amostra não apresentou título bibliográfico confiável; revisar OCR e as primeiras páginas do documento."
+      ]
+    },
+    {
+      "drive_file_id": "1vhBGYtuJbVsg2k8fh5x8ZFvL6SDC81fY",
+      "mime_type": "application/pdf",
+      "status": "partial",
+      "confirmed_fields": {},
+      "observed_title_candidate": "Avaliação em Enfermagem; Enfermagem Médico-Cirúrgica",
+      "evidence_pages": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "ORCID: 0000-0003-0876-3996 “estado respiratório: permeabilidade das vias aéreas”. Resultados: no primeiro dia de avaliação Simony Fabíola Lopes NunesI os indicadores mais compr ometidos foram: frequência respiratória, tosse, profundidade da respiração e uso de músculos acessórios. Durante o acompanhamento, verificou-se que a maior ORCID: 0000-0003-4613-8542 parte dos indicadores apresentou desvio leve da variação normal e, na última avaliação, houve Pedro Martins Lima NetoI predomínio de indicadores com algum grau de comprometimento. Conclusões: com auxílio ORCID: 0000-0001-5711-6280 da Classificação dos resultados de enfermagem, observou-se que pacientes submetidos a cirurgias toracoabdomin",
+      "sampled_chunks": 36,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "O candidato de título foi extraído do conteúdo e deve ser conferido nas páginas indicadas antes de ser usado pelo app."
+      ]
+    },
+    {
+      "drive_file_id": "1RCyHau7fNnNhRka-atSPhppmAuW6JeRH",
+      "mime_type": "application/pdf",
+      "status": "unresolved",
+      "confirmed_fields": {},
+      "observed_title_candidate": null,
+      "evidence_pages": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "PREPARO DO PACIENTE E SUA FAMÍLIA PARA A ALTA HOSPITALAR Dra Neide da Silva Knihs Transição do cuidado entre alta hospitalar e domicílio Planejamento da alta hospitalar Equipe multiprofissional Rede de atenção em saúde REDEDE APOIO Igreja/ Trabalho Religião Escola/ Universidade Serviço de Saúde Grupos/ Paciente XXX Instituições 32 anos Comunitárias Animal de estimação Vizinhos Filhos (família) Amigos",
+      "sampled_chunks": 5,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "A amostra não apresentou título bibliográfico confiável; revisar OCR e as primeiras páginas do documento."
+      ]
+    },
+    {
+      "drive_file_id": "1FCdYFq79-qL4t0wgmmrOmaOnU_p9vDwv",
+      "mime_type": "application/pdf",
+      "status": "unresolved",
+      "confirmed_fields": {},
+      "observed_title_candidate": null,
+      "evidence_pages": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "maior parte dos pacientes graves internados por COVID-19 possuem alterações laboratoriais dignas de atenção, como linfopenia, neutrofilia, aumento do tempo de protrombina e elevação dos níveis de D-dímero. Devido tais mudanças se mostrarem cruciais para a taxa de mortalidade e morbidade nesse subgrupo de infectados, diversos trabalhos com enfoque na fisiopatologia, principalmente hematológica, da doença surgem a cada dia. Aprofundando em tais estudos, variados trabalhos publicados evidenciaram a infecção pelo Sars-CoV-2 à instalação de um estado pró-trombótico em pacientes hospitalizados graves, o que acarreta em potencial ocorrência de eventos trombóticos venosos ou arteriais nessa coorte. ",
+      "sampled_chunks": 25,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "A amostra não apresentou título bibliográfico confiável; revisar OCR e as primeiras páginas do documento."
+      ]
+    },
+    {
+      "drive_file_id": "1fK0AF3jec4OrQtIAROJPKMrdU8VWv89F",
+      "mime_type": "application/pdf",
+      "status": "partial",
+      "confirmed_fields": {},
+      "observed_title_candidate": "Assistência de Enfermagem e Intercorrências no Pós-Operatório Imediato (POI)",
+      "evidence_pages": [
+        1,
+        2,
+        3
+      ],
+      "evidence_excerpt": "Náuseas 16,04% Hipertensão 12,26% Hipotermia 12,26% Hipotensão 9,43% Tremores 7,55% Dispneia 5,66% Hipoglicemia e Retenção Urinária 4,72% cada Outras intercorrências identificadas:  Cardiovasculares: Arritmias (taquicardia e bradicardia);  Respiratórias: Hipoxemia (hipoventilação), taquipneia e bradipneia.  Neurológicas: Atraso ao despertar, desorientação, agitação;  Gastrointestinais: Vômitos e soluços.  Sítio Cirúrgico: Sangramento (3,77%), deiscência. A prevalência da sede pode atingir índices de até 88,6% em alguns contextos, manifestando-se através de boca seca, lábios ressecados e saliva grossa. Fatores como o tempo de jejum prolongado (frequentemente superior a 11-12 horas), o ti",
+      "sampled_chunks": 6,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "O candidato de título foi extraído do conteúdo e deve ser conferido nas páginas indicadas antes de ser usado pelo app."
+      ]
+    },
+    {
+      "drive_file_id": "1WZJNFwRSIvqsTzE3YlPo-kT9rBzfQKOO",
+      "mime_type": "application/pdf",
+      "status": "unresolved",
+      "confirmed_fields": {},
+      "observed_title_candidate": null,
+      "evidence_pages": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "ORCID: 0000-0003-1675-9516 pneumonia e infecção urinária. A presença de complicações esteve ligada ao aumento na Paula Regina de Souza HermannIII mortalidade, necessidade de reoperações e pior sobrevida. Poucos estudos relatam a frequência de monitoramento, tempo de seguimento e/ou quando as complicações começaram a serem ORCID: 0000-0002-3235-3287 observadas. Conclusão: as complicações infecciosas foram as mais prevalentes no pós- Inês FronteiraII operatório. A escassez de diretrizes que guiem a vigilância das complicações no que concerne ORCID: 0000-0003-1406-4585 a frequência de monitoramento, tempo de seguimento e classificação dificulta estabelecer um panorama das mesmas e consequenteme",
+      "sampled_chunks": 38,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "A amostra não apresentou título bibliográfico confiável; revisar OCR e as primeiras páginas do documento."
+      ]
+    },
+    {
+      "drive_file_id": "17qpoGMDN4iu6_dGZl1L620eCwxOeypvr",
+      "mime_type": "application/pdf",
+      "status": "unresolved",
+      "confirmed_fields": {},
+      "observed_title_candidate": null,
+      "evidence_pages": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "ORCID: https://orcid.org/0000-0001-7285-7108 Centro Universitário Dinâmica das Cataratas, Brasil E-mail: Josiane.andrade@udc.edu.br Resumo Objetivo: identificar as principais dificuldades encontradas por familiares/cuidadores relacionado a passagem de informação da equipe multidisciplinar pós alta hospitalar. Metodologia: trata-se de uma revisão integrativa da literatura realizada por meio dos estudos disponíveis na Biblioteca Virtual em Saúde, Literatura Latino Americana e do Caribe em ciências da saúde e no portal ScientificEletronicLibrary Online. Os critérios estabelecidos como inclusão nessa pesquisa foram: estudos completos e originais disponibilizados gratuitamente, período de publica",
+      "sampled_chunks": 28,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "A amostra não apresentou título bibliográfico confiável; revisar OCR e as primeiras páginas do documento."
+      ]
+    },
+    {
+      "drive_file_id": "1ymUqtCBbHKAKBUqyuAgCrN4zfdps7LfE",
+      "mime_type": "application/pdf",
+      "status": "unresolved",
+      "confirmed_fields": {},
+      "observed_title_candidate": null,
+      "evidence_pages": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "Suely Amorim de Araújo ORCID: https://orcid.org/0000-0001-9234-166X Universidade Federal de Uberlândia, Brasil E-mail: profasuelyamorim@ufu.br Resumo O presente estudo teve como objetivo descrever as principais contribuições que a equipe de enfermagem traz na recuperação física e no controle emocional dos pacientes no momento pós-cirúrgico. Para responder a este objetivo foi adotada como metodologia a Revisão Integrativa de Literatura. Percorrendo seis etapas, identificação do tema, definição do problema, elaboração da pergunta norteadora, a qual foi construída através do acrônimo PICo, busca nas bases de dados, seleção dos estudos que compuseram a amostra, e as estratégias de busca. A parti",
+      "sampled_chunks": 24,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "A amostra não apresentou título bibliográfico confiável; revisar OCR e as primeiras páginas do documento."
+      ]
+    },
+    {
+      "drive_file_id": "1-xhx4ifwQCUbz_keirJIz6UQSQ8a5sUE",
+      "mime_type": "application/pdf",
+      "status": "unresolved",
+      "confirmed_fields": {},
+      "observed_title_candidate": null,
+      "evidence_pages": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "Diretrizes de Atenção à Pessoa AmputISaBdNa 978-85-334-1981-0 MINISTÉRIO DA SAÚDE 9788533 419810 Plano Nacional dos Direitos da Pessoa com Deficiência Diretrizes de Atenção Biblioteca Virtual em Saúde do Ministério da Saúde www.saude.gov.br/bvs à Pessoa Amputada Brasília – DF 1 2013 MINISTÉRIO DA SAÚDE Secretaria de Atenção à Saúde Departamento de Ações Programáticas Estratégicas Diretrizes de Atenção à Pessoa Amputada 1ª edição 1ª reimpressão Brasília – DF 2013 © 2012 Ministério da Saúde. Todos os direitos reservados. É permitida a reprodução parcial ou total desta obra, desde que citada a fonte e que não seja para venda ou qualquer fim comercial. Venda proibida. Distribuição gratuita. A re",
+      "sampled_chunks": 8,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "A amostra não apresentou título bibliográfico confiável; revisar OCR e as primeiras páginas do documento."
+      ]
+    },
+    {
+      "drive_file_id": "1a0YMt3q7p70f5iFaX_qQJ1RHouEvalYA",
+      "mime_type": "application/pdf",
+      "status": "unresolved",
+      "confirmed_fields": {},
+      "observed_title_candidate": null,
+      "evidence_pages": [
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "SEREM enfermagem em conjunto até a chegada do paciente na SRPA e sua passagem de plantão OBSERVADAS: ao profissional desse local. Passo 1 Transporte seguro Inicia na sala operatória, ainda com o paciente sob os cuidados do anestesiologista, QUANDO? equipe cirúrgica e de enfermagem fazendo parte do sign out, no protocolo de verificação de cirurgia segura. A equipe em conjunto revê o transporte e a necessidade de uso de oxigenioterapia ao encaminhar o paciente até a SRPA, assim como a estabilidade de sinais vitais COMO? previamente, condições de normotermia, curativos, infusões conectadas e funcionantes, drenagens abertas e na altura adequada, náuseas, vômitos e dor, condições de consciência, ",
+      "sampled_chunks": 4,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "A amostra não apresentou título bibliográfico confiável; revisar OCR e as primeiras páginas do documento."
+      ]
+    },
+    {
+      "drive_file_id": "1_VSuj-wh7VOliXi2M_7idLkb1jEAk5Yn",
+      "mime_type": "application/pdf",
+      "status": "unresolved",
+      "confirmed_fields": {},
+      "observed_title_candidate": null,
+      "evidence_pages": [
+        2,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": " Avaliar bloqueio residual neuromuscular 1.3 Hipoventilação  Coletar exames para avaliar gases sanguíneos  Solicitar avaliação imediata do anestesiologista responsável PARE e AVALIE os seguintes sinais de alerta! Alterações respiratórias ANALISE E INTERPRETE TOME CONDUTAS FRENTE A SITUAÇAO IDENTIFICADA a situação especifica a Conduta imediata/Intervenção do enfermeiro na SRPA ser monitorada 1.1 Obstrução de Vias  Realizar desobstrução imediata da VAS com reposicionamento – extensão do Aéreas pescoço e anteriorizar a mandíbula, decúbito a 45 graus e uso de canula oro/naso faríngea. Casos extremos podem exigir nova IOT. 1.2 Hipoxemia –  Monitorar constantemente com oximetria de pulso e pa",
+      "sampled_chunks": 8,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "A amostra não apresentou título bibliográfico confiável; revisar OCR e as primeiras páginas do documento."
+      ]
+    },
+    {
+      "drive_file_id": "1XoSi4a7hJA7A9GdWxQxGucwCv3WLhv1f",
+      "mime_type": "application/pdf",
+      "status": "unresolved",
+      "confirmed_fields": {},
+      "observed_title_candidate": null,
+      "evidence_pages": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "Calcularam-se os índices de validade de conteúdo (IVC) e aparência (IVA), concordância ORCID: 0000-0003-3523-7238 (IC), e aplicou-se o teste exato de binomial, considerando p>0,05 e a proporção de 0,80 de Thalita Gomes do CarmoII concordância. Resultados: o vídeo contemplou 13 temáticas, com tempo de duração de sete minutos e 33 segundos. Os itens das três dimensões avaliadas apresentaram IVCs excelentes, ORCID: 0000-0002-5868-667X variando entre 0,86 e 1,00 (p>0,05), com IVC total de 0,95, IVA de 0,94 e IC igual a 61,5%. Débora Rodrigues Guerra ProboI Conclusões: construiu-se ferramenta tecnológica, do tipo vídeo educativo, para o ensino ORCID: 0000-0001-9787-8263 sobre o perioperatório de ",
+      "sampled_chunks": 35,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "A amostra não apresentou título bibliográfico confiável; revisar OCR e as primeiras páginas do documento."
+      ]
+    },
+    {
+      "drive_file_id": "1SllmrhJX8SuZi5i6kFikDqBCtngSFhzh",
+      "mime_type": "application/pdf",
+      "status": "unresolved",
+      "confirmed_fields": {},
+      "observed_title_candidate": null,
+      "evidence_pages": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "RESUMO Objetivo: Identificar os aspectos relevantes da visita pré-operatória de Enfermagem de modo a evidenciar seus benefícios para o paciente e para a assistência. Métodos: Trata-se de uma revisão bibliográfica narrativa descritiva, realizada por meio das bases de dados Biblioteca Virtual em Saúde (BVS) e Base de Dados de Enfermagem (BDEnf) e do buscador acadêmico Google Acadêmico, utilizando os descritores “cirurgia”, “enfermagem” e “visita pré-operatória”. Foram selecionados oito artigos para discussão, além de um Manual de Práticas Recomendadas. Resultados: Educação para a saúde, preparo físico e emocional, prevenção de complicações no pós-operatório e diversas competências presentes no",
+      "sampled_chunks": 25,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "A amostra não apresentou título bibliográfico confiável; revisar OCR e as primeiras páginas do documento."
+      ]
+    },
+    {
+      "drive_file_id": "14dVMPLHlYsu5YP1GrC0_aFlMQWqy8Z8N",
+      "mime_type": "application/pdf",
+      "status": "unresolved",
+      "confirmed_fields": {},
+      "observed_title_candidate": null,
+      "evidence_pages": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "geralmente <6horas. (cid:0) CIRURGIA DE URGÊNCIA: risco de vida ou de perda de membro caso o paciente não seja operado em um INTERVALO DE TEMPO, geralmente entre 6he 24h. (cid:0) CIRURGIA ELETIVA: pode ser postergada POR ATÉ 1 ANO sem causar grandes problemasaopaciente. UNIVERSIDADE FEDERAL DE SANTA CATARINA – UFSC CENTRO DE CIÊNCIAS DA SAÚDE- CCS DEPARTAMENTO DE ENFERMAGEM INT 5204- O CUIDADO NO PROCESSO DE VIVER HUMANO II: condição cirúrgica de saúde Materialde apoioelaboradopelasProf.ª Dr.ªNeide daSilvaKnihs; JulianaBalbinot ReisGirondi eLúcia Nazaré Amante. CUIDADOSDE ENFERMAGEM AOS PACIENTES CIRÚRGICOSNO PERÍODOPRÉ- OPERATÓRIO 1. ASPECTOS GERAIS Quanto aoperíodo,opré-operatório divide-s",
+      "sampled_chunks": 11,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "A amostra não apresentou título bibliográfico confiável; revisar OCR e as primeiras páginas do documento."
+      ]
+    },
+    {
+      "drive_file_id": "1z24RFyNSXK70wgr9-a3KZ9257xGsRJTD",
+      "mime_type": "application/pdf",
+      "status": "partial",
+      "confirmed_fields": {},
+      "observed_title_candidate": "Atenção à saúde CUIDADOS DE ENFERMAGEM A PACIENTES EM PRÉ-OPERATÓRIO",
+      "evidence_pages": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "pré-operatório mediato e imediato, e propor um ‘checklist’ para uma Clínica Cirúrgica, como forma de garantir a segurança do paciente antes do procedimento cirúrgico. Pesquisa qualitativa, descritiva, exploratória e de campo com 42 profissionais da equipe de enfermagem em uma instituição hospitalar do sul de Santa Catarina, nos meses de abril e maio de 2016. Os resultados apontaram que o serviço não possui instrumento de ‘cheklist’ ou protocolo para pré-operatório mediato e imediato e que houve um déficit de orientação quanto ao cuidado realizado. Foi elaborado uma proposta de ‘cheklist’ para ser entregue a instituição da pesquisa. Como também salientamos a necessidade da realização de educa",
+      "sampled_chunks": 16,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "O candidato de título foi extraído do conteúdo e deve ser conferido nas páginas indicadas antes de ser usado pelo app."
+      ]
+    },
+    {
+      "drive_file_id": "11yYTHeY94hOPFBZaB2Zlt2Wiw2qxVuX4",
+      "mime_type": "application/pdf",
+      "status": "unresolved",
+      "confirmed_fields": {},
+      "observed_title_candidate": null,
+      "evidence_pages": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "Enfermagem no período pré-operatórias? Foram selecionados 93 artigos, e após refinamento, através dos critérios de exclusão e elegibilidade, restaram 10 artigos. A base de indexação com maior representatividade foram a LILACS e SciELO, ambas representando 85,71% das publicações, e a base de dados BDENF 14,28%. Verificou-se poucas publicações entre o intervalo de tempo avaliado (2017 e 2022), sendo encontrados dois estudos de revisão de literatura, dois de revisão integrativa, dois com abordagem qualitativa e descritiva, dois estudos de intervenção, um estudo metodológico e um estudo descritivo exploratório. Os resultados e discussões dos artigos analisados confirmam que, os cuidados/assistên",
+      "sampled_chunks": 19,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "A amostra não apresentou título bibliográfico confiável; revisar OCR e as primeiras páginas do documento."
+      ]
+    },
+    {
+      "drive_file_id": "12F8539ZNtvLtx5nGmPOtUPJ6clbVvNJU",
+      "mime_type": "application/pdf",
+      "status": "unresolved",
+      "confirmed_fields": {},
+      "observed_title_candidate": null,
+      "evidence_pages": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "Paulo (USP), São Paulo, São Paulo, Brasil. RESUMO Introdução: a avaliação pré-anestésica (APA) é uma prática imprescindível no cuidado perioperatório, por oferecer condições de planejamento do ato anestésico e cirúrgico, mantendo a segurança física e emocional do paciente. Objetivo: apresentar uma revisão das principais orientações pré-anestésicas disponíveis na literatura. Metodologia: trabalho de revisão bibliográfica realizada nos domínios PubMed, SciELO, British Journal of Anaesthesia (BJA), Aneshesiology e Current Opinion. Resultados: as principais recomendações abordam a estratificação do risco anestésico/cirúrgico, jejum pré-operatório, controle da ansiedade e dos hábitos sociais, alé",
+      "sampled_chunks": 24,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "A amostra não apresentou título bibliográfico confiável; revisar OCR e as primeiras páginas do documento."
+      ]
+    },
+    {
+      "drive_file_id": "1ajbzLqRKBfhN6X2Dz1yIJyWVc1JQ2Hw8",
+      "mime_type": "application/pdf",
+      "status": "unresolved",
+      "confirmed_fields": {},
+      "observed_title_candidate": null,
+      "evidence_pages": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "pós-anestésica e da clínica cirúrgica, cujos dados foram analisados pela técnica do Discurso do Sujeito Coletivo. Resultados: os enfermeiros em estudo não fazem uso de nenhum instrumento padronizado para avaliar e mensurar a dor pós-operatória e seu controle é realizado, basicamente, pela administração de medicamentos prescritos. Conclusão: os enfermeiros necessitam de capacitação prévia, bem como existe a necessidade de implementar um modelo de avaliação que seja utilizado para o controle mais efetivo da dor. Descritores: Cuidados de Enfermagem; Dor; Dor Pós-Operatória; Equipe de Enfermagem; Manejo da Dor; Medição da Dor. ABSTRACT Objective: to identify the form used by nurses to evaluate a",
+      "sampled_chunks": 30,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "A amostra não apresentou título bibliográfico confiável; revisar OCR e as primeiras páginas do documento."
+      ]
+    },
+    {
+      "drive_file_id": "1uFP54kMLDB4hpJ22P-eb-Y3IrhQ3vyz2",
+      "mime_type": "application/pdf",
+      "status": "unresolved",
+      "confirmed_fields": {},
+      "observed_title_candidate": null,
+      "evidence_pages": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "feiln reir paencCa NOSECNIODEDT I ot ediug a htiW opioida vailabiliyt orldH earglhOat nizaitonW eGneva 1996 LH iWObraCry aatloguingi nPu blicaitonD aat Cancepr ainrew l ihagi:t ue ifdooet p ioida vailabiliyt 2- nde d. N3 e.oplda- ruhsms gte raNaPradrco n- ruht gte rapy N4 a.rcohterapy SBN9I 241 544821 (NLCM lassi (cid:222) 2 0caiZ0toQ)n : orldH earglhOat nizaitonw elcomeres qopufr ees rmistssioorent p roduraceotn r slaeist thTeW Applicaitonas nde nquirieshs ouldb ea ddrehfsseoteOdt publicaitoin npoius, a r nflrt l . (cid:222) ceo f orldH earglhOat nizaietoGnn eSw,va ize,trlanwd h,ichw illb eg laopdt ro vidhete PublicaitoWn s, iae notstfrmaitono na nchy anpg lemahe,aons dotetxtnfr eet s we di",
+      "sampled_chunks": 7,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "A amostra não apresentou título bibliográfico confiável; revisar OCR e as primeiras páginas do documento."
+      ]
+    },
+    {
+      "drive_file_id": "1K2z5fV3W0HpnI8qlic6VSDEf0zS86jLv",
+      "mime_type": "application/pdf",
+      "status": "unresolved",
+      "confirmed_fields": {},
+      "observed_title_candidate": null,
+      "evidence_pages": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "Millions of patients each year suffer from acute pain as a Abstract result of trauma, illness, or surgery. Pain is the most commonreasonforadmissiontotheemergencydepart- Context. Intense acute pain afflicts millions of ment (ED), comprising more than 40% of the over 100 patients each year. Despite the recently increased millionEDvisitsannually[1].Furthermore,alargepropor- focus on the importance of pain control, manage- tionofcasesintheEDsettinginvolvepainofmoderateto mentofacutepainhasremainedsuboptimal. severeintensity[2].Theprevalenceofintenseacutepainis similarly high among patients undergoing surgery; in the Objective. The objective of this study was to iden- United States, over 73 mill",
+      "sampled_chunks": 28,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "A amostra não apresentou título bibliográfico confiável; revisar OCR e as primeiras páginas do documento."
+      ]
+    },
+    {
+      "drive_file_id": "1nAb093keQj_Yhc0ggBrbFitGFblbrudE",
+      "mime_type": "application/pdf",
+      "status": "unresolved",
+      "confirmed_fields": {},
+      "observed_title_candidate": null,
+      "evidence_pages": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "artigos selecionados foram dispostos num quadro síntese segundo as variáveis: autor, revista com o ano, título do artigo e objetivo geral do estudo. Foram incluídos estudos com texto completos, publicados no período de 1990 a 2014, n os idiomas português e inglês. Os estudos foram agrupados em três categorias: pacientes amputados que tiveram dor fantasma, tratamentos utilizados nesse controle e o papel de enfermagem para com estes. Foram recuperados 40 artigos na base de dados, dos quais 30 foram excluídos. Após leitura minuciosa, foram eleitos 11 artigos que atenderam aos critérios de elegibilidade definidos no estudo. A dor fantasma é um problema recorrente entre pacientes submetidos a amp",
+      "sampled_chunks": 26,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "A amostra não apresentou título bibliográfico confiável; revisar OCR e as primeiras páginas do documento."
+      ]
+    },
+    {
+      "drive_file_id": "1EPCBDJS70QMGgzsxG7WNHoP0GaN4feCD",
+      "mime_type": "application/pdf",
+      "status": "unresolved",
+      "confirmed_fields": {},
+      "observed_title_candidate": null,
+      "evidence_pages": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "raiva e depressão, crença, expectativa e percepção do paciente na sua condição. A dor no pré-operatório, duração da doença e ansiedade pós-cirúrgica são considerados preditivos para o desenvolvimento de dor crônica no pós-operatório de cirurgia ortopédica. O controle da dor no pós-operatório envolve prescrição de analgésicos em horários fixos, uso de métodos sofisticados como cateteres peridurais; evitando o sofrimento, proporcionando maior satisfação com o atendimento e reduzindo os custos relacionados a possíveis complicações que resultam num período prolongado de internação. A analgesia efetiva resulta numa recuperação mais rápida e maior colaboração com o tratamento, com resultados posit",
+      "sampled_chunks": 30,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "A amostra não apresentou título bibliográfico confiável; revisar OCR e as primeiras páginas do documento."
+      ]
+    },
+    {
+      "drive_file_id": "1PqMF2K_ijUIrkhqDL-28KPJSA5dwinzY",
+      "mime_type": "application/pdf",
+      "status": "unresolved",
+      "confirmed_fields": {},
+      "observed_title_candidate": null,
+      "evidence_pages": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "cirúrgica geral de um hospital público do Recife. Coletaram-se os dados de julho a setembro de 2019, por meio de entrevista semiestruturada gravada e avaliada através da análise de conteúdo temática proposta por Bardin. Resultados: seis enfermeiras com idade média de 45,3 anos participaram do estudo, com tempo de formação entre 3 e 24 anos. Dos depoimentos emergiram três categorias: 1) Sensibilidade e conhecimentos de enfermeiros no manejo adequado da dor; 2) Termoterapia e massagem de conforto para alívio da dor ao paciente cirúrgico; e 3) Práticas alternativas associadas aos fármacos no controle da dor pós-operatória. Pelos relatos, verificou-se a subjetividade característica da dor como f",
+      "sampled_chunks": 16,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "A amostra não apresentou título bibliográfico confiável; revisar OCR e as primeiras páginas do documento."
+      ]
+    },
+    {
+      "drive_file_id": "1UcXuZBX8B_e2GvymQHqisVur3Fryddx7",
+      "mime_type": "application/pdf",
+      "status": "unresolved",
+      "confirmed_fields": {},
+      "observed_title_candidate": null,
+      "evidence_pages": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "Programa de Pós-graduação intervenções de enfermagem para o manejo da dor aguda na SRPA. em Ciências e Tecnologias em Saúde, Brasília, DF, Brasil. CONTEÚDO: Trata-se de revisão de escopo, conforme a metodologia do Joana Briggs Institute, registrada no Open Science Framework (10.17605/OSF.IO/56TS7). A busca foi conduzida via Pubmed, Biblioteca Virtual em Saúde, Science Direct, Cochrane, CINAHL e literatura cinzenta e atualizada em 26 de março de 2025, além da busca exploratória. Foram incluídos Correspondência para: na amostra 14 artigos que cumpriram os critérios de elegibilidade. As intervenções de enfermagem encontradas foram: a) Mani Indiana Funez farmacológicas - supervisão da infusão de",
+      "sampled_chunks": 26,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "A amostra não apresentou título bibliográfico confiável; revisar OCR e as primeiras páginas do documento."
+      ]
+    },
+    {
+      "drive_file_id": "1O0YOHXXn1t4mA03TX_G37T27QPd4icHc",
+      "mime_type": "application/pdf",
+      "status": "unresolved",
+      "confirmed_fields": {},
+      "observed_title_candidate": null,
+      "evidence_pages": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "Conceição,PortoAlegre,RS,Brasil RevBrasOrtop2024;59(2):e160–e171. Resumo A dor é a queixa mais comum recebida pelo ortopedista no ambulatório e/ou emergência.Inúmeraspublicaçõesrelatamomanejoinadequadotantodadoraguda quanto da dor crônica pelos profissionais da saúde. O objetivo desse artigo de Palavras-chave atualização é trazer informações sobre a dor musculoesquelética, sua classificação, ► dor aguda avaliação,diagnósticoeabordagemterapêuticamultimodalparacadasituação.Desta ► dor crônica maneira, nas dores agudas seu controle adequado possibilita um trabalho de reabi- ► dor litaçãomaisprecoce,bemcomodiminuiosíndicesdecronificaçãodador.Nasdores musculoesquelética crônicassuaabordagemalémda",
+      "sampled_chunks": 17,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "A amostra não apresentou título bibliográfico confiável; revisar OCR e as primeiras páginas do documento."
+      ]
+    },
+    {
+      "drive_file_id": "14FpkEkVZ8rQQQ6bS9Sw3m1bfWXykFSQR",
+      "mime_type": "application/pdf",
+      "status": "unresolved",
+      "confirmed_fields": {},
+      "observed_title_candidate": null,
+      "evidence_pages": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "Guia para preparo de medicamentos injetáveis 1ª Edição – 2019 SFH / HU-UFSC Guia para preparo de medicamentos injetáveis 2019 ® 2019, Ebserh. Todos os direitos reservados Empresa Brasileira de Serviços Hospitalares – Ebserh www.ebserh.gov.br Empresa Brasileira de Serviços Hospitalares – Ministério da Educação Guia para preparo de medicamentos injetáveis – Setor de Farmácia Hospitalar. Florianópolis: Hospital Unive rsitário Prof. Polydoro Ernani de São Thiago, 2019. 41 p. Universidade Federal de Santa Catarina Hospital Polydoro Ernani de São Thiago Campus Universitário, Rua Professora Maria Flora Pausewang, s/n°, Trindade Florianópolis – SC – Caixa Postal 5199 CEP 88036 – 800 CNPJ 83.899.526/",
+      "sampled_chunks": 6,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "A amostra não apresentou título bibliográfico confiável; revisar OCR e as primeiras páginas do documento."
+      ]
+    },
+    {
+      "drive_file_id": "1Tm4GYvbkUYo315CYRF4ssgWIoAdjIC-H",
+      "mime_type": "application/pdf",
+      "status": "partial",
+      "confirmed_fields": {},
+      "observed_title_candidate": "ANALGÉSICOS SUBSTÂNCIA APRESENTAÇÃO REAÇÕES ADVERSAS PRINCIPAIS CUIDADOS AÇÃO E TEMPO DE ATIVA E NOME DILUIÇÃO DE ENFERMAGEM",
+      "evidence_pages": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "nsitram,Sylador, 5. Monitorar freqüência Timasen. Tramadon, intestinal. Tramal,Zamadol) 6. Orientar medidas para prevenção de obstipação intestinal. 7. Utilizar escala de dor para sua mensuração e controle. 8. Administrar de 20-30 minutos (infusão). Analgésico Oral: 30 e 60mg (cp) Administração Injeção Prurido corporal, 1. Atentar para uso em idosos SULFATO DE opióde. EV: 1 amp- lentamente constipação intestinal, perda e pacientes muito MORFINA Injetável: 10mg/ml; Diluir em 09ml de apetite, náuseas e debilitados. (Dimorf, Morfina) Dor intensa, (EV, SC, IM, de AD ou vômitos, tontura e 2. Controlar sinais e sintomas aguda e crônica. Intratecal, Epidural) SF/SG 5% sonolência. de impregnação ao ",
+      "sampled_chunks": 9,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "O candidato de título foi extraído do conteúdo e deve ser conferido nas páginas indicadas antes de ser usado pelo app."
+      ]
+    },
+    {
+      "drive_file_id": "1ldnVPOO96XZstBvujx0cRJAqO9lDyHKE",
+      "mime_type": "application/pdf",
+      "status": "unresolved",
+      "confirmed_fields": {},
+      "observed_title_candidate": null,
+      "evidence_pages": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "1. Centro Hospitalar de Trás-os-Montes e apresentava uma QV positiva. Esta diferiu significativamente (p < 0,05) entre os tipos de estomia e a preparação prévia na Alto Douro EPE. Vila Real, Portugal. consulta, sendo que os portadores de colostomia e os que fizeram marcação prévia do estoma na consulta apresentavam 2. Universidade de Trás-os-Montes e melhor QV. Conclusões: Existe relação estatística entre QV, o tipo de estomia e participação na consulta de enfermagem Alto Douro. Vila Real, Portugal. de estomaterapia, demonstrando a influência positiva dos cuidados de Enfermagem para o estomizado. O estudo reforça a 3. Universidade Federal do Rio de Janeiro. importância dessa consulta para a ",
+      "sampled_chunks": 31,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "A amostra não apresentou título bibliográfico confiável; revisar OCR e as primeiras páginas do documento."
+      ]
+    },
+    {
+      "drive_file_id": "1OMQVMDvrNhaDt46uOzTIf8vELVNQuJFz",
+      "mime_type": "application/pdf",
+      "status": "unresolved",
+      "confirmed_fields": {},
+      "observed_title_candidate": null,
+      "evidence_pages": [
+        1,
+        2,
+        3
+      ],
+      "evidence_excerpt": "trumental conservador, instrumental cirúrgico e por larvas. Cada método apresenta vantagens e desvantagens, dependendo das comorbidades do indivíduo e da etiologia da ferida2. A importância de uma avaliação abrangente do paciente e da ferida antes do início de qualquer forma de desbridamento não pode ser subestimada2. Essa avaliação ajuda a determinar o po- tencial de cicatrização da ferida, os objetivos do paciente e outros obstáculos ou facilitadores para a cicatrização3. Além disso, fornece ao profissional de saúde as informações necessárias para auxiliar na seleção do desbridamento mais apropriado para o paciente. As organizações de saúde devem estabelecer políticas e procedimentos que d",
+      "sampled_chunks": 17,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "A amostra não apresentou título bibliográfico confiável; revisar OCR e as primeiras páginas do documento."
+      ]
+    },
+    {
+      "drive_file_id": "1BF7mv42fMWtWbl-RFEM2kMqC7u_JvfXl",
+      "mime_type": "application/pdf",
+      "status": "unresolved",
+      "confirmed_fields": {},
+      "observed_title_candidate": null,
+      "evidence_pages": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "incluindo-se 32 estudos. A análise dos resumos dos estudos foi realizada qualitativamente. Resultados: a maioria das pesquisas teve abordagem quantitativa, desenvolvida por meio de dissertações. Encontraram-se como temas comuns: tecnologias para o tratamento de feridas, perfil de pessoas portadoras de feridas, conhecimento e prática dos profissionais de enfermagem sobre tratamento de feridas, avaliação de feridas, custos do tratamento de feridas. Considerações finais: a revisão possibilitou identificar as tendências, encontrando-se uma lacuna no conhecimento produzido. O estudo contribui para orientar as ações desenvolvidas na prática dos profissionais enfermeiros, uma vez que possibilita o ",
+      "sampled_chunks": 21,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "A amostra não apresentou título bibliográfico confiável; revisar OCR e as primeiras páginas do documento."
+      ]
+    },
+    {
+      "drive_file_id": "1B6zSzhdLAkuIo6tAsxUEjnvdu5sparL5",
+      "mime_type": "application/pdf",
+      "status": "partial",
+      "confirmed_fields": {},
+      "observed_title_candidate": "Enferm. Foco 2019; 10 (3): 52-58 52 ARTIGO 9 CICATRIZAÇÃO E TRATAMENTO DE FERIDAS: A",
+      "evidence_pages": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "biofilme e sinais de infecção, e a partir das observações, encontrou-se indicação inadequada de produtos em 48,5%, bem como foi inadequado o tempo de permanência daqueles produtos com recomendação de troca entre cinco e sete dias. Conclusão: Destaca-se que os temas debridamento, exsudato, biofilmes e indicação e tempo de permanência de produtos devem ser reforçados nos centros formadores e na qualificação em serviço. Descritores: Cicatrização; Conhecimento; Curativos oclusivos; Enfermeiras e Enfermeiros. CICATRIZACIÓN Y TRATAMIENTO DE HERIDAS: LA INTERFAZ DEL CONOCIMIENTO A LA PRÁCTICA DEL ENFERMERO Objetivos: determinar el nivel de conocimiento de enfermeros sobre cicatrización y tratamient",
+      "sampled_chunks": 30,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "O candidato de título foi extraído do conteúdo e deve ser conferido nas páginas indicadas antes de ser usado pelo app."
+      ]
+    },
+    {
+      "drive_file_id": "1_WY-Q4LoAi4Fkd5paSX5-Ckx7S922iSP",
+      "mime_type": "application/pdf",
+      "status": "partial",
+      "confirmed_fields": {},
+      "observed_title_candidate": "AANNTTIISSEEPPTTIICCSS IINN PPRRAACCTTIICCEE MANAGING THE CHALLENGES AND RISKS OF INFECTION IN WOUND CARE",
+      "evidence_pages": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "INTERNATIONAL CONSENSUS DOCUMENT UUSSEE OOFF WWOOUUNNDD AANNTTIISSEEPPTTIICCSS IINN PPRRAACCTTIICCEE MANAGING THE CHALLENGES AND RISKS OF INFECTION IN WOUND CARE USE OF DIFFERENT ANTISEPTICS IN PRACTICE WOUND CLEANSING AND TIPS FOR BEST PRACTICE GUIDANCE AND PATHWAYS FOR ANTISEPTIC USE THE IMPORTANCE OF AN ANTIMICROBIAL STEWARDSHIP-FOCUSED APPROACH PUBLISHED BY: Wounds International EXPERT PANEL 108 Cannon Street London EC4N 6EU, UK Harikrishna K. R. Nair (Chair), Professor and Head of the Wound Care Unit, Department of Internal Medicine, Kuala Lumpur Hospital, Malaysia Tel: + 44 (0)20 7627 1510 Beata Mrozikiewicz-Rakowska, President of the Polish Wound Management Association, Department inf",
+      "sampled_chunks": 16,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "O candidato de título foi extraído do conteúdo e deve ser conferido nas páginas indicadas antes de ser usado pelo app."
+      ]
+    },
+    {
+      "drive_file_id": "1-5n8Jt_rfg7VBwL0pA_Fn0tV--9Xywop",
+      "mime_type": "application/pdf",
+      "status": "unresolved",
+      "confirmed_fields": {},
+      "observed_title_candidate": null,
+      "evidence_pages": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "Machine Translated by Google INTERNACIONAL CONSENSO USO A PROPRIADO D A P RATA COBERTURAS E M F ERIDAS um c onsenso d o g rupo d e t rabalho de e specialistas Machine Translated by Google EDITOR: PREFÁCIO Lisa M acGregor Curativos antimicrobianos t ópicos, i ncluindo a queles que contêm prata, s ão u sados para p revenir EDITOR: Dia d e Kathy ou controlar a infecção em u ma ampla v ariedade de f eridas. E mbora o s c urativos de p rata tenham sido a mplamente u tilizados, um e studo r ecente1 e d uas r evisões Cochrane2,3 concluíram q ue n ão PUBLICADO P OR: há evidências s uficientes para m ostrar q ue os c urativos de p rata melhoram as t axas de c icatrização. Internacional de F eridas Ca",
+      "sampled_chunks": 22,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "A amostra não apresentou título bibliográfico confiável; revisar OCR e as primeiras páginas do documento."
+      ]
+    },
+    {
+      "drive_file_id": "1m_HSGwUzG5sl9cy09ExR1YxXuR4KjBfh",
+      "mime_type": "application/pdf",
+      "status": "partial",
+      "confirmed_fields": {},
+      "observed_title_candidate": "MANUAL PRÁTICO Da avaliação ao tratamento: os cuidados de enfermagem às",
+      "evidence_pages": [
+        2,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "MANUAL PRÁTICO Da avaliação ao tratamento: os cuidados de enfermagem às pessoas com feridas oncológicas 2018 CAMILAVICENTE MANUAL PRÁTICO: Da avaliação ao tratamento: os cuidados de enfermagem às pessoas com feridas oncológicas 1ª edição Florianópolis Camila Vicente 2018 2 1ªEdição – Editora Camila Vicente Elaborado por: Enfa Camila Vicente [ Autor ] Seleção de dados. Redação. Revisão. Profa Dra. Lúcia Nazareth Amante [ Autor ] Seleção de dados. Redação. Revisão. Aprovação da Versão Final. Et Msc Maristela Jeci dos Santos [ Autor ] Seleção de dados. Redação. Revisão. Profa Dra. Juliana Balbinot Reis Girondi [ Autor ] Seleção de dados. Redação. Revisão. Profa Dra. Luciana Martins da Rosa [ Au",
+      "sampled_chunks": 6,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "O candidato de título foi extraído do conteúdo e deve ser conferido nas páginas indicadas antes de ser usado pelo app."
+      ]
+    },
+    {
+      "drive_file_id": "15c3UdgWIO_hpDM5qFP0cuoBCxVpwSH4E",
+      "mime_type": "application/pdf",
+      "status": "partial",
+      "confirmed_fields": {},
+      "observed_title_candidate": "PROTOCOLO DE ENFERMAGEM VOLUME 6 CUIDADO À PESSOA COM FERIDA",
+      "evidence_pages": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "PROTOCOLO DE ENFERMAGEM VOLUME 6 CUIDADO À PESSOA COM FERIDA Florianópolis, junho de 2019 v 1.0 PROTOCOLO DE ENFERMAGEM VOLUME 6 CUIDADO À PESSOA COM FERIDA Prefeito Gean Marques Loureiro Vice-Prefeito João Batista Nunes Secretário de Saúde Carlos Alberto Justo da Silva Secretário Adjunto Sandro José Andretti Diretor de Atenção em Saúde Sandra Regina da Costa Gerente de Atenção Primária João Paulo Mello da Silveira Responsável Técnica de Enfermagem e Coordenadora da Comissão Permanente de Sistematização da Assistência de Enfermagem (CSAE) Elizimara Ferreira Siqueira Autores Alessandra de Q. Esmeraldino Gisele Magnabosco Priscilla Cibele Tramontina Ana Cristina M. F. Báfica Guilherme MortariB",
+      "sampled_chunks": 11,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "O candidato de título foi extraído do conteúdo e deve ser conferido nas páginas indicadas antes de ser usado pelo app."
+      ]
+    },
+    {
+      "drive_file_id": "1_8WY52g7BmnDCgiOeCVR5Adm3rhaTlTz",
+      "mime_type": "application/pdf",
+      "status": "partial",
+      "confirmed_fields": {},
+      "observed_title_candidate": "RReevviissttaa RReeddee ddee CCuuiiddaaddooss eemm SSaaúúddee IISSSSNN--11998822--66445511 FERIDAS COMPLEXAS E O BIOFILME: ATUALIZAÇÃO DE SABERES E PRÁTICAS PARA ENFERMAGEM",
+      "evidence_pages": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "4Enfermeira. Mestranda bolsista do Programa de Pós-graduação em Enfermagem da Universidade Federal da Paraíba. João Pessoa, Paraíba, Brasil. Autor para correspondência: Ronny Anderson de Oliveira Cruz Rua Dom Pedro II, 17, Santa Rita – PB. CEP: 58300-660 e-mail: ronnyufpb@gmail.com fone: (83) 988557845 RESUMO Objetivo: abordar os saberes e práticas para o manejo adequado do biofilme em feridas complexas. Metodologia: estudo reflexivo a partir da literatura nacional e internacional com o intuito de corroborar para a atualização acerca dos cuidados destinados a feridas complexas e o biofilme, proporcionando discussões e novas pesquisas no âmbito da enfermagem. Resultados: Na perspectiva de oti",
+      "sampled_chunks": 17,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "O candidato de título foi extraído do conteúdo e deve ser conferido nas páginas indicadas antes de ser usado pelo app."
+      ]
+    },
+    {
+      "drive_file_id": "1yNf2wjEd6Kh_6ws3A_aNhtCBF_rQ-Dy7",
+      "mime_type": "application/pdf",
+      "status": "unresolved",
+      "confirmed_fields": {},
+      "observed_title_candidate": null,
+      "evidence_pages": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "Fios e padrões de sutura Profª Keyla Cristiane do Nascimento 2020-1 Sobre o que vamos ver nessa aula...  Conceito de sutura  Características do fio de sutura  Tipos de fios  Agulhas cirúrgicas Sutura - conceito Termo genérico para todos os materiais  utilizados para manter a união do tecido corporal seccionado e para manter esses tecidos em sua posição normal até que ocorra a cicatrização. Suturar consiste em costurar, juntas as  bordas cortadas ou laceradas do tecido. Vários fios de sutura estão disponíveis para ligar, costurar e fechar a ferida. Características do fio de sutura Três principais características para avaliar as propriedades do fio: CARACTERÍSTICA PROPRIEDADES Configuraç",
+      "sampled_chunks": 5,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "A amostra não apresentou título bibliográfico confiável; revisar OCR e as primeiras páginas do documento."
+      ]
+    },
+    {
+      "drive_file_id": "16GLTKTwbrmzK0Ss_EvupoyQQEm6kYSpG",
+      "mime_type": "application/pdf",
+      "status": "unresolved",
+      "confirmed_fields": {},
+      "observed_title_candidate": null,
+      "evidence_pages": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "nonabsorbable, monofilamentar and multifilamentar sutures were described. Conclusion: With this review it was possible to synthesize current knowledge about sutures, which will certainly be useful for medical students, residents and surgeons. Key words: Sutures Materials. Polymers. Absorbable. Non-absorbable. RESUMO Objetivo: Este é um estudo de revisão com o objetivo de descrever as características físicas e biológicas dos fios de sutura mais utilizados na prática cirúrgica diária, e suas indicações de uso. Métodos: Foi feita revisão da literatura médica através de pesquisa nas bases de dados Pubmed e SciElo. Resultados: Foram descritos dados relativos às qualidades ideais dos fios de sutur",
+      "sampled_chunks": 13,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "A amostra não apresentou título bibliográfico confiável; revisar OCR e as primeiras páginas do documento."
+      ]
+    },
+    {
+      "drive_file_id": "1kxe4y0u6waPpmW3VJFlZ7eGTam0959gI",
+      "mime_type": "application/pdf",
+      "status": "partial",
+      "confirmed_fields": {},
+      "observed_title_candidate": "Enfermagem em Terapia Nutricional Parenteral TERAPIA Guia de Cuidados",
+      "evidence_pages": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "Guia de Cuidados em Feridas A enfermagem é essencial na prevenção e tratamento de feridas, promovendo recuperação e qualidade de vida. O Guia de Cuidados em Feridas, organizado pela Comissão de Integridade Cutânea do Coren-SP, reforça o compromisso com a capacitação profissional e segurança na assistência. Baseado em evidências científicas, aborda cicatrização, avaliação de risco e terapias inovadoras. Guia de boas práticas de Enfermagem em Terapia Nutricional Parenteral Guia de Cuidado em Feridas Conselho Regional de Enfermagem de São Paulo Acesse nossas redes sociais CONSELHO REGIONAL DE ENFERMAGEM DE SÃO PAULO Guia de boas práticas de Enfermagem em Terapia Nutricional Parenteral TERAPIA G",
+      "sampled_chunks": 6,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "O candidato de título foi extraído do conteúdo e deve ser conferido nas páginas indicadas antes de ser usado pelo app."
+      ]
+    },
+    {
+      "drive_file_id": "1TiWjB4dsk0mmiuDFZ1raAmjjSnWGQtVG",
+      "mime_type": "application/pdf",
+      "status": "unresolved",
+      "confirmed_fields": {},
+      "observed_title_candidate": null,
+      "evidence_pages": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "International Consensus Document Embedding Wound Hygiene into a proactive wound healing strategy Manage Assess Monitor Cleanse Debride Refashion Dress Downloaded from magonlinelibrary.com by 045.004.080.171 on May 7, 2026. Authors (consensus panel): Reviewer panel: ● Chris Murphy, PhD ● Angela Walker, Vascular Nurse Specialist, The Ottawa Hospital Limb Podiatry Lead Clinical Specialist, Birmingham Community Preservation Centre, Ottawa, Canada Healthcare NHS Foundation Trust, UK ● Leanne Atkin, PhD ● Beata Mrozikiewicz-Rakowska, MD, PhD Vascular Nurse Consultant, Mid Yorkshire Hospitals NHS Associate Professor, Diabetology and Metabolic Diseases Trust and University of Huddersfield, UK Depart",
+      "sampled_chunks": 17,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "A amostra não apresentou título bibliográfico confiável; revisar OCR e as primeiras páginas do documento."
+      ]
+    },
+    {
+      "drive_file_id": "1wHIhi2Yw7B-NCR3oN3tfBnlZ9I9f2fHu",
+      "mime_type": "application/pdf",
+      "status": "unresolved",
+      "confirmed_fields": {},
+      "observed_title_candidate": null,
+      "evidence_pages": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "International Consensus Document Implementing TIMERS: the race against hard-to-heal wounds e u s s i T noitcefni/noitammaflnI erutsioM s n r o o i t t a c r a e f n l a e e i g g c d e o E R S Downloaded from magonlinelibrary.com by 189.004.076.140 on November 2, 2022. Authors: Review panel: Leanne Atkin, PhD, Vascular Nurse Consultant. Mid Nahla Abdulrahman Al Mansoori, Consultant Physician, Yorkshire NHS Trust/University of Huddersfield, England Medical Institute, Medical Affairs, Sheikh Khalifa Medical City, Abu Dhabi, United Arab Emirates Zofia Bućko, Dr med. Head of Non-Healing Wounds Dave Barillo, Principal, Disaster Response/Critical Care Department, Centrum Medycznym HCP, Poznań, Pol",
+      "sampled_chunks": 18,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "A amostra não apresentou título bibliográfico confiável; revisar OCR e as primeiras páginas do documento."
+      ]
+    },
+    {
+      "drive_file_id": "1EP6smNAfD1mGvxlFI60zdWYI0AUiBzbS",
+      "mime_type": "application/pdf",
+      "status": "unresolved",
+      "confirmed_fields": {},
+      "observed_title_candidate": null,
+      "evidence_pages": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "Web of Science, BDEnf e LILACS para responder ao questionamento: “Quais as evidências disponíveis sobre as intervenções de enfermagem durante o posicionamento cirúrgico do paciente adulto?” Resultados: Após busca e análise, nove artigos contemplaram o objetivo da pesquisa e compuseram a amostra final. Foi possível constatar uma variedade de intervenções, com predomínio de avaliação de fatores preexistentes e externos, uso de escalas de avaliação de risco, superfícies de suporte e uso de curativos profiláticos. Conclusão: Foi possível atualizar as evidências científicas quanto à aplicação das intervenções direcionadas ao posicionamento cirúrgico. O uso de ELPO, SAEP e Scott-Triggers é o mais ",
+      "sampled_chunks": 21,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "A amostra não apresentou título bibliográfico confiável; revisar OCR e as primeiras páginas do documento."
+      ]
+    },
+    {
+      "drive_file_id": "1GPn09XtMV0-zVQvV9jAeZUSBGS5oX_NT",
+      "mime_type": "application/pdf",
+      "status": "unresolved",
+      "confirmed_fields": {},
+      "observed_title_candidate": null,
+      "evidence_pages": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "NRDITOU(cid:130)(cid:204)O trumentadores cir(cid:156)rgicos, al(cid:142)m da nova categoria de enfermeiros perfusionistas, todos interagindo no -bara t deacnic(cid:142)so tvi(cid:139) dia umom, centebimso aemm p roOcessodra etb alhon oC enroCt ir(cid:156)rgico(C C) .farea tdanairmet deercxe e umdaa cl quaho nal visa(cid:136)a ssi(cid:144)stnciag lobald ops acieneqts uesesu bme- eaptm rocedimenoats ne(cid:142)stsico-cir(cid:156)rgiNco es.sse sondu- a co ec(cid:151)ginolceo tn(cid:141)vando o araConsdei roiermnfe do elspedora, o pasnovai iaissnca assetit contexto, a atua(cid:141)(cid:139)o da equipe de Enfermagem do , naa didaa cxo aeplsomi cado morna s tmeeno CC t CC (cid:142) de extrema impo",
+      "sampled_chunks": 29,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "A amostra não apresentou título bibliográfico confiável; revisar OCR e as primeiras páginas do documento."
+      ]
+    },
+    {
+      "drive_file_id": "14j2akP9bZLD6Q85b7gvMJf4ULWCMSBY3",
+      "mime_type": "application/pdf",
+      "status": "partial",
+      "confirmed_fields": {},
+      "observed_title_candidate": "O papel do enfermeiro na prevenção de infecção no sítio cirúrgico The role of the nurse in preventing infection in the surgical site",
+      "evidence_pages": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "E-mail: carolinemonzato@gmail.com Aline Honorato de Freitas Enfermeira especialista em Oncologia Endereço: Rua General Sezefredo n. 310 Apt. 305 Realengo - Rio de Janeiro E-mail: enfaline.honorato@gmail.com Simone Carneiro Freitas Enfermeira Especialista em Neonatologia e Pediatria- Centro Universitário Celso Lisboa Endereço: Rua Almerinda de Castro N. 180 bl. 14 Apt. 202 Campo Grande E-mail: enfa.sifreitas@hotmail.com Braz. J. Hea. Rev, Curitiba, v. 3, n. 6, p.16969-16977. nov./dez. 2020. ISSN 2595-6825 Brazilian Journal of health Review 16969 O papel do enfermeiro na prevenção de infecção no sítio cirúrgico The role of the nurse in preventing infection in the surgical site DOI:10.34119/bjh",
+      "sampled_chunks": 17,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "O candidato de título foi extraído do conteúdo e deve ser conferido nas páginas indicadas antes de ser usado pelo app."
+      ]
+    },
+    {
+      "drive_file_id": "1CPPdhEiV2JsIGCOXovYj7RwLn35BnUB6",
+      "mime_type": "application/pdf",
+      "status": "unresolved",
+      "confirmed_fields": {},
+      "observed_title_candidate": null,
+      "evidence_pages": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "infection and the most common healthcare-associated infection in the developing world. A systematic review and meta-analysis was conducted to evaluate the relative size of this burden and to estimate the prevalence of SSI in clean and clean-contaminated surgeries in a large sample of countries in the developing world. Methods: A systematic search of the MEDLINE/PubMed, Scopus, and LILACS databases was conducted to identify studies providing the prevalence of SSI in elective clean and clean-contaminated surgeries in 39 countries or regions around the world. Data of interest were limited to publications from January 2000 to December 2017. Studies with information on the number of cases of SSI ",
+      "sampled_chunks": 34,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "A amostra não apresentou título bibliográfico confiável; revisar OCR e as primeiras páginas do documento."
+      ]
+    },
+    {
+      "drive_file_id": "1LXQQMOjsvUHa8NdTKk0RXwbQBjAg8lD7",
+      "mime_type": "application/pdf",
+      "status": "unresolved",
+      "confirmed_fields": {},
+      "observed_title_candidate": null,
+      "evidence_pages": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "trição de idioma, relacionados à temática de investigação. Utilizou-se análise temática para tratamento dos dados. Resultados: Com base na análise das 16 publicações que compuseram o corpus deste estudo, foram elencadas duas categorias: a) fatores de risco para o desenvolvimento de lesão por pressão em pacientes no período perioperatório; b) intervenções de enfermagem para prevenir lesões por pressão. Conclusão: São considerados fatores de risco para o desenvolvimento de lesão por pressão: ser idoso, apresentar desnutrição ou sobrepeso, comorbidades como diabetes mellitus, vasculopatia, neu- ropatia, entre outros. As intervenções de enfermagem compreendem: avaliar os riscos por meio de escal",
+      "sampled_chunks": 26,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "A amostra não apresentou título bibliográfico confiável; revisar OCR e as primeiras páginas do documento."
+      ]
+    },
+    {
+      "drive_file_id": "1R0Pzaanq3GvepGiV9SLU7-La9BmGoui1",
+      "mime_type": "application/pdf",
+      "status": "unresolved",
+      "confirmed_fields": {},
+      "observed_title_candidate": null,
+      "evidence_pages": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "seu uso em cirurgia. Método: Utilizou-se para a pesquisa a base de dados Medline, Ovid, Cirurgia Dose Cefazolina Cada 4 h Google Scholar, National Library of Medicine (PubMed), Cochrane e SciELO. As palavras- gastroduodenal única chave usadas foram “anti-bacterial agents”; “antibioticoprophylaxis” AND “surgical wound Cefazolina Cada 4 h infection”. Os critérios de inclusão foram artigos de publicação recente, com textos Cirurgia Dose completos disponíveis e realizados em humanos. Resultado: Um total de 29 artigos foi biliopancreática Cefoxitina Cada 2 h única Ampicilina- avaliado e selecionado de acordo com os critérios de elegibilidade. Conclusão: A infecção sulbactam Cada 2 h do sítio cirú",
+      "sampled_chunks": 42,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "A amostra não apresentou título bibliográfico confiável; revisar OCR e as primeiras páginas do documento."
+      ]
+    },
+    {
+      "drive_file_id": "1thXt7VYhkq97lqBrzin2Fu3KiLajarG-",
+      "mime_type": "application/pdf",
+      "status": "partial",
+      "confirmed_fields": {},
+      "observed_title_candidate": "Rev. SOBeCC, SãO PaulO. Jul./SeT. 2018; 23(3): 155-159 | ARTIGO DE REVISÃO | O Que uSaR NO PRePaRO CIRÚRGICO Da Pele",
+      "evidence_pages": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "os manuais de boas práticas internacionais têm recomendado a sua utilização em soluções alcoólicas. Observou-se uma tendência na indicação da clo- rexidina alcoólica e a emergência de estudos que têm avaliado o uso sequencial ou concomitante da clorexidina e do povidona-iodo com resultados favo- ráveis a essa prática. Conclusão: Há uma tendência mundial mais favorável ao uso da clorexidina alcoólica em detrimento ao povidona-iodo. Contudo, a decisão pelo melhor agente antisséptico deve considerar cada caso clínico, (contra) indicações e situação. Palavras-chave: Anti-infecciosos locais. Antissepsia. Clorexidina. Povidona-iodo. Etanol. ABSTRACT: Objective: To discuss the efficacy of chlorhexi",
+      "sampled_chunks": 30,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "O candidato de título foi extraído do conteúdo e deve ser conferido nas páginas indicadas antes de ser usado pelo app."
+      ]
+    },
+    {
+      "drive_file_id": "1Um9T9xAIcWTPoL44NBgQQNMOz4V_IjQW",
+      "mime_type": "application/pdf",
+      "status": "partial",
+      "confirmed_fields": {},
+      "observed_title_candidate": "GLOBAL GUIDELINES FOR THE PREVENTION OF SURGICAL SITE INFECTION",
+      "evidence_pages": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "GLOBAL GUIDELINES FOR THE PREVENTION OF SURGICAL SITE INFECTION GLOBAL GUIDELINES FOR THE PREVENTION OF SURGICAL SITE INFECTION Global guidelines for the prevention of surgical site infection, second edition ISBN 978-92-4-155047-5 © World Health Organization 2018 Some rights reserved. This work is available under the Creative Commons Attribution-NonCommercial-ShareAlike 3.0IGO licence (CCBY-NC-SA3.0IGO; https://creativecommons.org/licenses/by-nc-sa/3.0/igo). Under the terms of this licence, you may copy, redistribute and adapt the work for non-commercial purposes, provided the work is appropriately cited, as indicated below. In any use of this work, there should be no suggestion that WHO end",
+      "sampled_chunks": 15,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "O candidato de título foi extraído do conteúdo e deve ser conferido nas páginas indicadas antes de ser usado pelo app."
+      ]
+    },
+    {
+      "drive_file_id": "1v5cEFXfyIsZqYz7mVijoZm3seGx69pC3",
+      "mime_type": "application/pdf",
+      "status": "unresolved",
+      "confirmed_fields": {},
+      "observed_title_candidate": null,
+      "evidence_pages": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "Art. 1º Fica aprovado o Regulamento Técnico que estabelece os requisitos de boas práticas para o processamento de produtos para saúde, nos termos desta Resolução. CAPÍTULO I DAS DISPOSIÇÕES INICIAIS Seção I Objetivo Art. 2º Este Regulamento tem o objetivo de estabelecer os requisitos de boas práticas para o funcionamento dos serviços que realizam o processamento de produtos para a saúde visando à segurança do paciente e dos profissionais envolvidos. Seção II Abrangência Art. 3º Este Regulamento se aplica aos Centros de Material e Esterilização - CME dos serviços de saúde públicos e privados, civis e militares, e às empresas processadoras envolvidas no processamento de produtos para saúde. Pa",
+      "sampled_chunks": 26,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "A amostra não apresentou título bibliográfico confiável; revisar OCR e as primeiras páginas do documento."
+      ]
+    },
+    {
+      "drive_file_id": "1jqsGK86i2AcDj9ATPyU13kcsRLkmCNJn",
+      "mime_type": "application/pdf",
+      "status": "unresolved",
+      "confirmed_fields": {},
+      "observed_title_candidate": null,
+      "evidence_pages": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "subitens. A pontuação dessa escala varia de sete a 35 pontos, quanto maior o escore maior o risco do paciente. O Índice de Validade de Conteúdo da escala foi de 0,88. Por meio da aplicação do teste t de Student, para igualdade de médias, constatou-se validade de critério concorrente entre os escores da escala de Braden e da escala construída. Para avaliar a validade de critério preditiva testou-se a associação da presença de dor decorrente do posicionamento cirúrgico e o desenvolvimento de úlcera por pressão com o escore da Escala de Avaliação de Risco para o Desenvolvimento de Lesões Decorrentes do Posicionamento Cirúrgico (p<0,001). A confiabilidade interobservadores foi verificada",
+      "sampled_chunks": 24,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "A amostra não apresentou título bibliográfico confiável; revisar OCR e as primeiras páginas do documento."
+      ]
+    },
+    {
+      "drive_file_id": "1z_YMS4BiOR5VPF_bpTCBcqH1dnsd6KwT",
+      "mime_type": "application/pdf",
+      "status": "partial",
+      "confirmed_fields": {},
+      "observed_title_candidate": "Prof. Vanessa Martinhago Borges Fernandes Resumo 4 tempos cirúrgicos: Fundamentais para a organização da assistência de enfermagem no centro cirúrgico",
+      "evidence_pages": [
+        1,
+        2
+      ],
+      "evidence_excerpt": "(aderida ao músculo) → Músculo → Peritônio parietal → Peritônio visceral → Órgão.  Finalidade: Criar a via de acesso necessária para a intervenção. 2. Exérese (Cirurgia Propriamente Dita) É o momento principal da operação, onde o cirurgião atua diretamente para resolver o problema, realizar o diagnóstico ou promover a melhoria estética.  Objetivos: Pode visar o controle ou resolução de uma patologia, buscando sempre reconstituir a área da forma mais fisiológica possível.  Classificação: Dependendo da finalidade, a exérese pode ser curativa, paliativa, estética, corretiva ou diagnóstica. O sufixo -ectomia (ex: apendicectomia) é frequentemente usado para designar a remoção total ou parcial ",
+      "sampled_chunks": 4,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "O candidato de título foi extraído do conteúdo e deve ser conferido nas páginas indicadas antes de ser usado pelo app."
+      ]
+    },
+    {
+      "drive_file_id": "1Y0kgBCwjfPSAN9WAsXB2nCoM8oJM-mFJ",
+      "mime_type": "application/pdf",
+      "status": "unresolved",
+      "confirmed_fields": {},
+      "observed_title_candidate": null,
+      "evidence_pages": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "CenroCt ir(cid:156)rgiRco e,cupera(cid:141)(cid:139)o P(cid:151)s-Anest(cid:142)sica e Centro de Material e Esteriliza(cid:141)(cid:139)o para Enfermagem OOO Fernando Riegel Nery Jos(cid:142) de Oliveira Junior (Organizadores) R(cid:231)MOI Ediotra panicop elos pacieneeoats /ufmi liarenos afrmad eco nsenitmenolt ivreei nofrmadseo g,uindoan s or-maps reconizadaps elare solu(cid:141)(cid:139)o4 662/01d2 oC, onselhoN acionald eSa (cid:156)de. r(cid:135)eGArts Diagrama(cid:141)(cid:139)oecao pFrmaoa t : (cid:222) cas maIgedD5m ecaI 3 pSheo 8a utrstck;4:t58469 AnneliseSi lvad aR ochaa- n nelisesr@gmailco.mRevis(cid:139)od ePou rtgu(cid:144) s: 1Ed» i(cid:141)(cid:139)2o- 0 19 odoods s ireiodts er",
+      "sampled_chunks": 9,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "A amostra não apresentou título bibliográfico confiável; revisar OCR e as primeiras páginas do documento."
+      ]
+    },
+    {
+      "drive_file_id": "1ylCscDwfJvWf0BnRcKVBol8GfilwPNuk",
+      "mime_type": "application/pdf",
+      "status": "partial",
+      "confirmed_fields": {},
+      "observed_title_candidate": "MANUAL DE ROTINAS DO CENTRO CIRÚRGICO",
+      "evidence_pages": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "MANUAL DE ROTINAS DO CENTRO CIRÚRGICO Ana Karina Silva da Rocha Tanaka Flávia Giendruczak Da Silva Giovana Maria Agliardi Cardoso Liege Segabinazzi Lunardi Lisiane Paula Sordi Matzenbacher Liziane Gil Rosane Maria Sordi Universidade Federal do Rio Grande do Sul Escola de Enfermagem Diretora: Profa Dra Ana Maria Muller de Magalhães Projeto Gráfico, Ilustrações e Diagramação: Acadêmica de Enfermagem Giovana Maria Agliardi Cardoso Ana Karina Silva da Rocha Tanaka Flávia Giendruczak Da Silva Giovana Maria Agliardi Cardoso Liege Segabinazzi Lunardi Lisiane Paula Sordi Matzenbacher Liziane Gil Rosane Maria Sordi PORTO ALEGRE 2022 Elaborado por: Ana Karina Silva da Rocha Tanaka Enfermeira graduada ",
+      "sampled_chunks": 6,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "O candidato de título foi extraído do conteúdo e deve ser conferido nas páginas indicadas antes de ser usado pelo app."
+      ]
+    },
+    {
+      "drive_file_id": "1Dfa11eSLLIDE5S6eZPY8_qP3fG7WZQTx",
+      "mime_type": "application/pdf",
+      "status": "unresolved",
+      "confirmed_fields": {},
+      "observed_title_candidate": null,
+      "evidence_pages": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "in dieresis, hemostasis and synthesis, the fundamental times of surgery. Methods: Surgery has evolved over centuries, but the concepts of dieresis, hemostasis and synthesis continue, with many updates. The present review was carried out from bibliographic research in the electronic databases Pubmed and SciElo, in addition to consulting specialized books on operative technique. Results: In the past, large incisions extending along the abdomen, chest and limbs were the standard approach to access the organs and tissues of these anatomical regions. However, with advances in technology and improvements in surgical technique, surgery has progressed to minimize trauma to the patient while maintain",
+      "sampled_chunks": 14,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "A amostra não apresentou título bibliográfico confiável; revisar OCR e as primeiras páginas do documento."
+      ]
+    },
+    {
+      "drive_file_id": "1sC_kwbQ0Rl_EzmUhpNd5qkiMZ6nRs1h8",
+      "mime_type": "application/pdf",
+      "status": "unresolved",
+      "confirmed_fields": {},
+      "observed_title_candidate": null,
+      "evidence_pages": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "ultrapassado e a formulação dos novos protocolos como Enhanced Recovery After Surgery (ERAS) e Aceleração da Recuperação Total Pós-Operatória (ACERTO) possibilitam uma mudança benéfica nessa conduta. A alimentação precoce no pós- operatório é responsável por acelerar a recuperação do paciente, bem como, por reduzir os custos hospitalares durante a internação do paciente. Esses benefícios são constatados tanto em cirurgias abertas quanto em videocirurgias. Outro aspecto importante é a região anatômica do procedimento, sendo as cirurgias colorretais as mais estudadas e com resultados positivos mais consistentes. Considerações Finais: A alimentação precoce no pós-operatório de cirurgias colorre",
+      "sampled_chunks": 26,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "A amostra não apresentou título bibliográfico confiável; revisar OCR e as primeiras páginas do documento."
+      ]
+    },
+    {
+      "drive_file_id": "1OgGmU5houhT6ONseSFeh-wlP4nPAIcZK",
+      "mime_type": "application/pdf",
+      "status": "unresolved",
+      "confirmed_fields": {},
+      "observed_title_candidate": null,
+      "evidence_pages": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "cuidado perioperatório. Esta revisão sistemática da literatura tem como objetivo reunir e analisar as evidências disponíveis sobre os protocolos e diretrizes vigentes no Brasil para o manejo da anemia no período perioperatório. Foram consultadas bases de dados como SciELO, LILACS e PubMed, priorizando publicações brasileiras entre 2013 e 2024. A análise revelou uma crescente padronização das condutas voltadas para a triagem, diagnóstico e tratamento da anemia antes, durante e após procedimentos cirúrgicos, com ênfase no uso racional de transfusões, suplementação de ferro, eritropoetina e medidas de conservação do sangue. As diretrizes nacionais, alinhadas com iniciativas como o Patient Blood",
+      "sampled_chunks": 16,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "A amostra não apresentou título bibliográfico confiável; revisar OCR e as primeiras páginas do documento."
+      ]
+    },
+    {
+      "drive_file_id": "1w-iSjXWRXHywRGMLm4cNmXOHvlqChck7",
+      "mime_type": "application/pdf",
+      "status": "unresolved",
+      "confirmed_fields": {},
+      "observed_title_candidate": null,
+      "evidence_pages": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "disfunções são essenciais para prevenir complicações e reduzir custos hospitalares. Esta revisão sistemática da literatura teve como objetivo reunir evidências brasileiras sobre os principais fatores de risco, mecanismos fisiopatológicos, estratégias preventivas e terapêuticas associadas à disfunção orgânica no período perioperatório. Os dados foram coletados nas bases SciELO, LILACS e PubMed, com ênfase em estudos nacionais publicados nos últimos dez anos. Os resultados apontam para a importância da monitorização hemodinâmica avançada, da individualização da anestesia e do cuidado multidisciplinar como pilares fundamentais na prevenção das disfunções orgânicas. A atuação precoce frente à in",
+      "sampled_chunks": 17,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "A amostra não apresentou título bibliográfico confiável; revisar OCR e as primeiras páginas do documento."
+      ]
+    },
+    {
+      "drive_file_id": "1xGY_SapE2TSc_PpEB3OM8FENw0tKP_v7",
+      "mime_type": "application/pdf",
+      "status": "unresolved",
+      "confirmed_fields": {},
+      "observed_title_candidate": null,
+      "evidence_pages": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "eServicedechirurgievisc!erale,CentreHospitalierUniversitaireVaudois(CHUV),RueduBugnon46,1011Lausanne,Switzerland fGeneralandOncologySurgeryUnit,StanleyDudrick'sMemorialHospital,15TynieckaStreet,32-050Skawina,Krakau,Poland gDipartimentodiMedicinaClinica,Universita“LaSapienza”Roma,UODCoordinamentoAttivita\"NutrizioneClinica,Vialedell'Universita\",00185Roma,Italy hDepartmentofSurgery,FacultyofMedicineandHealth,O€rebroUniversity,O€rebro,Sweden iGastrointestinalSurgery,NationalInstituteforHealthResearchNottinghamDigestiveDiseasesBiomedicalResearchUnit,NottinghamUniversityHospitals andUniversityofNottingham,Queen'sMedicalCentre,NottinghamNG72UH,UK jOregonHealth&ScienceUniversity,3181SWSamJacksonPark",
+      "sampled_chunks": 39,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "A amostra não apresentou título bibliográfico confiável; revisar OCR e as primeiras páginas do documento."
+      ]
+    },
+    {
+      "drive_file_id": "16-T64RbQAsry8m955vpW2yxo4jakrbIu",
+      "mime_type": "application/pdf",
+      "status": "unresolved",
+      "confirmed_fields": {},
+      "observed_title_candidate": null,
+      "evidence_pages": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "independentes mais importantes nos resultados pós- do sexo masculino (56,8%) e com o diagnóstico de operatórios em cirurgias eletivas. doençamaligna(56,6%).SegundoaNRS50%dospa- Objetivos:Avaliaroestadonutricionalpré-operató- cientes encontravam-se em risco nutricional e pela rio e o tempo de jejum pós-operatório em pacientes ASG 30% foram classificados como moderadamente submetidos à cirurgias colorretais eletivas. desnutridos. Ao avaliar a associação entre o diagnós- tico clínico de malignidade da doença colorretal e a Métodos: Estudo transversal, com avaliação de pa- avaliação do estado nutricionalcom os demais parâme- cientes submetidos às cirurgias colorretais eletivas. tros antropométri",
+      "sampled_chunks": 22,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "A amostra não apresentou título bibliográfico confiável; revisar OCR e as primeiras páginas do documento."
+      ]
+    },
+    {
+      "drive_file_id": "1-y2_9a53d0ArQgLc4_PtZ22yBECV3rzN",
+      "mime_type": "application/pdf",
+      "status": "unresolved",
+      "confirmed_fields": {},
+      "observed_title_candidate": null,
+      "evidence_pages": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "evidências, relativas aos cuidados nutricionais perioperatórios em procedimentos eletivos em Cirurgia Geral. Métodos: revisão da litera- tura pertinente entre 2006 e 2016, com base em busca realizada nas principais bases de dados, com o intuito de responder a perguntas norteadoras previamente formuladas por especialistas, dentro de cada temática desta diretriz. Foram selecionados alguns estudos de coorte, mas, preferencialmente, foram utilizados estudos aleatórios controlados, revisões sistemáticas e meta-análises. Cada pergunta norteadora de recomendação foi contextualizada de modo a determinar a qualidade da evidência e a força desta recomendação (GRA- DE). Este material foi enviado aos au",
+      "sampled_chunks": 29,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "A amostra não apresentou título bibliográfico confiável; revisar OCR e as primeiras páginas do documento."
+      ]
+    },
+    {
+      "drive_file_id": "12iLd6ulHIxM8yw9h501KqZt5OYyXVbtT",
+      "mime_type": "application/pdf",
+      "status": "unresolved",
+      "confirmed_fields": {},
+      "observed_title_candidate": null,
+      "evidence_pages": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "olism and describe the clinical consequences that ensue. It will also focus on the role of perioperative nutrition, including pre- operative nutrition risk, carbohydrate loading, and early initiation of oral feeding (centered on macronutrients) in modulating surgical stress, as well as highlight the contribution of the anesthesiologist to nutritional care. Emerging therapeutic concepts such as preoperative glycemic control and prehabilitation will be discussed. (ANESTHESIOLOGY 2015; 123:1455-72) A LTHOUGH efforts have been made to enhance the by inducing a “stress response,” which is characterized by hor- pharmacological and physiological management of the monal, hematological, metabolic, an",
+      "sampled_chunks": 30,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "A amostra não apresentou título bibliográfico confiável; revisar OCR e as primeiras páginas do documento."
+      ]
+    },
+    {
+      "drive_file_id": "1sZ-qNwzDCdhcj1osXoe3SQx-B6Nmikf9",
+      "mime_type": "application/pdf",
+      "status": "partial",
+      "confirmed_fields": {},
+      "observed_title_candidate": "Brazilian Society of Parenteral and Enteral Nutrition Diretriz BRASPEN de Enfermagem em Terapia Nutricional Oral, Enteral e Parenteral",
+      "evidence_pages": [
+        1,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "Thaís Rogério dos Santos, Mylene Montes Rodrigues Faim, Ricardo Ferrer, Saskia Iasana Pontes Fleury, Daniela França Gomes, Karla Lopes Pereira Gomes, Thiago José Martins Gonçalves, Adriana Flores Haikel, Elaine Emi Ito, Allan Egon Kern, Maria de Fátima Lago Alvite, Marcela Alvim Lopes Parente Martins, Hugo Martinez Moraes, Adriano Antonio Mehl, Ana Paula Borges Ménès, Ivna Raquel Olimpio Moreira Nogueira, Vanessa Alvarenga Pegoraro, Renata Andrea Pietro Pereira Viana, Sílvia Maria Fraga Piovacari, Rafaella Pitol Corrêa, Ricardo Tadeu Prete, José Ribamar do Nascimento Junior, Fernanda Antunes Ribeiro, Nara Lúcia Andrade Lopes Segadilha, Cibelle Ribeiro Magalhães Silva, Stella Marys Rigatti Si",
+      "sampled_chunks": 14,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "O candidato de título foi extraído do conteúdo e deve ser conferido nas páginas indicadas antes de ser usado pelo app."
+      ]
+    },
+    {
+      "drive_file_id": "1nAnS9Lgf5Ywwv43xtoq369StrZQaTTIU",
+      "mime_type": "application/pdf",
+      "status": "unresolved",
+      "confirmed_fields": {},
+      "observed_title_candidate": null,
+      "evidence_pages": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "the care process as the centrality of the Nursing] DOI: http://dx.doi.org/10.1590/0034-7167-2018-0449 Submissão: 08-06-2018 Aprovação: 26-07-2018 RESUMO Objetivo: Descrever as recomendações de enfermeiros para boas práticas de segurança do paciente em centro cirúrgico. Método: Pesquisa quantiqualitativa, do tipo descritiva e exploratória, desenvolvida a partir de um survey on-line com 220 enfermeiros de centro cirúrgico de diferentes regiões do Brasil. O processamento dos dados para analise textual foi realizado pelo software IRAMUTEQ. Resultados: Obtiveram-se oito recomendações: (1) Envolvimento da equipe multiprofi ssional e dos gestores da instituição; (2) Estabelecimento de uma cultura d",
+      "sampled_chunks": 35,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "A amostra não apresentou título bibliográfico confiável; revisar OCR e as primeiras páginas do documento."
+      ]
+    },
+    {
+      "drive_file_id": "1a42jr8rEqtm-Z_4JJcUAQ1iXayt-nQrT",
+      "mime_type": "application/pdf",
+      "status": "unresolved",
+      "confirmed_fields": {},
+      "observed_title_candidate": null,
+      "evidence_pages": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "Elencaram-se as seguintes categorias: potencialidades e fragilidades na aplicação da lista; 96,6% concordaram totalmente que se sentiam mais seguros em participar de procedimentos em que o checklist é aplicado e 90,2% e concordaram que proporciona boa comunicação. Porém 39,9% discordam de que toda a equipe participe da aplicação e 69,9% concordam que nem sempre a lista é aplicada em função da resistência ou pouca praticidade. Conclusão: Os profissionais reconhecem que a aplicabilidade da lista proporciona segurança para o processo cirúrgico, porém uma das fragilidades foi a baixa adesão da equipe em realizar o passo a passo proposto. Palavras-chave: Segurança do paciente. Assistência periope",
+      "sampled_chunks": 26,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "A amostra não apresentou título bibliográfico confiável; revisar OCR e as primeiras páginas do documento."
+      ]
+    },
+    {
+      "drive_file_id": "1tlLGjy3H7HybRDJfw7UqUxbmA2SrcVdQ",
+      "mime_type": "application/pdf",
+      "status": "unresolved",
+      "confirmed_fields": {},
+      "observed_title_candidate": null,
+      "evidence_pages": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "Helen Norat Siqueira Ministério da Saúde delinearam ações, política e regulamentação sanitária para prevenir Magda Machado de EAs, incluindo aqueles decorrentes de procedimentos cirúrgicos. Em 2013 foi instituído o Miranda Costa Programa Nacional de Segurança do Paciente (PNSP), e a ANVISA regulamentou as ações de segurança do paciente. Apesar dos avanços da política nacional de segurança do pa- Diana Carmem Almeida ciente, recentemente instituída no país, ainda são necessárias medidas visando a busca Nunes de Oliveira da qualidade e da segurança nos cuidados cirúrgicos. A instituição e a sustentação de Suzie Marie Gomes cultura de segurança pode asseverar a cirurgia segura nos serviços de s",
+      "sampled_chunks": 35,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "A amostra não apresentou título bibliográfico confiável; revisar OCR e as primeiras páginas do documento."
+      ]
+    },
+    {
+      "drive_file_id": "1x6ItDqToXxEVWogytRPZIMvj0k9s_eT3",
+      "mime_type": "application/pdf",
+      "status": "partial",
+      "confirmed_fields": {},
+      "observed_title_candidate": "UNIRIOS. andrea.tenorio@unirios.edu.br. III SIMPÓSIO DE PESQUISA CIENTÍFICA II CONGRESSO DE ENFERMAGEM DO UNIRIOS",
+      "evidence_pages": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "históricos, culturais e sócio-políticos que promovam a pesquisa, o ensino e a assistência como achados constituintes de sua base (Brasil, 1987; COFEN, 2017). Isto posto, deve-se compreender que, como um complexo fundamentado em saberes institucionalizados e comprovados cientificamente, a Enfermagem deve agir ordenadamente e com processos previamente designados, de maneira que se mantenha a excelência do cuidado e o provimento ideal das técnicas adquiridas. Outrossim, surge o Conselho Federal de Enfermagem (COFEN) como órgão federativo responsável por reger e disciplinar todos os profissionais que categorizem a classe da Enfermagem, inclusos enfermeiros, também sendo o órgão responsável por h",
+      "sampled_chunks": 15,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "O candidato de título foi extraído do conteúdo e deve ser conferido nas páginas indicadas antes de ser usado pelo app."
+      ]
+    },
+    {
+      "drive_file_id": "1cvepErJkxwdGQqpbFa9XsKNEXupDtVpM",
+      "mime_type": "application/pdf",
+      "status": "partial",
+      "confirmed_fields": {},
+      "observed_title_candidate": "O CONSELHO FEDERAL DE ENFERMAGEM - COFEN, no uso das",
+      "evidence_pages": [
+        1,
+        2,
+        3
+      ],
+      "evidence_excerpt": "art. 11, inciso II, alínea “c”, combinado com o art. 8º, inciso II, alínea “c”, do Decreto nº 94.406/1987; CONSIDERANDO as disposições da Resolução Cofen nº 703/2022, que trata do “botão anestésico”; CONSIDERANDO as disposições do Código de Éca dos Profissionais de Enfermagem; CONSIDERANDO o Parecer Nº 4/2023/COFEN/DGEP/CTAS, aprovado na 556ª Reunião Ordinária de Plenário do Cofen; CONSIDERANDO tudo o mais que consta nos autos do Processo Administravo Cofen nº 1076/2019, e a deliberação do Plenário do Cofen em sua 556ª Reunião Ordinária, realizada em 24 de agosto de 2023; https://sei.cofen.gov.br/sei/controlador.php?acao=documento_imprimir_web&acao_origem=arvore_visualizar&id_documento=20798",
+      "sampled_chunks": 6,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "O candidato de título foi extraído do conteúdo e deve ser conferido nas páginas indicadas antes de ser usado pelo app."
+      ]
+    },
+    {
+      "drive_file_id": "1DlFt-yq4yEtwCfTbQ1tbesx4SBIaFFMt",
+      "mime_type": "application/pdf",
+      "status": "unresolved",
+      "confirmed_fields": {},
+      "observed_title_candidate": null,
+      "evidence_pages": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "collection took place through semi-structured interviews and data processing followed the methodological framework of Bardin content analysis. Results: The speeches that emerged 1Universidade Estadual Paulista “Júlio de Mesquita addressed telemedicine in the context of professional training, the care modalities carried Filho”, Faculdade de Medicina de Botucatu, Departamento de Enfermagem, Botucatu, SP, Brasil. out through digital technologies, the benefits and challenges identified in the practice of 2Universidade de São Paulo, Escola de Enfermagem, telemedicine for work and care processes. Conclusion: The need for public policies and training São Paulo, SP, Brasil. was identified, aimed at ",
+      "sampled_chunks": 33,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "A amostra não apresentou título bibliográfico confiável; revisar OCR e as primeiras páginas do documento."
+      ]
+    },
+    {
+      "drive_file_id": "12E3zeZALF2fXu7Axkq-bPbqqGi8PpkLa",
+      "mime_type": "application/pdf",
+      "status": "unresolved",
+      "confirmed_fields": {},
+      "observed_title_candidate": null,
+      "evidence_pages": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "segura, adaptado para as necessidades do local escolhido. O princípio da inovação norteia-se na Teleconsulta de enfermagem ao paciente submetido a cirurgia geral que consiste em ligações telefônicas, 1Universidade Federal do Estado com o objetivo de orientar e acompanhar os pacientes com conduta cirúrgica conforme sua condição do Rio de Janeiro. Rio de Janeiro, patológica, seja ela curativa, diagnóstica ou paliativa. Elaborou-se um infográfico de passo a passo Brasil. disponibilizado para o paciente informando etapas para o agendamento de sua teleconsulta de enfermagem com as orientações relativas ao seu período perioperatório. O uso de um protocolo focado em ações educativas representa uma ",
+      "sampled_chunks": 33,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "A amostra não apresentou título bibliográfico confiável; revisar OCR e as primeiras páginas do documento."
+      ]
+    },
+    {
+      "drive_file_id": "1s_GOMN45mxvxZwbH00bL71gcHRr9V8eD",
+      "mime_type": "application/pdf",
+      "status": "unresolved",
+      "confirmed_fields": {},
+      "observed_title_candidate": null,
+      "evidence_pages": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "evidence_excerpt": "MANUAL DE BOAS PRÁTICAS DE TELEMEDICINA E TELESSAÚDE PATRO CINA DORES 6202-5202 6 SAÚDE DIGITAL BRASIL 7 EDÚASSELET E ANICIDEMELET ED SACITÁRP SAOB ED LAUNAM MASTER “A SDB lidera um movimento essencial para fortalecer a saúde digital. É uma honra apoiar o Manual e contribuir para este avanço coletivo” OURO “Temos orgulho em apoiar o Manual 2025, que reforça o compromisso pela construção de uma saúde digital mais segura e responsável, guiada por padrões que fortalecem a confiança e qualificam o cuidado no sistema de saúde brasileiro.” PRATA BRONZE 8 6202-5202 EXPE DIENTE EDITORES CARLOS HENRIQUE SARTORATO PEDROTTI Presidente do Conselho de Administração da Saúde Digital Brasil CAIO SEIXAS SOA",
+      "sampled_chunks": 6,
+      "limitations": [
+        "Nenhum campo bibliográfico foi promovido automaticamente: autor, ano, edição, editora e título exigem confirmação humana literal no documento.",
+        "A amostra não apresentou título bibliográfico confiável; revisar OCR e as primeiras páginas do documento."
+      ]
+    }
+  ]
+}

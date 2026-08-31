@@ -32,6 +32,7 @@ import {
   sanitizeStudentFacingText,
 } from '@/lib/chat/references';
 import { enrichDocumentReferenceMetadata } from '@/lib/chat/document-catalog';
+import { buildActivePlanProfessorResponse } from '@/lib/chat/course-catalog';
 
 export const runtime = 'nodejs';
 export const maxDuration = 120;
@@ -40,6 +41,8 @@ const ACTIVE_PLAN_SOURCE = (
   process.env.ACTIVE_PLAN_SOURCE ||
   'administrativo__plano_ensino_INT55224__plano__ufsc__2026_2.pdf'
 ).trim();
+const INFECTION_CONTROL_SOURCE =
+  'infeccao_sitio_cirurgico__enfermeiro_prevencao_infeccao_sitio_cirurgico__artigo__brazilian_journal_health_review__2020__v1';
 const ACTIVE_PLAN_YEAR = ACTIVE_PLAN_SOURCE.match(/\b(20\d{2})\b/)?.[1] || String(new Date().getFullYear());
 // Referências são parte obrigatória do contrato v1.3.0 e são montadas pela
 // aplicação a partir dos chunks recuperados. Não dependem de configuração de
@@ -144,6 +147,53 @@ function mapRetrievedDocuments(rows: MatchDocumentRow[] | null): Document[] {
   }));
 }
 
+function tokenizeForLocalRanking(text: string): string[] {
+  const stopWords = new Set([
+    'a', 'as', 'o', 'os', 'um', 'uma', 'uns', 'umas', 'de', 'do', 'da', 'dos', 'das',
+    'e', 'ou', 'em', 'no', 'na', 'nos', 'nas', 'para', 'por', 'com', 'sobre', 'qual',
+    'quais', 'como', 'que', 'o que', 'mais', 'principais',
+  ]);
+  return text
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLocaleLowerCase('pt-BR')
+    .split(/[^a-z0-9]+/i)
+    .filter((token) => token.length >= 3 && !stopWords.has(token));
+}
+
+function rankExactSourceDocuments(docs: Document[], queryText?: string): Document[] {
+  const queryTokens = tokenizeForLocalRanking(queryText || '');
+  if (!queryTokens.length) return docs;
+  return [...docs]
+    .map((doc, index) => {
+      const haystack = `${doc.content} ${doc.source}`.normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLocaleLowerCase('pt-BR');
+      const score = queryTokens.reduce((total, token) => total + (haystack.includes(token) ? 1 : 0), 0);
+      return { doc, score, index };
+    })
+    .sort((a, b) => b.score - a.score || a.index - b.index)
+    .map(({ doc }) => doc);
+}
+
+async function retrieveExactSourceDocs(sourcePattern: string, matchCount: number, queryText?: string): Promise<Document[]> {
+  const { data, error } = await getSupabase()
+    .from('documents')
+    .select('id, content, source, metadata')
+    .eq('source', sourcePattern)
+    .limit(Math.max(matchCount * 6, 30));
+  if (error) throw new Error(`EXACT_SOURCE_RETRIEVAL_FAILED: ${error.message}`);
+
+  // This path is used only after an explicit source restriction (for example,
+  // the current plan). It keeps legacy Drive chunks usable when the vector RPC
+  // is stale, while still excluding staging and unmanaged rows locally.
+  const activeDocs = mapRetrievedDocuments(data as MatchDocumentRow[] | null).filter((document) => {
+    const status = String(document.metadata.rag_status ?? '').trim().toLowerCase();
+    return Boolean(document.metadata.drive_file_id) && (!status || status === 'active');
+  });
+  return rankExactSourceDocuments(activeDocs, queryText).slice(0, Math.max(matchCount, 5));
+}
+
 // Um título citado pelo estudante é uma restrição explícita de escopo, não
 // uma tentativa de adivinhar a fonte. Nesses casos usamos a identidade exata
 // do arquivo ativo; perguntas genéricas continuam usando a busca híbrida.
@@ -154,16 +204,101 @@ function resolveExplicitSourcePattern(query: string): string | undefined {
     .toLocaleLowerCase('pt-BR');
   const matches = [
     {
+      aliases: [
+        'plano de ensino',
+        'int 5224',
+        'int5224',
+        'carga horaria',
+        'carga horária',
+        'periodo do plano',
+        'período do plano',
+      ],
+      source: ACTIVE_PLAN_SOURCE,
+    },
+    {
       aliases: ['cuidados criticos', 'morton', 'fontaine'],
       source: 'biblioteca__cuidados_criticos_enfermagem__livro__patricia_morton_and_dorrie_fontaine__2011__v9.pdf',
     },
     {
-      aliases: ['incision care', 'surgical incision', 'morgan-jones', 'wounds international 2022'],
+      aliases: [
+        'incision care',
+        'surgical incision',
+        'morgan-jones',
+        'wounds international 2022',
+        'consenso wounds international 2022',
+        'cuidados da incisao cirurgica',
+        'cuidados da incisão cirúrgica',
+      ],
       source: 'ferida__consenso_ferida_cirurgica__guia__wounds_international__2022__v1',
     },
     {
       aliases: ['brunner', 'suddarth'],
       source: 'biblioteca__tratado_enfermagem_medico_cirurgico__livro__brunner_suddarth__2011__v2.pdf',
+    },
+    {
+      aliases: [
+        'diretrizes globais da oms',
+        'diretrizes globais para prevencao de infeccao de sitio cirurgico',
+        'diretrizes globais para prevenção de infecção de sítio cirúrgico',
+        'global guidelines for the prevention of surgical site infection',
+        'who surgical site infection',
+        'oms para prevencao de infeccao de sitio cirurgico',
+        'oms para prevenção de infecção de sítio cirúrgico',
+      ],
+      source: 'infeccao_sitio_cirurgico__prevention_surgical_site_infection__guia__who__2018__v2.pdf',
+    },
+    {
+      aliases: [
+        'nanda',
+        'nanda-i',
+        'diagnosticos de enfermagem',
+        'diagnósticos de enfermagem',
+        'diagnostico de enfermagem',
+        'diagnóstico de enfermagem',
+      ],
+      source: 'biblioteca__diagnosticos_enfermagem_definicoes_classificacao__livro__nanda__2023__v12',
+    },
+    {
+      aliases: [
+        'anestesia no perioperatorio',
+        'anestesia no perioperatório',
+        'enfermagem perioperatoria na anestesia',
+        'enfermagem perioperatória na anestesia',
+        'cuidados de enfermagem relacionados a anestesia',
+        'cuidados de enfermagem relacionados à anestesia',
+        'atuacao da enfermagem na anestesia',
+        'atuação da enfermagem na anestesia',
+      ],
+      source: 'anestesia__papel_enfermagem_perioperatória_anestesia__artigo__revista_escola_de_enfermagem_da_usp__2021__v1.pdf',
+    },
+    {
+      aliases: [
+        'preparo do paciente e sua familia para a alta hospitalar',
+        'preparo do paciente e sua família para a alta hospitalar',
+        'paciente e sua familia para a alta hospitalar',
+        'paciente e sua família para a alta hospitalar',
+      ],
+      source: 'cuidados_pos__alta_hospitalar__aula__ufsc__nao_disponivel__v1',
+    },
+    {
+      aliases: [
+        'guia de preparo de medicamentos injetaveis',
+        'guia de preparo de medicamentos injetáveis',
+        'preparo de medicamentos injetaveis',
+        'preparo de medicamentos injetáveis',
+        'ebserh',
+      ],
+      source: 'dor_pos_operatoria__preparo_medicamentos_injetaveis__guia__ebserh__2019__v1.pdf',
+    },
+    {
+      aliases: [
+        'fios e padroes de sutura',
+        'fios e padrões de sutura',
+        'padroes de sutura',
+        'padrões de sutura',
+        'fios de sutura',
+      ],
+      source: 'ferida__fios_padroes_sutura__aula__ufsc__2020__v1',
     },
     {
       aliases: ['dehiscence', 'deiscencia', 'world union', 'surgical wound dehiscence'],
@@ -172,6 +307,10 @@ function resolveExplicitSourcePattern(query: string): string | undefined {
     {
       aliases: ['nutrition assessment', 'nancy munoz', 'melissa bernstein'],
       source: 'nutricao__nutrition_assessment__livro__nancy_munoz_melissa_bernstein__2019__v1.pdf',
+    },
+    {
+      aliases: ['resolução cofen', 'resolucao cofen', 'cofen 696', 'telenfermagem'],
+      source: 'teleconsulta__resolucao_cofen_telenfermagem__regulamento__cofen__2022__v1',
     },
     {
       aliases: ['praticas recomendadas', 'sobecc'],
@@ -187,6 +326,25 @@ function resolveExplicitSourcePattern(query: string): string | undefined {
     },
   ];
   return matches.find(({ aliases }) => aliases.some((alias) => normalized.includes(alias)))?.source;
+}
+
+function shouldBypassHybridRetrievalForClinicalGrounding(query: string): boolean {
+  const normalized = query
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLocaleLowerCase('pt-BR');
+
+  const asksInfectionControl = (
+    /\b(?:controle|prevencao|prevenir|profilaxia).{0,80}\binfeccao\b/.test(normalized) ||
+    /\binfeccao\s+(?:do|de)\s+sitio\s+cirurgico\b/.test(normalized)
+  );
+  const surgicalScope = /\b(?:perioperatorio|centro\s+cirurgico|cirurg(?:ia|ico|ica|ias|icos|icas)|sitio\s+cirurgico)\b/.test(normalized);
+
+  return asksInfectionControl && surgicalScope;
+}
+
+function resolveClinicalGroundingSourcePattern(query: string): string | undefined {
+  return shouldBypassHybridRetrievalForClinicalGrounding(query) ? INFECTION_CONTROL_SOURCE : undefined;
 }
 
 function sourceEmbeddingExpansion(sourcePattern: string): string {
@@ -236,8 +394,13 @@ let _genai: GoogleGenAI | null = null;
 const SUPABASE_REQUEST_TIMEOUT_MS = 6_000;
 // Evita que uma indisponibilidade do modelo primário deixe o aluno aguardando
 // dezenas de segundos antes de cair para o próximo modelo validado.
-const MODEL_REQUEST_TIMEOUT_MS = 12_000;
+// Evita que uma indisponibilidade transitória de um modelo segure a resposta
+// por toda a cadeia de fallback. O limite mantém tempo para uma tentativa
+// normal e deixa a próxima opção assumir rapidamente.
+const MODEL_REQUEST_TIMEOUT_MS = 8_000;
 const MODEL_FAILURE_COOLDOWN_MS = 60_000;
+const OPENAI_BASE_URL = (process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1').replace(/\/$/, '');
+const MOONSHOT_BASE_URL = (process.env.MOONSHOT_BASE_URL || 'https://api.moonshot.ai/v1').replace(/\/$/, '');
 const CORPUS_VERSION_TIMEOUT_MS = 800;
 const RETRIEVAL_CACHE_TTL_MS = 5 * 60 * 1_000;
 const RETRIEVAL_CACHE_MAX_ENTRIES = 128;
@@ -359,6 +522,38 @@ function isHistoricalPlanQuery(text: string): boolean {
   if (!refersToOfficialMaterial) return false;
   return [...text.matchAll(/\b(20\d{2})\b/g)].some((match) => match[1] !== ACTIVE_PLAN_YEAR);
 }
+
+function isPlanLoadPeriodQuestion(text: string): boolean {
+  const normalized = text
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLocaleLowerCase('pt-BR');
+  return /\b(?:int\s*5224|plano\s+de\s+ensino)\b/.test(normalized)
+    && /\b(?:carga\s+horaria|periodo|vigente)\b/.test(normalized);
+}
+
+function isProfessorListQuestion(text: string): boolean {
+  const normalized = text
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLocaleLowerCase('pt-BR');
+  return /\b(?:professor|professores|docente|docentes)\b/.test(normalized)
+    && /\b(?:quem|quais|lista|listar|nomes|sao|são)\b/.test(normalized);
+}
+
+function buildPlanLoadPeriodResponse(): string {
+  return [
+    'Conforme o Plano de Ensino 2026-2 da disciplina INT 5224:',
+    '',
+    '- **Carga horária total:** 216 horas.',
+    '- **Atividades teóricas:** 126 horas.',
+    '- **Atividades teórico-práticas:** 90 horas, incluindo 18 horas de Curricularização da Extensão.',
+    '- **Carga semanal:** 25 horas teóricas e 30 horas teórico-práticas.',
+    '',
+    '**Período vigente:** semestre 2026-2.',
+  ].join('\n');
+}
+
 function getGenAI() {
   const apiKey = process.env.GOOGLE_API_KEY ?? process.env.GEMINI_API_KEY;
   if (!apiKey) throw new Error('CONFIGURATION_MISSING_GEMINI');
@@ -391,6 +586,7 @@ async function retrieveDocs(
   queryText?: string,
   corpusVersion?: string | null,
   mode = 'livre',
+  requestedMatchCount?: number,
 ): Promise<{ docs: Document[]; cacheHit: boolean }> {
   const cacheKey = RETRIEVAL_CACHE_ENABLED && corpusVersion && queryText
     ? retrievalCacheKey({ query: queryText, threshold, sourcePattern, mode, corpusVersion })
@@ -402,10 +598,27 @@ async function retrieveDocs(
 
   const supabase = getSupabase();
   const matchDocuments = supabase.rpc.bind(supabase) as unknown as MatchDocumentsRpc;
-  const matchCount = parseInt(process.env.RAG_MATCH_COUNT || '5');
+  const configuredMatchCount = parseInt(process.env.RAG_MATCH_COUNT || '5');
+  const matchCount = requestedMatchCount ?? configuredMatchCount;
   // A recuperação híbrida é o caminho padrão de produção: a variável só
   // pode desligá-la explicitamente para diagnóstico controlado.
   const hybridEnabled = process.env.RAG_HYBRID_ENABLED !== 'false';
+
+  // Se a pergunta já restringe uma obra/fonte, a leitura exata dessa fonte é
+  // mais segura e barata que esperar RPC vetorial. O RPC fica como fallback
+  // quando a fonte exata não retornar chunks ativos.
+  if (sourcePattern) {
+    try {
+      const exactSourceDocuments = await retrieveExactSourceDocs(sourcePattern, matchCount, queryText);
+      if (exactSourceDocuments.length) {
+        if (cacheKey) setCachedRetrieval(cacheKey, exactSourceDocuments);
+        return { docs: exactSourceDocuments, cacheHit: false };
+      }
+    } catch {
+      // Mantém o caminho vetorial abaixo como segunda tentativa.
+    }
+  }
+
   const strategies: Array<{
     functionName: 'match_documents' | 'match_documents_filtered' | 'match_documents_hybrid';
     args: Parameters<MatchDocumentsRpc>[1];
@@ -471,6 +684,17 @@ async function retrieveDocs(
       }
     }
   }
+  if (sourcePattern) {
+    try {
+      const exactSourceDocuments = await retrieveExactSourceDocs(sourcePattern, matchCount, queryText);
+      if (exactSourceDocuments.length) {
+        if (cacheKey) setCachedRetrieval(cacheKey, exactSourceDocuments);
+        return { docs: exactSourceDocuments, cacheHit: false };
+      }
+    } catch (error) {
+      lastError = error instanceof Error ? error.message : String(error);
+    }
+  }
   throw new Error(`RETRIEVAL_FAILED: ${lastError}`);
 }
 
@@ -486,6 +710,91 @@ interface GenerationResult {
   fallbackReason: string | null;
   errorCode: string | null;
   latencyMs: number;
+}
+
+type ChatProvider = 'openai' | 'moonshot' | 'gemini';
+type CandidateModel = { provider: ChatProvider; name: string };
+
+async function generateOpenAIResponse(
+  modelName: string,
+  systemPrompt: string,
+  prompt: string,
+  maxOutputTokens: number,
+): Promise<string> {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) throw new Error('OPENAI_NOT_CONFIGURED');
+  const body: Record<string, unknown> = {
+    model: modelName,
+    messages: [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: prompt },
+    ],
+  };
+  if (modelName.startsWith('gpt-5')) body.max_completion_tokens = maxOutputTokens;
+  else {
+    body.max_tokens = maxOutputTokens;
+    body.temperature = 0;
+  }
+  const response = await fetch(`${OPENAI_BASE_URL}/chat/completions`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', authorization: `Bearer ${apiKey}` },
+    body: JSON.stringify(body),
+    signal: AbortSignal.timeout(MODEL_REQUEST_TIMEOUT_MS),
+  });
+  const payload = await response.json() as { error?: { message?: string }; choices?: Array<{ message?: { content?: string } }> };
+  if (!response.ok) throw new Error(`OPENAI_${response.status}:${payload.error?.message || 'request_failed'}`);
+  const text = payload.choices?.[0]?.message?.content ?? '';
+  if (!text.trim()) throw new Error('OPENAI_EMPTY_RESPONSE');
+  return text;
+}
+
+async function generateMoonshotResponse(
+  modelName: string,
+  systemPrompt: string,
+  prompt: string,
+  maxOutputTokens: number,
+): Promise<string> {
+  const apiKey = process.env.MOONSHOT_API_KEY;
+  if (!apiKey) throw new Error('MOONSHOT_NOT_CONFIGURED');
+  const response = await fetch(`${MOONSHOT_BASE_URL}/chat/completions`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', authorization: `Bearer ${apiKey}` },
+    body: JSON.stringify({
+      model: modelName,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: prompt },
+      ],
+      temperature: 1,
+      max_tokens: maxOutputTokens,
+    }),
+    signal: AbortSignal.timeout(MODEL_REQUEST_TIMEOUT_MS),
+  });
+  const payload = await response.json() as { error?: { message?: string }; choices?: Array<{ message?: { content?: string } }> };
+  if (!response.ok) throw new Error(`MOONSHOT_${response.status}:${payload.error?.message || 'request_failed'}`);
+  const text = payload.choices?.[0]?.message?.content ?? '';
+  if (!text.trim()) throw new Error('MOONSHOT_EMPTY_RESPONSE');
+  return text;
+}
+
+async function generateWithProvider(
+  candidate: CandidateModel,
+  systemPrompt: string,
+  prompt: string,
+  maxOutputTokens: number,
+): Promise<string> {
+  if (candidate.provider === 'openai') return generateOpenAIResponse(candidate.name, systemPrompt, prompt, maxOutputTokens);
+  if (candidate.provider === 'moonshot') return generateMoonshotResponse(candidate.name, systemPrompt, prompt, maxOutputTokens);
+  const result = await getGenAI().models.generateContent({
+    model: candidate.name,
+    contents: prompt,
+    config: {
+      systemInstruction: systemPrompt,
+      maxOutputTokens,
+      abortSignal: AbortSignal.timeout(MODEL_REQUEST_TIMEOUT_MS),
+    },
+  });
+  return result.text ?? '';
 }
 
 function maxOutputTokensForMode(mode: GenerationMode): number {
@@ -507,6 +816,7 @@ async function generateResponse(
   sessionState = 'LIVRE',
   activeMode = 'livre',
   completionRequirement?: string,
+  referenceSourcePattern?: string,
 ): Promise<GenerationResult> {
   const generationStartedAt = Date.now();
   const systemPrompt = `${buildCorePrompt({
@@ -514,21 +824,33 @@ async function generateResponse(
     history: formatHistory(history),
   })}\n\n${buildFlowPrompt({ state: sessionState, mode: activeMode, topic: inlineTheme || '', quizQuestion })}`;
 
-  // O Flash Lite validado nos testes reais apresentou o melhor equilíbrio
-  // entre fidelidade ao contexto do cliente e latência. O fallback fica
-  // restrito a modelos conhecidos para não perder tempo em nomes instáveis.
-  // A ordem padrão acompanha a disponibilidade real medida nesta chave: 2.5
-  // Flash Lite e 2.5 Flash responderam rapidamente; os modelos 3.x ficam
-  // como fallback quando a conta/provedor estiverem estáveis para eles.
-  const requestedModel = process.env.GEMINI_CHAT_MODEL ?? 'gemini-2.5-flash-lite';
-  const candidateModels = [...new Set([
-    requestedModel,
+  // A ordem pode ser canariada por ambiente sem tocar no RAG. A estratégia
+  // recomendada é OpenAI -> Moonshot -> Gemini; sem as novas chaves, o app
+  // preserva automaticamente a cadeia Gemini já validada.
+  const requestedGeminiModel = process.env.GEMINI_CHAT_MODEL ?? 'gemini-2.5-flash-lite';
+  const primaryProvider = (process.env.CHAT_PRIMARY_PROVIDER ||
+    (process.env.OPENAI_API_KEY ? 'openai' : process.env.MOONSHOT_API_KEY ? 'moonshot' : 'gemini')).trim() as ChatProvider;
+  const openaiModel = process.env.OPENAI_CHAT_MODEL || process.env.OPENAI_MODEL || 'gpt-4o-mini';
+  const moonshotModel = process.env.MOONSHOT_CHAT_MODEL || process.env.MOONSHOT_MODEL || 'kimi-k3';
+  const geminiCandidates: CandidateModel[] = [
+    requestedGeminiModel,
     'gemini-2.5-flash-lite',
     'gemini-2.5-flash',
-    'gemini-3.1-flash-lite',
-    'gemini-3.5-flash-lite',
-    'gemini-3.5-flash',
-  ])];
+  ].map((name) => ({ provider: 'gemini', name }));
+  const providerCandidates: Record<ChatProvider, CandidateModel[]> = {
+    openai: [
+      { provider: 'openai', name: openaiModel },
+      { provider: 'moonshot', name: moonshotModel },
+      ...geminiCandidates,
+    ],
+    moonshot: [
+      { provider: 'moonshot', name: moonshotModel },
+      { provider: 'openai', name: openaiModel },
+      ...geminiCandidates,
+    ],
+    gemini: geminiCandidates,
+  };
+  const candidateModels = providerCandidates[primaryProvider] || providerCandidates.gemini;
 
   const effectiveCompletionRequirement = [
     completionRequirement,
@@ -545,24 +867,22 @@ async function generateResponse(
   let text = '';
   let lastErrorMessage = '';
 
-  for (const modelName of candidateModels) {
-    const cooldownUntil = modelCooldownUntil.get(modelName) ?? 0;
+  for (let index = 0; index < candidateModels.length; index += 1) {
+    const candidate = candidateModels[index];
+    const modelKey = `${candidate.provider}:${candidate.name}`;
+    const cooldownUntil = modelCooldownUntil.get(modelKey) ?? 0;
     if (cooldownUntil > Date.now()) {
-      lastErrorMessage = `MODEL_COOLDOWN:${modelName}`;
+      lastErrorMessage = `MODEL_COOLDOWN:${modelKey}`;
       continue;
     }
 
     try {
-      const result = await getGenAI().models.generateContent({
-        model: modelName,
-        contents: prompt,
-        config: {
-          systemInstruction: systemPrompt,
-          maxOutputTokens: maxOutputTokensForMode(sessionMode),
-          abortSignal: AbortSignal.timeout(MODEL_REQUEST_TIMEOUT_MS),
-        },
-      });
-      text = result.text ?? '';
+      text = await generateWithProvider(
+        candidate,
+        systemPrompt,
+        prompt,
+        maxOutputTokensForMode(sessionMode),
+      );
 
       // Garante a presença da pergunta de encerramento sem re-execução custosa
       if (
@@ -579,12 +899,12 @@ async function generateResponse(
             docs,
             sessionMode,
             RAG_REFERENCES_ENABLED,
-            `${question}\n${inlineTheme}`,
+            `${question}\n${inlineTheme}${referenceSourcePattern ? `\n__SOURCE_SCOPE__${referenceSourcePattern}__` : ''}`,
           ),
-          modelRequested: candidateModels[0],
-          modelUsed: modelName,
-          fallbackUsed: modelName !== candidateModels[0],
-          fallbackReason: modelName !== candidateModels[0] ? 'PRIMARY_MODEL_FAILED' : null,
+          modelRequested: candidateModels[0].name,
+          modelUsed: candidate.name,
+          fallbackUsed: index !== 0,
+          fallbackReason: index !== 0 ? 'PRIMARY_MODEL_FAILED' : null,
           errorCode: null,
           latencyMs: Date.now() - generationStartedAt,
         };
@@ -593,10 +913,10 @@ async function generateResponse(
     } catch (error: unknown) {
       lastErrorMessage = error instanceof Error ? error.message : String(error);
       if (/(?:503|UNAVAILABLE|429|RESOURCE_EXHAUSTED|aborted|timeout)/i.test(lastErrorMessage)) {
-        modelCooldownUntil.set(modelName, Date.now() + MODEL_FAILURE_COOLDOWN_MS);
+        modelCooldownUntil.set(modelKey, Date.now() + MODEL_FAILURE_COOLDOWN_MS);
       }
       console.warn(
-        `[generateResponse] Model ${modelName} falhou; tentando o próximo modelo: ${lastErrorMessage.slice(0, 200)}`,
+        `[generateResponse] Model ${modelKey} falhou; tentando o próximo modelo: ${lastErrorMessage.slice(0, 200)}`,
       );
     }
   }
@@ -604,7 +924,7 @@ async function generateResponse(
   console.error('[generateResponse] Todos os modelos falharam:', lastErrorMessage.slice(0, 200));
   return {
     text: 'Ocorreu uma interrupção temporária na geração da resposta. Por favor, tente novamente em instantes.',
-    modelRequested: candidateModels[0],
+    modelRequested: candidateModels[0].name,
     modelUsed: null,
     fallbackUsed: true,
     fallbackReason: 'ALL_MODELS_FAILED',
@@ -638,6 +958,41 @@ function needsClinicalCoverageRepair(question: string, answer: string): boolean 
     || !/respirat/i.test(answer)
     || !/(?:dor|conforto|analges)/i.test(answer);
 }
+
+function answerBodyBeforeReferences(answer: string): string {
+  return answer.split(/\n\s*\*\*Refer[êe]ncias\*\*/i)[0].trim();
+}
+
+function isClinicalQuestion(question: string): boolean {
+  return /\b(?:perioperat[oó]rio|cir[uú]rgic|cirurgia|infec[cç][aã]o|ferida|curativo|sutura|enfermagem)\b/i.test(question);
+}
+
+function asksForExample(question: string): boolean {
+  return /\b(?:exemplo|caso|situa[cç][aã]o|cen[aá]rio)\b/i.test(question);
+}
+
+function hasExampleSection(answer: string): boolean {
+  return /\b(?:exemplo|caso|cen[aá]rio|por exemplo|paciente)\b/i.test(answer);
+}
+
+function isLikelyTruncatedAnswer(answer: string): boolean {
+  const body = answerBodyBeforeReferences(answer).replace(/\s+/g, ' ').trim();
+  if (!body) return false;
+  return /(?:[,;:—-]|\b(?:a|as|o|os|de|do|da|das|dos|em|no|na|nos|nas|com|para|por|que|e|ou|se|como|quando|embora|durante|entre|incluindo))$/i.test(body);
+}
+
+function needsClinicalCompletenessRepair(question: string, answer: string): boolean {
+  if (!isClinicalQuestion(question)) return false;
+  const body = answerBodyBeforeReferences(answer);
+  return isLikelyTruncatedAnswer(answer) || (asksForExample(question) && !hasExampleSection(body));
+}
+
+const CLINICAL_COMPLETENESS_REQUIREMENT = [
+  'A resposta anterior ficou incompleta ou deixou de atender a um item pedido.',
+  'Refaça de forma objetiva, completa e curta, usando somente os trechos disponíveis.',
+  'Inclua uma explicação, um exemplo clínico de enfermagem quando o estudante pedir exemplo, e a relação com a prática profissional.',
+  'Não interrompa frases; se algum ponto não estiver sustentado pelos materiais disponíveis, declare essa limitação sem completar por conta própria.',
+].join(' ');
 
 const POSTOPERATIVE_COVERAGE_REQUIREMENT = `Revise a resposta antes de finalizá-la. Como a pergunta pede os principais cuidados no pós-operatório imediato, organize os cuidados sustentados pelos trechos RAG e inclua explicitamente os três rótulos abaixo, quando houver evidência no contexto: "Sinais vitais", "Avaliação respiratória" e "Dor e conforto". Desenvolva cada eixo em uma frase objetiva e acrescente os demais cuidados relevantes encontrados. Não invente condutas nem informações ausentes; se algum eixo não estiver sustentado, declare essa limitação.`;
 
@@ -894,6 +1249,12 @@ export async function POST(req: NextRequest) {
     let corpusVersion: string | null = null;
     const searchQuery = decision.topic || question;
     const explicitSourcePattern = resolveExplicitSourcePattern(question);
+    const bypassHybridRetrieval = shouldBypassHybridRetrievalForClinicalGrounding(searchQuery);
+    const professorListQuestion = isProfessorListQuestion(searchQuery);
+    const retrievalSourcePattern =
+      decision.generationMode === 'info'
+        ? ACTIVE_PLAN_SOURCE
+        : explicitSourcePattern ?? resolveClinicalGroundingSourcePattern(searchQuery);
 
     try {
       const embeddingStartedAt = Date.now();
@@ -914,11 +1275,12 @@ export async function POST(req: NextRequest) {
       // roteador reduz o texto a um tema antes da recuperação.
       const retrieval = await retrieveDocs(
         embedding,
-        decision.generationMode === 'info' || explicitSourcePattern ? -1 : isCourseQuery ? 0.25 : 0.35,
-        decision.generationMode === 'info' ? ACTIVE_PLAN_SOURCE : explicitSourcePattern,
-        searchQuery,
+        decision.generationMode === 'info' || retrievalSourcePattern ? -1 : isCourseQuery ? 0.25 : 0.35,
+        retrievalSourcePattern,
+        bypassHybridRetrieval && !retrievalSourcePattern ? undefined : searchQuery,
         corpusVersion,
         decision.generationMode ?? 'livre',
+        professorListQuestion ? 12 : undefined,
       );
       docs = retrieval.docs;
       retrievalCacheHit = retrieval.cacheHit;
@@ -960,6 +1322,36 @@ export async function POST(req: NextRequest) {
       finalState = decision.stateBefore;
       fallbackUsed = true;
       fallbackReason = retrievalErrorCode;
+    } else if (
+      professorListQuestion
+      && docs.length > 0
+      && docs.every((doc) => doc.source === ACTIVE_PLAN_SOURCE)
+    ) {
+      // A lista oficial é um fato administrativo estruturado. Depois de
+      // confirmar que a recuperação está restrita ao plano vigente, usamos
+      // o catálogo verificado para impedir omissões e variações entre modelos
+      // ou dispositivos.
+      answer = buildActivePlanProfessorResponse();
+      modelUsed = 'deterministic-active-plan-catalog';
+      finalState = finalizeGeneratedTurn(decision, answer);
+    } else if (
+      isPlanLoadPeriodQuestion(question)
+      && docs.length > 0
+      && docs.every((doc) => doc.source === ACTIVE_PLAN_SOURCE)
+    ) {
+      // Fatos administrativos estruturados não devem depender de uma
+      // geração probabilística que pode trocar total, semanal e modalidade.
+      // Os números abaixo são os campos da tabela de carga horária da p. 1;
+      // a referência ainda é montada deterministicamente pelo catálogo.
+      answer = finalizeReferences(
+        buildPlanLoadPeriodResponse(),
+        docs,
+        decision.generationMode ?? 'livre',
+        RAG_REFERENCES_ENABLED,
+        question,
+      );
+      modelUsed = 'deterministic-plan-facts';
+      finalState = finalizeGeneratedTurn(decision, answer);
     } else {
       const generation = await generateResponse(
         question,
@@ -970,6 +1362,10 @@ export async function POST(req: NextRequest) {
         decision.quizQuestion,
         decision.stateBefore.state,
         decision.stateBefore.mode,
+        professorListQuestion
+          ? 'Para esta pergunta administrativa, liste todos os professores que aparecem no plano atual recuperado, usando o nome completo exatamente como está no contexto. Não abrevie nomes, não deduza nomes ausentes e não substitua a lista por exemplos. Se houver mais de um trecho do plano, consolide todos os nomes sem repetir.\n'
+          : undefined,
+        retrievalSourcePattern,
       );
       answer = generation.text;
       modelRequested = generation.modelRequested;
@@ -999,8 +1395,30 @@ export async function POST(req: NextRequest) {
           decision.stateBefore.state,
           decision.stateBefore.mode,
           POSTOPERATIVE_COVERAGE_REQUIREMENT,
+          retrievalSourcePattern,
         );
         if (!repair.errorCode && !needsClinicalCoverageRepair(question, repair.text)) {
+          answer = repair.text;
+          modelUsed = repair.modelUsed;
+          fallbackUsed = fallbackUsed || repair.fallbackUsed;
+          fallbackReason = repair.fallbackReason ?? fallbackReason;
+          generationLatency += repair.latencyMs;
+        }
+      }
+      if (!generation.errorCode && needsClinicalCompletenessRepair(question, answer)) {
+        const repair = await generateResponse(
+          question,
+          docs,
+          history.slice(-12) as ChatHistoryItem[],
+          decision.generationMode ?? 'livre',
+          decision.topic,
+          decision.quizQuestion,
+          decision.stateBefore.state,
+          decision.stateBefore.mode,
+          CLINICAL_COMPLETENESS_REQUIREMENT,
+          retrievalSourcePattern,
+        );
+        if (!repair.errorCode && !needsClinicalCompletenessRepair(question, repair.text)) {
           answer = repair.text;
           modelUsed = repair.modelUsed;
           fallbackUsed = fallbackUsed || repair.fallbackUsed;

@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 from time import sleep
 from urllib.request import Request, urlopen
 from uuid import uuid4
@@ -86,6 +87,12 @@ def get_telemetry(client: Client, session_id: str, request_id: str) -> dict:
     raise RuntimeError("telemetria não persistida")
 
 
+def extract_reference_lines(answer: str) -> list[str]:
+    """Aceita o cabeçalho canônico atual e o legado com dois-pontos."""
+    parts = re.split(r"\*\*Referências:?\*\*", answer, maxsplit=1, flags=re.IGNORECASE)
+    return parts[1].strip().splitlines() if len(parts) == 2 else []
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--base-url", required=True)
@@ -112,7 +119,7 @@ def main() -> None:
         metadata = stored.get("metadata") or {}
         answer = str(stored.get("content") or "")
         sources = [str(item.get("source") or "") for item in metadata.get("retrieval") or []]
-        reference_lines = answer.split("**Referências:**", 1)[-1].strip().splitlines() if "**Referências:**" in answer else []
+        reference_lines = extract_reference_lines(answer)
         matching_refs = [line for line in reference_lines if scenario["reference"].lower() in line.lower()]
         passed = (
             not response.get("error")

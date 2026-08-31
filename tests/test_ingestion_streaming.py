@@ -102,3 +102,47 @@ def test_stream_upsert_processes_bounded_batches(monkeypatch):
     assert removed == 2
     assert client.rpc_calls[0][0] == "finalize_drive_document_sync"
     assert set(client.rpc_calls[0][1]["p_current_ids"]) == current_ids
+
+
+def test_stream_upsert_binds_catalog_reference_to_the_same_drive_file(monkeypatch):
+    client = _Client()
+    file_id = "drive-catalogado"
+    monkeypatch.setattr(ingestion, "get_settings", lambda: SimpleNamespace(rag_table_name="documents"))
+    monkeypatch.setattr(ingestion, "get_supabase_client", lambda: client)
+    monkeypatch.setattr(ingestion, "_get_embeddings", lambda: object())
+    monkeypatch.setattr(ingestion, "_document_rows_for_file", lambda _file_id: [])
+    monkeypatch.setattr(ingestion, "_embed_batch", lambda texts, _model: [[0.1, 0.2] for _ in texts])
+    monkeypatch.setattr(
+        ingestion,
+        "_load_catalog_reference",
+        lambda requested_file_id: {
+            "reference_title": "Obra conferida no documento",
+            "reference_author": "Autoria conferida",
+            "reference_year": "2026",
+            "reference_source": "catalog",
+            "reference_verified": True,
+            "reference_key": requested_file_id,
+        },
+    )
+
+    inserted, _, total = ingestion.upsert_chunk_stream_to_supabase(
+        iter([{
+            "content": "Trecho clínico cuja página não repete a folha de rosto.",
+            "content_hash": "hash-catalogado",
+            "source": "nome-tecnico-que-nao-e-referencia.pdf",
+            "page_number": 12,
+            "chunk_index": 4,
+            "reference_metadata": {"reference_title": "Título extraído não verificado"},
+        }]),
+        file_id=file_id,
+        batch_size=1,
+    )
+
+    assert inserted == 1
+    assert total == 1
+    metadata = client.target.records[0]["metadata"]
+    assert metadata["drive_file_id"] == file_id
+    assert metadata["reference_key"] == metadata["drive_file_id"]
+    assert metadata["reference_source"] == "catalog"
+    assert metadata["reference_verified"] is True
+    assert metadata["reference_title"] == "Obra conferida no documento"

@@ -16,6 +16,8 @@ const CONTINUATION = /\n\s*\n(?=(?:\*{0,2})?(?:deseja|gostaria de|por favor|qual
  */
 export function sanitizeStudentFacingText(text: string): string {
   return text
+    .replace(/\s*\((?:materiais consultados|fontes consultadas)\s*\d*\)/gi, '')
+    .replace(/\s*\[(?:materiais consultados|fontes consultadas)\s*\d*\]/gi, '')
     .replace(/\b(?:materiais|documentos)\s+RAG\b/gi, 'materiais da disciplina')
     .replace(/\bbase\s+RAG\b/gi, 'materiais da disciplina')
     .replace(/\bcontexto\s+RAG\b/gi, 'materiais da disciplina disponíveis')
@@ -227,10 +229,14 @@ function referenceFromContent(
       ? `${storedAuthor.replace(/[.]+$/, '')} (${storedYear}).`
       : storedAuthor
         ? period(storedAuthor)
-        : (storedYear && !titleAlreadyContainsYear ? `(${storedYear}).` : '');
+        : '';
+    const yearAfterTitle = !storedAuthor && storedYear && !titleAlreadyContainsYear
+      ? `(${storedYear}).`
+      : '';
     return [
       author,
       period(storedTitle),
+      yearAfterTitle,
       edition ? period(edition) : '',
       publisher ? period(publisher) : '',
       Number.isFinite(page) && page > 0 ? `p. ${page}.` : '',
