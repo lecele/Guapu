@@ -58,6 +58,9 @@ const GREETING_RESPONSE =
   '- Informações da disciplina\n' +
   '- Encerrar sessão';
 
+const IDENTITY_RESPONSE =
+  'Sou o Guapu, assistente educacional da disciplina INT 5224 — O cuidado no processo de viver humano II: a condição cirúrgica, da Universidade Federal de Santa Catarina (UFSC). Meu propósito é apoiar o estudo de enfermagem no cuidado ao paciente cirúrgico. Não substituo o raciocínio do estudante nem forneço respostas prontas para provas, trabalhos ou avaliações.';
+
 const MENU_RETURN_RESPONSE =
   'Você voltou ao menu principal.\n\n' +
   'Escolha uma opção ou envie uma pergunta livre relacionada à disciplina:\n' +
@@ -1020,6 +1023,7 @@ async function saveTurnBounded(
 
 const FAST_RESPONSES: Record<FastResponseKey, string> = {
   greeting: GREETING_RESPONSE,
+  identity: IDENTITY_RESPONSE,
   menu: MENU_RETURN_RESPONSE,
   farewell: FAREWELL_RESPONSE,
   resumo_menu: RESUMO_MENU_RESPONSE,

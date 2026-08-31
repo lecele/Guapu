@@ -19,6 +19,7 @@ export type FlowIntent =
   | 'greeting'
   | 'menu_return'
   | 'farewell'
+  | 'identity'
   | 'menu_resumo'
   | 'menu_quiz'
   | 'menu_info'
@@ -39,6 +40,7 @@ export type GenerationMode =
 
 export type FastResponseKey =
   | 'greeting'
+  | 'identity'
   | 'menu'
   | 'farewell'
   | 'resumo_menu'
@@ -105,6 +107,7 @@ export function detectFlowIntent(text: string): FlowIntent {
   if (/^(2|opcao 2|quiz da disciplina|quiz|simulado de prova|simulado|2 quiz da disciplina|2 simulado de prova)$/.test(norm)) return 'menu_quiz';
   if (/^(3|opcao 3|informacoes da disciplina|informacao da disciplina|3 informacoes da disciplina|informacoes|informacao)$/.test(norm)) return 'menu_info';
   if (/^(4|opcao 4|encerrar sessao|encerrar|sair|tchau|bye|adeus|finalizar)$/.test(norm)) return 'farewell';
+  if (/^(quem e voce|o que voce faz|qual e seu nome|qual seu nome|quem e o guapu|qual seu papel(?: nesta disciplina)?|apresente se|se apresente)$/.test(norm)) return 'identity';
   if (/^(aprofundar|aprofundar este tema|aprofundar mais|aprofundar o tema)$/.test(norm)) return 'aprofundar';
   if (/^(escolher outro tema|outro tema|mudar tema|trocar tema)$/.test(norm)) return 'outro_tema';
   if (/^(seja mais concis[oa]|mais concis[oa]|responda novamente de forma concis[oa]|responda de forma concis[oa]|resuma mais|resuma isso|simplifique|explique de outra forma|resposta mais curta|mais curto|mais curta)$/.test(norm)) return 'reformular_conciso';
@@ -194,6 +197,16 @@ export function resolveTurn(state: SessionState, message: string, activeMode?: C
 
   const intent = detectFlowIntent(message);
   const base = { intent, stateBefore: state, quizQuestion: state.quizQuestion, quizAttempt: state.quizAttempt };
+
+  if (intent === 'identity') {
+    return {
+      ...base,
+      kind: 'fast',
+      fastResponse: 'identity',
+      topic: '',
+      stateAfter: nextState(state, { state: 'MENU_PRINCIPAL', mode: 'livre', currentTopic: '', quizQuestion: 0, quizAttempt: 0 }),
+    };
+  }
 
   if (intent === 'greeting' || intent === 'menu_return') {
     return {

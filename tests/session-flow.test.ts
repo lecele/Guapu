@@ -56,6 +56,12 @@ test('reconhece o pedido completo de responder novamente de forma concisa', () =
   assert.equal(decision.generationMode, 'resumo_reformular');
 });
 
+test('responde identidade de forma determinística', () => {
+  const decision = resolveTurn(createDefaultSessionState('session-identity'), 'Quem é você?');
+  assert.equal(decision.kind, 'fast');
+  assert.equal(decision.fastResponse, 'identity');
+});
+
 test('escolher outro tema limpa o tema atual', () => {
   const decision = resolveTurn(state({ state: 'RESUMO_CONCLUIDO', mode: 'resumo', currentTopic: 'hemostasia' }), 'Escolher outro tema');
   assert.equal(decision.stateAfter.state, 'RESUMO_AGUARDANDO_TEMA');
