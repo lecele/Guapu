@@ -166,4 +166,12 @@ Os cinco demais casos da planilha continuam classificados como pendentes de repr
 - Estado final preservado: OpenAI primário, Moonshot configurado como `kimi-k3` na cadeia de fallback, Gemini mantido como fallback posterior. Health final: app/Supabase saudáveis.
 - Recomendação: se a prioridade for manter Moonshot como fallback confiável, trocar o fallback para um modelo geral mais rápido somente após validação de qualidade; o modelo `code-highspeed` foi rápido, mas não deve ser promovido automaticamente a tutor clínico sem amostra comparativa maior.
 
+## Remoção do Moonshot — 2026-08-31
+
+- A pedido do responsável pelo projeto, o Moonshot foi removido da cadeia de geração do Guapu e não é mais selecionável pelo código.
+- Foram removidos o provedor, a chamada específica, a seleção de modelo e o fallback intermediário; a cadeia final é **OpenAI → Gemini**.
+- As variáveis `MOONSHOT_*` foram retiradas do ambiente exclusivo do app na VPS. O backup protegido da configuração anterior está em `/opt/guapu-backups/20260831-remove-moonshot/app.env.before`.
+- Validação: `npm run test:flow` passou em **62/62**, build local e Docker passaram; após o deploy, `status=healthy`, `supabase=connected`, painel healthy, worker/timer ativos e Nginx válido.
+- Commit publicado: `c8489ff`.
+
 Na investigação independente, a identidade também foi reproduzida com comportamento inadequado: a pergunta era encaminhada ao modelo, que acrescentava explicações clínicas e uma referência NANDA não solicitada. A correção controlada no commit `44c11a5a26d42326e5ae2dc361e809f3d6c55b27` tornou as formulações de identidade uma resposta fixa, contendo Guapu, INT 5224, UFSC, propósito pedagógico e limite ético, sem RAG, geração ou referências. A validação publicada retornou somente essa apresentação determinística. O marcador será substituído pelo hash final no fechamento desta rodada.
