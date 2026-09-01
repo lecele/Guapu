@@ -26,6 +26,7 @@ import {
 import { buildCorePrompt, PROMPT_VERSION } from '@/lib/chat/prompts/core';
 import { buildFlowPrompt } from '@/lib/chat/prompts/flow';
 import { buildModePrompt } from '@/lib/chat/prompts/modes';
+import { inferStudentLevel, type StudentLevel } from '@/lib/chat/student-level';
 import {
   finalizeReferences,
   isLikelyInfoInsufficient,
@@ -821,12 +822,15 @@ async function generateResponse(
   activeMode = 'livre',
   completionRequirement?: string,
   referenceSourcePattern?: string,
+  studentLevel?: StudentLevel,
 ): Promise<GenerationResult> {
   const generationStartedAt = Date.now();
+  const effectiveStudentLevel = studentLevel ?? inferStudentLevel(history as ChatHistoryItem[]);
   const systemPrompt = `${buildCorePrompt({
     context: formatContext(docs),
     history: formatHistory(history),
-  })}\n\n${buildFlowPrompt({ state: sessionState, mode: activeMode, topic: inlineTheme || '', quizQuestion })}`;
+    studentLevel: effectiveStudentLevel,
+  })}\n\n${buildFlowPrompt({ state: sessionState, mode: activeMode, topic: inlineTheme || '', quizQuestion, studentLevel: effectiveStudentLevel })}`;
 
   // A ordem pode ser canariada por ambiente sem tocar no RAG. A estratégia
   // recomendada é OpenAI -> Moonshot -> Gemini; sem as novas chaves, o app

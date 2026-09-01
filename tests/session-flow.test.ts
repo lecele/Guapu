@@ -7,6 +7,7 @@ import {
   resolveTurn,
   type SessionState,
 } from '../lib/chat/session-flow.ts';
+import { inferStudentLevel } from '../lib/chat/student-level.ts';
 
 function state(patch: Partial<SessionState>): SessionState {
   return { ...createDefaultSessionState('session-test'), ...patch };
@@ -60,6 +61,11 @@ test('responde identidade de forma determinística', () => {
   const decision = resolveTurn(createDefaultSessionState('session-identity'), 'Quem é você?');
   assert.equal(decision.kind, 'fast');
   assert.equal(decision.fastResponse, 'identity');
+});
+
+test('infere níveis distintos a partir de evidência acumulada na sessão', () => {
+  assert.equal(inferStudentLevel([{ role: 'user', content: 'Explique de forma simples o que é assepsia.' }]), 'iniciante');
+  assert.equal(inferStudentLevel([{ role: 'user', content: 'Compare criticamente as implicações da assepsia e da antissepsia no perioperatório, considerando limitações e evidências.' }]), 'avançado');
 });
 
 test('escolher outro tema limpa o tema atual', () => {
