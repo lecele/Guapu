@@ -401,7 +401,12 @@ const SUPABASE_REQUEST_TIMEOUT_MS = 6_000;
 // Evita que uma indisponibilidade transitória de um modelo segure a resposta
 // por toda a cadeia de fallback. O limite mantém tempo para uma tentativa
 // normal e deixa a próxima opção assumir rapidamente.
-const MODEL_REQUEST_TIMEOUT_MS = 8_000;
+// O prompt RAG completo inclui contexto, histórico e regras de fluxo. O
+// limite anterior de 8 s abortava gerações válidas do OpenAI/Moonshot antes
+// que pudessem responder; o fallback continuava funcionando, mas mascarava
+// a disponibilidade das chaves. Mantemos limite finito para não prender a
+// requisição indefinidamente.
+const MODEL_REQUEST_TIMEOUT_MS = 20_000;
 const MODEL_FAILURE_COOLDOWN_MS = 60_000;
 const OPENAI_BASE_URL = (process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1').replace(/\/$/, '');
 const MOONSHOT_BASE_URL = (process.env.MOONSHOT_BASE_URL || 'https://api.moonshot.ai/v1').replace(/\/$/, '');
