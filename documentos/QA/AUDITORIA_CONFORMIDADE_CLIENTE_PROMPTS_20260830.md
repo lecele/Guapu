@@ -141,4 +141,13 @@ Evidências após a correção: `npm run test:flow` passou em 60/60; `npm run bu
 
 Os cinco demais casos da planilha continuam classificados como pendentes de reprodução específica. O relatório externo fornece apenas o título e uma mensagem resumida, sem os prompts completos nem as respostas esperadas; portanto, não foi feita alteração especulativa em referências, quiz, fallback, guardrails ou detecção de nível.
 
+## Correção controlada — detecção e adaptação do nível do estudante — 2026-08-31
+
+- Causa confirmada: o requisito do Prompt 02 (inferir iniciante/intermediário/avançado a partir do histórico da sessão e adaptar profundidade sem confundir com concisão) não possuía implementação no runtime.
+- Correção: `lib/chat/student-level.ts` calcula o nível de forma determinística, usando sinais linguísticos acumulados das mensagens do estudante; `buildCorePrompt` e `buildFlowPrompt` recebem o nível estimado. Não houve migração, alteração de chunks/embeddings, reprocessamento ou mudança de credenciais.
+- Validação local: `npm run test:flow` passou em **62/62** e `npm run build` passou. O teste cobre classificação introdutória como `iniciante` e pergunta comparativa/técnica como `avançado`.
+- Validação publicada: deploy da correção no commit `f2d2137`; backup remoto em `/opt/guapu-backups/20260831-student-level/`. Health após publicação: `status=healthy`, `supabase=connected`, app/painel healthy, worker e timer ativos, Nginx válido.
+- Teste real sequencial na mesma sessão `qa-level-final-20260831-dd9ba32d-cc07-4f22-9cfe-f4c6d1c30936`: pergunta introdutória sobre assepsia respondeu em **4.626 ms**; pergunta comparativa avançada respondeu em **5.276 ms**, com maior densidade conceitual e referências coerentes. Ambas tiveram `sources_found=5`; não houve erro técnico no fluxo final.
+- Resultado: **ATENDIDO tecnicamente para o critério de adaptação por evidência linguística**. A aceitação plena ainda exige uma amostra maior, porque uma heurística não prova todos os perfis possíveis; isso é uma recomendação de QA, não bloqueio de deploy.
+
 Na investigação independente, a identidade também foi reproduzida com comportamento inadequado: a pergunta era encaminhada ao modelo, que acrescentava explicações clínicas e uma referência NANDA não solicitada. A correção controlada no commit `44c11a5a26d42326e5ae2dc361e809f3d6c55b27` tornou as formulações de identidade uma resposta fixa, contendo Guapu, INT 5224, UFSC, propósito pedagógico e limite ético, sem RAG, geração ou referências. A validação publicada retornou somente essa apresentação determinística. O marcador será substituído pelo hash final no fechamento desta rodada.
