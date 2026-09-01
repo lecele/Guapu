@@ -409,7 +409,6 @@ const SUPABASE_REQUEST_TIMEOUT_MS = 6_000;
 const MODEL_REQUEST_TIMEOUT_MS = 20_000;
 const MODEL_FAILURE_COOLDOWN_MS = 60_000;
 const OPENAI_BASE_URL = (process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1').replace(/\/$/, '');
-const MOONSHOT_BASE_URL = (process.env.MOONSHOT_BASE_URL || 'https://api.moonshot.ai/v1').replace(/\/$/, '');
 const CORPUS_VERSION_TIMEOUT_MS = 800;
 const RETRIEVAL_CACHE_TTL_MS = 5 * 60 * 1_000;
 const RETRIEVAL_CACHE_MAX_ENTRIES = 128;
@@ -722,7 +721,7 @@ interface GenerationResult {
   latencyMs: number;
 }
 
-type ChatProvider = 'openai' | 'moonshot' | 'gemini';
+type ChatProvider = 'openai' | 'gemini';
 type CandidateModel = { provider: ChatProvider; name: string };
 
 async function generateOpenAIResponse(
@@ -758,38 +757,6 @@ async function generateOpenAIResponse(
   return text;
 }
 
-async function generateMoonshotResponse(
-  modelName: string,
-  systemPrompt: string,
-  prompt: string,
-  maxOutputTokens: number,
-): Promise<string> {
-  const apiKey = process.env.MOONSHOT_API_KEY;
-  if (!apiKey) throw new Error('MOONSHOT_NOT_CONFIGURED');
-  const response = await fetch(`${MOONSHOT_BASE_URL}/chat/completions`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json', authorization: `Bearer ${apiKey}` },
-    body: JSON.stringify({
-      model: modelName,
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: prompt },
-      ],
-      temperature: 1,
-      // kimi-k3 inclui tokens de raciocínio no mesmo orçamento. Com 1.200 a
-      // 1.800 tokens, o raciocínio podia consumir todo o limite e deixar
-      // message.content vazio, provocando fallback apesar da API estar OK.
-      max_tokens: Math.max(maxOutputTokens, 4_096),
-    }),
-    signal: AbortSignal.timeout(MODEL_REQUEST_TIMEOUT_MS),
-  });
-  const payload = await response.json() as { error?: { message?: string }; choices?: Array<{ message?: { content?: string } }> };
-  if (!response.ok) throw new Error(`MOONSHOT_${response.status}:${payload.error?.message || 'request_failed'}`);
-  const text = payload.choices?.[0]?.message?.content ?? '';
-  if (!text.trim()) throw new Error('MOONSHOT_EMPTY_RESPONSE');
-  return text;
-}
-
 async function generateWithProvider(
   candidate: CandidateModel,
   systemPrompt: string,
@@ -797,7 +764,6 @@ async function generateWithProvider(
   maxOutputTokens: number,
 ): Promise<string> {
   if (candidate.provider === 'openai') return generateOpenAIResponse(candidate.name, systemPrompt, prompt, maxOutputTokens);
-  if (candidate.provider === 'moonshot') return generateMoonshotResponse(candidate.name, systemPrompt, prompt, maxOutputTokens);
   const result = await getGenAI().models.generateContent({
     model: candidate.name,
     contents: prompt,
@@ -840,14 +806,13 @@ async function generateResponse(
     studentLevel: effectiveStudentLevel,
   })}\n\n${buildFlowPrompt({ state: sessionState, mode: activeMode, topic: inlineTheme || '', quizQuestion, studentLevel: effectiveStudentLevel })}`;
 
-  // A ordem pode ser canariada por ambiente sem tocar no RAG. A estratégia
-  // recomendada é OpenAI -> Moonshot -> Gemini; sem as novas chaves, o app
-  // preserva automaticamente a cadeia Gemini já validada.
+  // A ordem pode ser configurada por ambiente sem tocar no RAG. A cadeia
+  // operacional é OpenAI -> Gemini; não há provedor intermediário.
   const requestedGeminiModel = process.env.GEMINI_CHAT_MODEL ?? 'gemini-2.5-flash-lite';
-  const primaryProvider = (process.env.CHAT_PRIMARY_PROVIDER ||
-    (process.env.OPENAI_API_KEY ? 'openai' : process.env.MOONSHOT_API_KEY ? 'moonshot' : 'gemini')).trim() as ChatProvider;
+  const configuredPrimaryProvider = (process.env.CHAT_PRIMARY_PROVIDER ||
+    (process.env.OPENAI_API_KEY ? 'openai' : 'gemini')).trim();
+  const primaryProvider: ChatProvider = configuredPrimaryProvider === 'openai' ? 'openai' : 'gemini';
   const openaiModel = process.env.OPENAI_CHAT_MODEL || process.env.OPENAI_MODEL || 'gpt-4o-mini';
-  const moonshotModel = process.env.MOONSHOT_CHAT_MODEL || process.env.MOONSHOT_MODEL || 'kimi-k3';
   const geminiCandidates: CandidateModel[] = [
     requestedGeminiModel,
     'gemini-2.5-flash-lite',
@@ -855,12 +820,6 @@ async function generateResponse(
   ].map((name) => ({ provider: 'gemini', name }));
   const providerCandidates: Record<ChatProvider, CandidateModel[]> = {
     openai: [
-      { provider: 'openai', name: openaiModel },
-      { provider: 'moonshot', name: moonshotModel },
-      ...geminiCandidates,
-    ],
-    moonshot: [
-      { provider: 'moonshot', name: moonshotModel },
       { provider: 'openai', name: openaiModel },
       ...geminiCandidates,
     ],
