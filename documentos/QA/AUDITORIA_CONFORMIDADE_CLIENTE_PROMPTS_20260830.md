@@ -150,4 +150,13 @@ Os cinco demais casos da planilha continuam classificados como pendentes de repr
 - Teste real sequencial na mesma sessão `qa-level-final-20260831-dd9ba32d-cc07-4f22-9cfe-f4c6d1c30936`: pergunta introdutória sobre assepsia respondeu em **4.626 ms**; pergunta comparativa avançada respondeu em **5.276 ms**, com maior densidade conceitual e referências coerentes. Ambas tiveram `sources_found=5`; não houve erro técnico no fluxo final.
 - Resultado: **ATENDIDO tecnicamente para o critério de adaptação por evidência linguística**. A aceitação plena ainda exige uma amostra maior, porque uma heurística não prova todos os perfis possíveis; isso é uma recomendação de QA, não bloqueio de deploy.
 
+## Diagnóstico dos timeouts OpenAI/Moonshot — 2026-08-31
+
+- Preflight na VPS confirmou `OPENAI_BASE_URL=https://api.openai.com/v1`, modelo `gpt-4o-mini`, provedor primário `openai` e chave configurada, sem expor o segredo.
+- Teste mínimo direto na API OpenAI confirmou `HTTP 200` para o modelo e resposta em **1.934 ms**; portanto, crédito, chave e nome do modelo estão válidos.
+- Causa operacional confirmada no runtime: o limite global de geração era **8.000 ms**, insuficiente para o prompt completo com contexto RAG, histórico e regras. Os logs registraram timeout do OpenAI e do Moonshot antes do fallback.
+- Correção mínima publicada no commit `a419a80`: limite finito ampliado para **20.000 ms**, mantendo a cadeia de fallback e sem mudar RAG, catálogo, chunks ou embeddings.
+- Teste real pós-deploy: pergunta sobre assepsia retornou em **8.754 ms** (`processing_time_ms`), com `sources_found=5`, referências bibliográficas e sem erro técnico; logs posteriores não registraram falha do modelo nessa chamada. Health permaneceu `healthy` e Supabase `connected`.
+- Resultado: **OpenAI operacional no fluxo completo**. Moonshot permanece pendente de teste isolado de disponibilidade/modelo, sem bloquear o uso do OpenAI nem o fallback Gemini.
+
 Na investigação independente, a identidade também foi reproduzida com comportamento inadequado: a pergunta era encaminhada ao modelo, que acrescentava explicações clínicas e uma referência NANDA não solicitada. A correção controlada no commit `44c11a5a26d42326e5ae2dc361e809f3d6c55b27` tornou as formulações de identidade uma resposta fixa, contendo Guapu, INT 5224, UFSC, propósito pedagógico e limite ético, sem RAG, geração ou referências. A validação publicada retornou somente essa apresentação determinística. O marcador será substituído pelo hash final no fechamento desta rodada.
