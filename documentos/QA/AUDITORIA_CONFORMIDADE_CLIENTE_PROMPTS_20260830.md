@@ -159,4 +159,11 @@ Os cinco demais casos da planilha continuam classificados como pendentes de repr
 - Teste real pós-deploy: pergunta sobre assepsia retornou em **8.754 ms** (`processing_time_ms`), com `sources_found=5`, referências bibliográficas e sem erro técnico; logs posteriores não registraram falha do modelo nessa chamada. Health permaneceu `healthy` e Supabase `connected`.
 - Resultado: **OpenAI operacional no fluxo completo**. Moonshot permanece pendente de teste isolado de disponibilidade/modelo, sem bloquear o uso do OpenAI nem o fallback Gemini.
 
+### Teste isolado do Moonshot — resultado
+
+- `kimi-k3` e `kimi-k2.6` foram confirmados como modelos válidos, mas excederam 20 s no prompt RAG completo; o primeiro também pode consumir o orçamento com raciocínio antes de produzir `content`.
+- O modelo disponível `kimi-k2.7-code-highspeed` respondeu no fluxo completo em **15.182 ms**, com `sources_found=5`, referência bibliográfica coerente e sem fallback registrado. O teste foi feito temporariamente com `CHAT_PRIMARY_PROVIDER=moonshot` e depois a configuração original foi restaurada.
+- Estado final preservado: OpenAI primário, Moonshot configurado como `kimi-k3` na cadeia de fallback, Gemini mantido como fallback posterior. Health final: app/Supabase saudáveis.
+- Recomendação: se a prioridade for manter Moonshot como fallback confiável, trocar o fallback para um modelo geral mais rápido somente após validação de qualidade; o modelo `code-highspeed` foi rápido, mas não deve ser promovido automaticamente a tutor clínico sem amostra comparativa maior.
+
 Na investigação independente, a identidade também foi reproduzida com comportamento inadequado: a pergunta era encaminhada ao modelo, que acrescentava explicações clínicas e uma referência NANDA não solicitada. A correção controlada no commit `44c11a5a26d42326e5ae2dc361e809f3d6c55b27` tornou as formulações de identidade uma resposta fixa, contendo Guapu, INT 5224, UFSC, propósito pedagógico e limite ético, sem RAG, geração ou referências. A validação publicada retornou somente essa apresentação determinística. O marcador será substituído pelo hash final no fechamento desta rodada.
