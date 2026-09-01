@@ -10,6 +10,48 @@ O trabalho foi orientado pelo documento do cliente `Impacto_Redesign_Interface_P
 
 Não foram expostos segredos neste relatório. As correções descritas não fizeram reingestão, não alteraram embeddings, conteúdo textual ou índices e não modificaram o worker de sincronização.
 
+## 1.1. Como o app funciona na VPS e no banco de dados
+
+O caminho de produção é VPS-only; a Vercel permanece apenas preservada, fora do tráfego operacional.
+
+```text
+Navegador desktop/celular
+        |
+        v
+Nginx na VPS (TLS e roteamento por domínio)
+        |
+        +--> guapu-app :3212  --> Supabase/Postgres/pgvector
+        |                         (documentos, chunks, embeddings,
+        |                          catálogo, sessões e telemetria)
+        |
+        +--> guapu-panel :3213 --> Supabase (painel protegido)
+
+Google Drive --> worker persistente na VPS --> manifesto/fila --> Supabase
+```
+
+### Fluxo de uma pergunta
+
+1. O navegador envia a pergunta para `https://guapu.agentesnasaude.com.br/api/chat`.
+2. O container `guapu-app` valida sessão, estado do fluxo e guardrails.
+3. A pergunta é convertida em embedding e usada para buscar chunks ativos no Supabase/pgvector, com filtros especiais para o plano vigente e temas roteados.
+4. O app envia ao modelo apenas o contexto recuperado, o histórico necessário e as instruções de geração.
+5. A resposta é normalizada; as referências são acrescentadas deterministicamente a partir dos documentos/chunks realmente recuperados.
+6. O turno é salvo no banco com `request_id`, estado, fontes, páginas, chunks, modelo, fallback, erro e latências.
+7. O painel consulta esses registros para histórico, telemetria e avaliações. A avaliação automática ocorre em segundo plano e não bloqueia a resposta do estudante.
+
+### Banco e sincronização
+
+- O Supabase é o banco remoto do projeto, não um banco dentro do container da VPS.
+- O banco mantém documentos RAG, embeddings de 768 dimensões, metadados bibliográficos, manifesto do Drive, fila de sincronização, sessões, mensagens, feedback e telemetria.
+- O worker compara o Google Drive com o manifesto e processa somente arquivos novos, alterados ou removidos; o chat não espera a sincronização terminar.
+- As portas dos containers ficam vinculadas a `127.0.0.1`; o acesso público ocorre pelo Nginx.
+- Segredos ficam em `/etc/guapu/app.env` e não são enviados ao navegador, repositório ou imagem Docker.
+- O painel administrativo usa ambiente separado e autenticação própria.
+
+### Operação e recuperação
+
+O health check `/api/health` confirma o app e a conexão com o Supabase. A operação também verifica containers, Nginx, worker, timer de fila, uso do disco e monitores. Existem backups externos do corpus e snapshots de manifesto/fila; antes de cada correção publicada foi preservado um backup específico para rollback.
+
 ## 2. Catalogação bibliográfica
 
 - Foi criado e ampliado um catálogo bibliográfico associado aos `drive_file_id` dos documentos.
