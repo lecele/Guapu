@@ -174,4 +174,13 @@ Os cinco demais casos da planilha continuam classificados como pendentes de repr
 - Validação: `npm run test:flow` passou em **62/62**, build local e Docker passaram; após o deploy, `status=healthy`, `supabase=connected`, painel healthy, worker/timer ativos e Nginx válido.
 - Commit publicado: `c8489ff`.
 
+## Comparação curta de modelos OpenAI — 2026-08-31
+
+- Bateria direta, sem alterar produção: mesma pergunta clínica, mesmo contexto RAG sintético controlado e mesma regra de grounding/referência, usando a chave server-side da VPS sem expô-la.
+- `gpt-4o-mini`: HTTP 200, **2.253 ms**, 636 caracteres, resposta não vazia e referência/contexto reconhecíveis.
+- `gpt-4.1-mini`: HTTP 200, **2.204 ms**, 437 caracteres, resposta não vazia e referência/contexto reconhecíveis; foi mais conciso.
+- `gpt-5-mini`: HTTP 200, **8.607 ms**, 1.012 caracteres, resposta não vazia e contextualizada; a maior latência é compatível com o suporte a raciocínio do modelo, que compartilha orçamento de geração. A documentação oficial o posiciona como opção de raciocínio de menor custo/latência para tarefas bem definidas, mas o teste desta aplicação ficou mais lento que os minis 4.x.
+- `gpt-5-nano`: HTTP 200, **6.720 ms**, `content` vazio no orçamento usado; não foi aprovado nesta bateria.
+- Resultado operacional: manter `gpt-4o-mini` como referência atual até uma bateria clínica maior; `gpt-4.1-mini` é candidato de otimização de latência, e `gpt-5-mini` é candidato de qualidade para perguntas mais complexas. Nenhum modelo foi trocado automaticamente.
+
 Na investigação independente, a identidade também foi reproduzida com comportamento inadequado: a pergunta era encaminhada ao modelo, que acrescentava explicações clínicas e uma referência NANDA não solicitada. A correção controlada no commit `44c11a5a26d42326e5ae2dc361e809f3d6c55b27` tornou as formulações de identidade uma resposta fixa, contendo Guapu, INT 5224, UFSC, propósito pedagógico e limite ético, sem RAG, geração ou referências. A validação publicada retornou somente essa apresentação determinística. O marcador será substituído pelo hash final no fechamento desta rodada.
