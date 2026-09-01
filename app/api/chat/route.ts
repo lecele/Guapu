@@ -776,7 +776,10 @@ async function generateMoonshotResponse(
         { role: 'user', content: prompt },
       ],
       temperature: 1,
-      max_tokens: maxOutputTokens,
+      // kimi-k3 inclui tokens de raciocínio no mesmo orçamento. Com 1.200 a
+      // 1.800 tokens, o raciocínio podia consumir todo o limite e deixar
+      // message.content vazio, provocando fallback apesar da API estar OK.
+      max_tokens: Math.max(maxOutputTokens, 4_096),
     }),
     signal: AbortSignal.timeout(MODEL_REQUEST_TIMEOUT_MS),
   });
