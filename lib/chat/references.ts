@@ -18,7 +18,11 @@ const CONTINUATION = /\n\s*\n(?=(?:\*{0,2})?(?:deseja|gostaria de|por favor|qual
 // Pergunta de encerramento que a aplicacao (ou o modelo) coloca ao final. O
 // cliente especifica a ordem conteudo -> **Referencias** -> pergunta, entao ela
 // e destacada antes de anexar a secao e recolocada depois.
-const CLOSING_QUESTION = /(?:^|\n)[ \t]*((?:\*{0,2})(?:deseja|gostaria)\b[^\n]*\?[ \t]*(?:\*{0,2}))[ \t]*$/i;
+// O modelo nem sempre coloca a pergunta de encerramento em linha própria:
+// em produção (02/09/2026) ela veio emendada ao fim do último parágrafo, e a
+// seção de Referências acabou depois dela. Reconhecemos as duas formas — a
+// linha própria e a última frase do texto.
+const CLOSING_QUESTION = /(?:(?:^|\n)[ \t]*|(?<=[.!?])[ \t]+)((?:\*{0,2})(?:deseja|gostaria)\b[^\n?]*\?[ \t]*(?:\*{0,2}))[ \t]*$/i;
 
 /**
  * Termos do mecanismo interno de recuperação nunca devem aparecer para o

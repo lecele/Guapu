@@ -34,6 +34,7 @@ import {
 } from '@/lib/chat/references';
 import { enrichDocumentReferenceMetadata } from '@/lib/chat/document-catalog';
 import { buildActivePlanProfessorResponse } from '@/lib/chat/course-catalog';
+import { OUT_OF_SCOPE_RESPONSE, resolveOutOfScopeTopic } from '@/lib/chat/scope';
 
 export const runtime = 'nodejs';
 export const maxDuration = 120;
@@ -1215,6 +1216,55 @@ export async function POST(req: NextRequest) {
         historyLength: history.length + 2,
         processingTimeMs: Date.now() - startedAt,
         responseKind: 'navigation',
+      });
+    }
+
+    // Escopo antes da busca (Prompt 01, seção 3.0 e nota técnica da v1.5.0).
+    // Um tema fora da ementa é redirecionado sem gastar recuperação nem
+    // geração, e sem seção de Referências — o texto 3.2 não é uma recusa
+    // ética e não é conteúdo insuficiente.
+    const outOfScopeTopic = resolveOutOfScopeTopic(question, decision.generationMode);
+    if (outOfScopeTopic) {
+      const totalLatency = Date.now() - startedAt;
+      const metadata = buildTurnMetadata({
+        requestId,
+        mode: decision.stateBefore.mode,
+        stateBefore: decision.stateBefore.state,
+        stateAfter: decision.stateBefore.state,
+        topic: decision.topic,
+        quizQuestion: decision.stateBefore.quizQuestion,
+        quizAttempt: decision.stateBefore.quizAttempt,
+        docs: [],
+        retrievalCacheHit: false,
+        modelRequested: null,
+        modelUsed: 'deterministic-out-of-scope',
+        fallbackUsed: true,
+        fallbackReason: `OUT_OF_DISCIPLINE_SCOPE:${outOfScopeTopic}`,
+        embeddingLatency: 0,
+        retrievalLatency: 0,
+        generationLatency: 0,
+        totalLatency,
+        errorCode: null,
+        corpusVersion: null,
+      });
+
+      await saveTurnBounded(supabase, {
+        sessionId,
+        requestId,
+        userMessage: question,
+        assistantMessage: OUT_OF_SCOPE_RESPONSE,
+        state: decision.stateBefore,
+        metadata,
+      });
+
+      return chatResponse({
+        answer: OUT_OF_SCOPE_RESPONSE,
+        sessionId,
+        requestId,
+        sourcesFound: 0,
+        historyLength: history.length + 2,
+        processingTimeMs: Date.now() - startedAt,
+        responseKind: 'fallback',
       });
     }
 

@@ -10,24 +10,36 @@
 # no stack de observabilidade, no worker /opt/guapu, em portas ou no firewall.
 #
 # Rollback: os arquivos anteriores ficam em $BACKUP_DIR e a imagem anterior é
-# marcada como guapu-app:rollback-20260902 antes do build.
+# marcada como $ROLLBACK_TAG antes do build.
 
 set -euo pipefail
 
 APP_DIR=/opt/guapu-app
 COMPOSE="$APP_DIR/docker-compose.guapu.yml"
-STAGING=/tmp/guapu-deploy-20260902
-BACKUP_DIR="$APP_DIR/backups/20260902-referencias"
+STAMP="${GUAPU_DEPLOY_STAMP:-20260902-referencias}"
+STAGING="/tmp/guapu-deploy-$STAMP"
+BACKUP_DIR="$APP_DIR/backups/$STAMP"
+ROLLBACK_TAG="guapu-app:rollback-$STAMP"
 
-FILES=(
-  "lib/chat/references.ts"
-  "lib/chat/document-catalog.ts"
-  "lib/chat/prompts/core.ts"
-  "lib/chat/prompts/flow.ts"
-  "lib/chat/prompts/modes.ts"
-  "app/api/chat/route.ts"
-  ".dockerignore"
-)
+# Sobrescrevível pelo chamador: cada rodada publica só o que mudou.
+# package.json e tests/ ficam de fora de propósito — não são usados em
+# produção e mexer em package.json invalidaria a camada de npm ci do Docker,
+# tornando o build muito mais lento sem nenhum ganho.
+if [ -n "${GUAPU_DEPLOY_FILES:-}" ]; then
+  # Lista separada por espaço, sem aspas: caminhos do repositório não têm
+  # espaços. Aspas aqui virariam parte do nome do arquivo.
+  read -ra FILES <<< "$GUAPU_DEPLOY_FILES"
+else
+  FILES=(
+    "lib/chat/references.ts"
+    "lib/chat/document-catalog.ts"
+    "lib/chat/prompts/core.ts"
+    "lib/chat/prompts/flow.ts"
+    "lib/chat/prompts/modes.ts"
+    "app/api/chat/route.ts"
+    ".dockerignore"
+  )
+fi
 
 say() { printf '\n== %s\n' "$*"; }
 fail() { printf '\nFALHOU: %s\n' "$*" >&2; exit 1; }
@@ -63,11 +75,11 @@ else
 fi
 
 say "2/7  Marcando a imagem atual para rollback"
-if sudo -n docker image inspect guapu-app:rollback-20260902 > /dev/null 2>&1; then
-  echo "  guapu-app:rollback-20260902 já existe; mantida como está"
+if sudo -n docker image inspect "$ROLLBACK_TAG" > /dev/null 2>&1; then
+  echo "  $ROLLBACK_TAG já existe; mantida como está"
 elif sudo -n docker image inspect guapu-app:homologacao > /dev/null 2>&1; then
-  sudo -n docker tag guapu-app:homologacao guapu-app:rollback-20260902
-  echo "  guapu-app:rollback-20260902 criada"
+  sudo -n docker tag guapu-app:homologacao "$ROLLBACK_TAG"
+  echo "  $ROLLBACK_TAG criada"
 else
   echo "  AVISO: imagem guapu-app:homologacao não encontrada"
 fi
@@ -134,4 +146,4 @@ grep -c 'MAX_REFERENCES' "$APP_DIR/lib/chat/references.ts"
 
 say "DEPLOY CONCLUÍDO"
 echo "Backup do estado anterior: $BACKUP_DIR"
-echo "Imagem de rollback: guapu-app:rollback-20260902"
+echo "Imagem de rollback: $ROLLBACK_TAG"
