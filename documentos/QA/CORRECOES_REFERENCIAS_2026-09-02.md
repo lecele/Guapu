@@ -4,12 +4,19 @@ Data: 02/09/2026
 Base normativa: `documentos/Ajustes_02_09_26/0{1,2,3}_*_4.md` (pacote v1.5.0, pedido de 01/09/2026)
 Diagnóstico que originou este trabalho: `documentos/QA/ANALISE_REFERENCIAS_2026-09-02.md`
 
-Validação: **75/75 testes** (`npm run test:flow`, eram 62 antes — 13 novos casos de regressão), `npx eslint` limpo e `npx tsc --noEmit` limpo nos arquivos alterados.
-`npm run build` não pôde ser executado no ambiente de análise (Linux sem egress; o `node_modules` local tem o binário SWC de Windows). **Deve ser rodado na máquina de desenvolvimento e na VPS antes do deploy.**
+**Status: publicado em produção e conferido no assistente no ar.**
+
+Validação: **83/83 testes** (`npm run test:flow`, eram 62 antes — 21 novos casos de regressão), `eslint` limpo, `tsc --noEmit` limpo e `npm run build` aprovado.
+
+| Etapa | Resultado |
+| --- | --- |
+| GitHub | `c96cee3` (correções), `a715f94` (contexto de build), `4163548` (escopo) na branch `codex/client-interface` |
+| VPS | imagem reconstruída, `guapu-app` saudável, saúde pública `{"status":"healthy","supabase":"connected"}` |
+| Rollback | `/opt/guapu-app/backups/20260902-referencias/` e `.../20260902-escopo/`; imagens `guapu-app:rollback-20260902-*` |
 
 ---
 
-## 1. Os seis defeitos corrigidos
+## 1. Os sete defeitos corrigidos
 
 ### D1 — Excesso de referências (`lib/chat/references.ts`)
 
@@ -58,6 +65,37 @@ Passou a distinguir dois casos: listas (`[3, 4, 5]`, `[4, p. 196]`) são sempre 
 `[1] Trecho RAG 1 (arquivo: apostila_final_v3.pdf; página: 12; …)`.
 
 Três problemas de uma vez: o nome técnico do arquivo — expressamente proibido como referência — ia ao modelo em toda chamada; a sigla interna aparecia no contexto; e o prefixo `[1]` ensinava exatamente os marcadores inline que a regra 9 proíbe. O formato passou a ser `--- Trecho 1, página 12 ---`. Nada nas referências depende disso: a identidade vem do catálogo, por `drive_file_id`.
+
+### D7 — O escopo da disciplina não era respeitado (encontrado testando o app publicado)
+
+Depois do primeiro deploy, o assistente foi testado no ar. Perguntado sobre **cuidados de enfermagem em pediatria no pós-operatório**, respondeu a pergunta inteira — sete parágrafos e três referências — em vez de usar o texto padrão de fora do escopo (Prompt 01, seção 3.2).
+
+A regra estava escrita no prompt e o modelo não a seguiu. Como a busca trouxe trechos plausíveis (SOBECC, Brunner), ele tratou o tema como se fosse da disciplina. É literalmente o erro que a seção 3.0 antecipa: *"não decida que um tema está dentro do escopo só porque `CONTEXTO_RAG` trouxe trechos relevantes sobre ele"*.
+
+**Importante:** isso não era uma regressão. Antes destas correções a categoria não existia no código, e a mesma pergunta seria respondida do mesmo jeito.
+
+**Correção.** A checagem saiu do prompt e virou código (`lib/chat/scope.ts`), executada em `app/api/chat/route.ts` **antes da recuperação**. Instrução em prompt é pedido, não garantia; para valer sempre, precisa ser determinística.
+
+Isso responde também à nota técnica da v1.5.0 sobre custo: um pedido fora da ementa não gasta mais embedding, busca nem geração. Em produção a resposta passou a ser imediata.
+
+A lista de temas é curta de propósito — pediatria/neonatologia, obstetrícia e atenção primária, campos que a ementa exclui sem ambiguidade — com duas salvaguardas:
+
+- se o estudante escreve "adulto" ou "idoso", não redireciona (a menção é comparativa, não é o tema);
+- **saúde mental e psiquiatria ficaram fora da lista de propósito.** Um paciente cirúrgico pode ter demanda de saúde mental no perioperatório, e essa pergunta é legítima. Recusar conteúdo que a disciplina cobre é pior que deixar passar uma pergunta fora do escopo.
+
+Dos 8 testes novos desta correção, metade verifica justamente o que **não** pode ser redirecionado.
+
+---
+
+## 1.1. Um defeito latente no processo de deploy
+
+A primeira tentativa de publicação falhou no build, com `TS2307` em `references.ts` e `prompts/modes.ts`. Causa: os backups de deploy são gravados em `/opt/guapu-app/backups/`, **dentro** da pasta que o `COPY .` do Dockerfile copia. O TypeScript passava a verificar cópias de arquivos fora do lugar.
+
+Isso não era novo — vinha passando despercebido porque os arquivos salvos em deploys anteriores não tinham importações relativas. `references.ts` e `modes.ts` têm.
+
+`.dockerignore` passou a excluir `backups/`, e o script de deploy confere essa exclusão antes de construir. Vale para todas as publicações futuras.
+
+O build parou antes de recriar qualquer container: o app permaneceu no ar durante toda a falha.
 
 ---
 
@@ -129,8 +167,18 @@ Os 13 casos novos em `tests/references.test.ts` travam cada defeito:
 
 ---
 
-## 5. Antes do deploy
+## 5. Conferido no assistente publicado
 
-1. `npm run build` na máquina de desenvolvimento e na VPS (não executável no ambiente de análise).
-2. Bateria manual: um Resumo, um Quiz completo (checar que a 3ª questão vai ao menu), uma pergunta de Informações e um pedido fora do escopo (ex.: enfermagem pediátrica) para confirmar o texto 3.2 sem Referências.
-3. Importar a planilha ABNT quando o cliente enviar.
+As respostas abaixo vieram do Guapu no ar, não de teste automatizado.
+
+| Caso | Resultado |
+| --- | --- |
+| Resumo sobre pós-operatório imediato | 3 referências, todas do tema, seção **antes** da pergunta de encerramento; quatro blocos completos; sem nome de arquivo e sem marcador numérico |
+| Pergunta sobre pediatria | texto de fora do escopo literal, sem Referências, resposta imediata sem consultar a base |
+| Quiz sobre feridas cirúrgicas | questão sem nenhuma seção de Referências |
+
+## 6. Em aberto
+
+1. **Hero Card (interface).** Ainda exibe "Assistente de IA · INT 5224" e repete o nome da disciplina na linha seguinte. A v1.4.0 pediu o nome da disciplina no eyebrow; a v1.5.0 pediu remover a linha repetida. É copy de interface, não faz parte destas correções.
+2. **Quiz completo.** Só a primeira questão foi verificada. Vale percorrer as três para confirmar que o encerramento vai direto ao menu curto (TC-RF-007).
+3. **Planilha ABNT.** O caminho está implementado e testado de ponta a ponta; falta a planilha do cliente.

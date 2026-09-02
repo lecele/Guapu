@@ -84,3 +84,9 @@ Thumbs.db
 *.swo
 
 .vercel
+
+# Scripts auxiliares de deploy gerados localmente. Contem caminhos da
+# maquina do desenvolvedor (inclusive o da chave SSH) e nao devem ser
+# versionados. O procedimento versionado e deploy/ops/.
+EXECUTAR_ETAPA_*.bat
+deploy_etapa*.ps1
