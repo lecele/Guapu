@@ -9,14 +9,17 @@ interface ModePromptInput {
 
 function nextQuizInstruction(questionNumber: number, topic: string): string {
   if (questionNumber >= 3) {
-    return 'Não gere outra questão. Informe que as três questões foram concluídas e ofereça continuar, trocar tema, voltar ao menu ou encerrar.';
+    // v1.4.0 (corrige TC-RF-007): a conclusão da 3ª questão vai direto ao menu
+    // curto. "Continuar o quiz" e "trocar de tema" levavam ao mesmo comportamento
+    // e confundiam o estudante logo após o feedback final.
+    return 'Não gere outra questão. Informe brevemente que as três questões foram concluídas e apresente o menu principal, uma opção por linha: Resumo de conteúdo, Quiz da disciplina, Informações da disciplina, Encerrar sessão. Não ofereça "continuar o quiz" nem "trocar de tema" como opções próprias.';
   }
   const next = questionNumber + 1;
   return `Gere em seguida a **Questão ${next}:** sobre "${topic}", com alternativas A, B, C e D em linhas separadas.`;
 }
 
 function quizScopeGuard(topic: string): string {
-  return `REGRA CRÍTICA DE ESCOPO: o tema imutável deste quiz é "${topic}". Cada enunciado, alternativa, correção e explicação deve tratar exclusivamente desse tema. Ignore temas de quizzes anteriores presentes no histórico. Não substitua o tema por outro conteúdo cirúrgico relacionado e não invente informações que não estejam sustentadas pelos trechos RAG recuperados.`;
+  return `REGRA CRÍTICA DE ESCOPO: o tema imutável deste quiz é "${topic}". Cada enunciado, alternativa, correção e explicação deve tratar exclusivamente desse tema. Ignore temas de quizzes anteriores presentes no histórico. Não substitua o tema por outro conteúdo cirúrgico relacionado e não invente informações que não estejam sustentadas pelos trechos fornecidos.`;
 }
 
 export function buildModePrompt({ mode, question, topic, quizQuestion }: ModePromptInput): string {
@@ -28,7 +31,7 @@ export function buildModePrompt({ mode, question, topic, quizQuestion }: ModePro
       return `[MODO ATIVO: INICIAR QUIZ]
 Tema: ${targetTopic}
 ${quizScopeGuard(targetTopic)}
-Crie somente a **Questão ${currentQuestion}:**, clara e baseada nos materiais RAG.
+Crie somente a **Questão ${currentQuestion}:**, clara e baseada nos materiais fornecidos.
 Use exatamente quatro alternativas, cada uma em linha separada: **A)**, **B)**, **C)** e **D)**.
 Não revele a resposta, não inclua referências e solicite apenas a letra escolhida.`;
 
@@ -57,7 +60,7 @@ Não inclua referências.`;
     case 'resumo':
       return `[MODO ATIVO: RESUMO]
 Tema: ${targetTopic}
-Produza aproximadamente 250 a 400 palavras, em quatro parágrafos desenvolvidos e obrigatórios: **Explicação:**, **Exemplo clínico:** sustentado pelos materiais, **Relação com a prática de enfermagem:** com ações concretas e **Sugestão de estudo complementar:** quando houver base no RAG. Não reduza nenhum desses blocos a uma frase isolada.
+Produza aproximadamente 250 a 400 palavras, em quatro parágrafos desenvolvidos e obrigatórios: **Explicação:**, **Exemplo clínico:** sustentado pelos materiais, **Relação com a prática de enfermagem:** com ações concretas e **Sugestão de estudo complementar:** quando houver base nos materiais. Não reduza nenhum desses blocos a uma frase isolada.
 Finalize exatamente com uma única frase corrida, sem lista ou marcadores: "Deseja aprofundar este tema, escolher outro tema, voltar ao menu principal ou encerrar a sessão?"`;
 
     case 'resumo_aprofundar':
@@ -84,6 +87,6 @@ Ofereça outra pergunta, menu ou encerramento.`;
     default:
       return `[MODO ATIVO: PERGUNTA LIVRE]
 Pergunta do estudante: ${question}
-Responda apenas ao que estiver sustentado pelos materiais RAG. Antes de finalizar, confira se todos os elementos centrais da pergunta foram tratados explicitamente; não omita um aspecto relevante quando ele estiver presente nos trechos recuperados. Em perguntas sobre cuidados de enfermagem no pós-operatório imediato, inclua avaliação da dor e do conforto quando houver base no material, junto aos demais cuidados sustentados pelos trechos. Sem pedido explícito de concisão, responda de forma detalhada e objetiva, com explicação, exemplo contextualizado quando houver base e relação com a prática de enfermagem.`;
+Responda apenas ao que estiver sustentado pelos materiais fornecidos. Antes de finalizar, confira se todos os elementos centrais da pergunta foram tratados explicitamente; não omita um aspecto relevante quando ele estiver presente nos trechos recuperados. Em perguntas sobre cuidados de enfermagem no pós-operatório imediato, inclua avaliação da dor e do conforto quando houver base no material, junto aos demais cuidados sustentados pelos trechos. Sem pedido explícito de concisão, responda de forma detalhada e objetiva, com explicação, exemplo contextualizado quando houver base e relação com a prática de enfermagem.`;
   }
 }

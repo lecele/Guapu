@@ -99,7 +99,7 @@ def _load_catalog_reference(file_id: str) -> dict[str, object]:
             .table("rag_document_catalog")
             .select(
                 "drive_file_id,reference_title,reference_author,reference_year,"
-                "reference_edition,reference_publisher,verification_status"
+                "reference_edition,reference_publisher,reference_abnt,verification_status"
             )
             .eq("drive_file_id", file_id)
             .eq("verification_status", "verified")
@@ -131,7 +131,7 @@ def _load_catalog_reference(file_id: str) -> dict[str, object]:
         key: row[key]
         for key in (
             "reference_title", "reference_author", "reference_year",
-            "reference_edition", "reference_publisher",
+            "reference_edition", "reference_publisher", "reference_abnt",
         )
         if row.get(key)
     } | {

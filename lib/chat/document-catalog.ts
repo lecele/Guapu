@@ -7,6 +7,13 @@ export interface CatalogReference {
   reference_source: 'catalog';
   reference_verified: true;
   reference_key: string;
+  /**
+   * Citação pronta em ABNT NBR 6023, conferida no próprio documento pela
+   * catalogação do cliente (planilha de 02/09/2026). Quando presente, é usada
+   * literalmente: a aplicação não remonta a referência a partir dos campos,
+   * o que garante formato idêntico em qualquer modalidade e qualquer modelo.
+   */
+  reference_abnt?: string;
   /** Identidade parcial baseada em título/seção explícita do documento. */
   reference_confidence?: 'complete' | 'partial';
 }
@@ -922,6 +929,16 @@ export function enrichDocumentReferenceMetadata(
 ): Record<string, unknown> {
   const fileId = typeof metadata.drive_file_id === 'string' ? metadata.drive_file_id : '';
   const catalog = fileId ? DOCUMENT_REFERENCE_CATALOG[fileId] : undefined;
-  if (!catalog || metadata.reference_verified === true) return metadata;
+  if (!catalog) return metadata;
+  if (metadata.reference_verified === true) {
+    // Os metadados já gravados no chunk continuam mandando. A citação ABNT é a
+    // exceção: ela é a identidade canônica curada do documento e precisa valer
+    // assim que a aplicação sobe, sem depender da reindexação de milhares de
+    // linhas legadas no Supabase.
+    if (catalog.reference_abnt && metadata.reference_abnt !== catalog.reference_abnt) {
+      return { ...metadata, reference_abnt: catalog.reference_abnt };
+    }
+    return metadata;
+  }
   return { ...metadata, ...catalog };
 }

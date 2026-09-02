@@ -701,3 +701,219 @@ test('reconhece informação administrativa sem confirmação no plano', () => {
     true,
   );
 });
+
+// ── Regressões corrigidas em 02/09/2026 (pacote de prompts v1.5.0) ──────────
+
+const catalogMetadata = (id: string, title: string, author?: string, year?: string, page?: number) => ({
+  drive_file_id: id,
+  reference_key: id,
+  reference_source: 'catalog',
+  reference_verified: true,
+  reference_title: title,
+  ...(author ? { reference_author: author } : {}),
+  ...(year ? { reference_year: year } : {}),
+  ...(page ? { page_number: page } : {}),
+});
+
+test('D2 — mensagem "fora do escopo da disciplina" (3.2) nunca leva Referências', () => {
+  const answer = finalizeReferences(
+    'Isso foge ao escopo desta disciplina (O cuidado no processo de viver humano II - a condição cirúrgica), que trata do cuidado de enfermagem ao adulto e ao idoso no período perioperatório. Deseja voltar ao menu principal ou perguntar algo dentro desses temas?',
+    [{
+      source: 'pediatria.pdf',
+      content: 'Cuidados de enfermagem em pediatria no pós-operatório de criança submetida a anestesia geral.',
+      similarity: 0.7,
+      metadata: catalogMetadata('drive-ped', 'Enfermagem pediátrica perioperatória', 'Autor P', '2020'),
+    }],
+    'livre',
+    true,
+    'cuidados de enfermagem em pediatria',
+  );
+
+  assert.doesNotMatch(answer, /Referências/i);
+  assert.doesNotMatch(answer, /Informação não disponível no artigo/);
+  assert.match(answer, /foge ao escopo desta disciplina/);
+});
+
+test('D2 — "não consta do Plano de Ensino" também suprime a seção', () => {
+  const answer = finalizeReferences(
+    'Esse tema não consta do Plano de Ensino desta disciplina. Deseja voltar ao menu principal?',
+    [{ source: 'a.pdf', content: 'Trecho qualquer sobre cuidados.', metadata: catalogMetadata('drive-x', 'Obra qualquer') }],
+    'resumo',
+  );
+  assert.doesNotMatch(answer, /Referências/i);
+});
+
+test('D3 — prosa iniciada por "Referências" não trunca a resposta', () => {
+  const answer = finalizeReferences(
+    'O plano de ensino define os critérios de avaliação.\nReferências bibliográficas básicas da disciplina estão listadas no Moodle e devem ser consultadas.\n\nO estudante deve verificar o cronograma antes da prova.',
+    [{ source: 'plano.pdf', content: 'Trecho administrativo.' }],
+    'info',
+    true,
+    'critérios de avaliação',
+  );
+
+  assert.match(answer, /Referências bibliográficas básicas da disciplina estão listadas no Moodle/);
+  assert.match(answer, /O estudante deve verificar o cronograma antes da prova\./);
+});
+
+test('D3 — cabeçalho real continua sendo removido', () => {
+  const answer = finalizeReferences(
+    'Resposta.\n\n**Referências**\n- fonte inventada pelo modelo',
+    [{ source: 'a.pdf', content: 'Trecho sem identificação.' }],
+    'info',
+  );
+  assert.doesNotMatch(answer, /fonte inventada/);
+});
+
+test('D1 — obra recuperada por aproximação não entra na lista', () => {
+  const answer = finalizeReferences(
+    'A antissepsia da pele do sítio cirúrgico com clorexidina alcoólica reduz a carga microbiana antes da incisão. Essa medida integra o pacote de prevenção de infecção.',
+    [
+      {
+        source: 's1',
+        content: 'A antissepsia da pele reduz a carga microbiana antes da incisão cirúrgica no centro cirúrgico.',
+        similarity: 0.8,
+        metadata: catalogMetadata('d1', 'Prevenção de infecção de sítio cirúrgico', 'Silva J', '2020'),
+      },
+      {
+        source: 's2',
+        content: 'A teleconsulta de enfermagem no pós-operatório permite acompanhamento remoto do paciente cirúrgico.',
+        similarity: 0.42,
+        metadata: catalogMetadata('d2', 'Teleconsulta de enfermagem ao paciente submetido a cirurgia geral', 'Jacome L', '2022'),
+      },
+      {
+        source: 's3',
+        content: 'O dicionário apresenta termos médicos utilizados na prática de enfermagem hospitalar.',
+        similarity: 0.4,
+        metadata: catalogMetadata('d3', 'Dicionário de termos médicos e de enfermagem', 'Guimarães D', '2002'),
+      },
+    ],
+    'resumo',
+    true,
+    'antissepsia da pele antes da cirurgia',
+  );
+
+  assert.match(answer, /Prevenção de infecção de sítio cirúrgico/);
+  assert.doesNotMatch(answer, /Teleconsulta|Dicionário de termos/);
+  assert.equal((answer.match(/^- /gm) ?? []).length, 1);
+});
+
+test('D1 — a seção nunca passa de três referências', () => {
+  const content = 'A checagem da lista de verificação de segurança cirúrgica confirma identidade e sítio antes da incisão.';
+  const docs = ['a', 'b', 'c', 'd', 'e'].map((id, index) => ({
+    source: `s-${id}`,
+    content,
+    similarity: 0.9 - index * 0.01,
+    metadata: catalogMetadata(`drive-${id}`, `Obra verificada ${id.toUpperCase()}`, 'Autor', '2020'),
+  }));
+  const answer = finalizeReferences(content, docs, 'resumo', true, 'lista de verificação de segurança cirúrgica');
+  assert.equal((answer.match(/^- /gm) ?? []).length, 3);
+});
+
+test('D4 — a seção fica antes da pergunta de encerramento', () => {
+  const answer = finalizeReferences(
+    'Infecção de sítio cirúrgico é uma complicação pós-operatória relevante.\n\nDeseja aprofundar este tema, escolher outro tema, voltar ao menu principal ou encerrar a sessão?',
+    [{
+      source: 's1',
+      content: 'A prevenção de infecção de sítio cirúrgico depende de antissepsia e profilaxia antibiótica.',
+      similarity: 0.8,
+      metadata: catalogMetadata('drive-isc', 'Prevenção de infecção de sítio cirúrgico', 'Silva J', '2020', 12),
+    }],
+    'resumo',
+    true,
+    'infecção de sítio cirúrgico',
+  );
+
+  const referencesAt = answer.indexOf('**Referências**');
+  const closingAt = answer.indexOf('Deseja aprofundar');
+  assert.ok(referencesAt > 0 && closingAt > referencesAt, `ordem incorreta:\n${answer}`);
+});
+
+test('D4 — o fallback da camada 3 também precede o encerramento', () => {
+  const answer = finalizeReferences(
+    'A resposta foi construída a partir do conteúdo consultado.\n\nDeseja aprofundar este tema, escolher outro tema, voltar ao menu principal ou encerrar a sessão?',
+    [{ source: 'manual.pdf', content: 'O procedimento deve seguir a rotina descrita no material.' }],
+    'resumo',
+  );
+  const referencesAt = answer.indexOf('**Referências**');
+  const closingAt = answer.indexOf('Deseja aprofundar');
+  assert.ok(referencesAt > 0 && closingAt > referencesAt, `ordem incorreta:\n${answer}`);
+});
+
+test('D5 — valores numéricos entre colchetes não são apagados', () => {
+  const answer = finalizeReferences(
+    'A escala de dor varia de [0] a [10]. O jejum pré-operatório recomendado é de [8] horas.',
+    [],
+    'livre',
+    false,
+  );
+  assert.match(answer, /de \[0\] a \[10\]/);
+  assert.match(answer, /de \[8\] horas/);
+});
+
+test('D5 — marcadores de citação herdados continuam sendo removidos', () => {
+  const answer = finalizeReferences(
+    'As normas da ABNT [2] incluem etapas específicas [3, 4, 5] e o "Mapa mental" [3].',
+    [],
+    'livre',
+    false,
+  );
+  assert.doesNotMatch(answer, /\[\s*\d/);
+  assert.match(answer, /normas da ABNT incluem etapas específicas/);
+});
+
+test('escopo explícito de fonte tolera diferença de maiúsculas', () => {
+  const answer = finalizeReferences(
+    'As etapas de limpeza e enxágue seguem a sequência técnica indicada.',
+    [{
+      source: 'Biblioteca__Praticas_Recomendadas__Livro__SOBECC__2013__v6',
+      content: 'Limpeza e enxágue de produtos para saúde.',
+      similarity: 0.76,
+      metadata: catalogMetadata('drive-sobecc', 'Práticas Recomendadas SOBECC', undefined, '2013', 122),
+    }],
+    'livre',
+    true,
+    'etapas de limpeza e enxágue\n__SOURCE_SCOPE__biblioteca__praticas_recomendadas__livro__sobecc__2013__v6__',
+  );
+  assert.match(answer, /Práticas Recomendadas SOBECC/);
+});
+
+test('ABNT — a citação curada é usada literalmente, sem remontagem', () => {
+  const answer = finalizeReferences(
+    'A enfermagem perioperatória acompanha o paciente durante a anestesia e monitora sinais vitais e nível de consciência.',
+    [{
+      source: 'anestesia.pdf',
+      similarity: 0.9,
+      content: 'A enfermagem perioperatória acompanha o paciente durante a anestesia, monitorando sinais vitais e nível de consciência.',
+      metadata: {
+        ...catalogMetadata('drive-abnt', 'O papel da enfermagem perioperatória na anestesia', 'Souza AB', '2021', 4),
+        reference_abnt: 'SOUZA, A. B. et al. O papel da enfermagem perioperatória na anestesia. Revista da Escola de Enfermagem da USP, São Paulo, v. 56, e20210465, 2022.',
+      },
+    }],
+    'resumo',
+    true,
+    'papel da enfermagem perioperatória na anestesia',
+  );
+
+  assert.match(answer, /- SOUZA, A\. B\. et al\. O papel da enfermagem perioperatória na anestesia\. Revista da Escola de Enfermagem da USP, São Paulo, v\. 56, e20210465, 2022\. p\. 4\./);
+  // A remontagem antiga (Autor (Ano). Título.) não pode reaparecer junto.
+  assert.doesNotMatch(answer, /Souza AB \(2021\)/);
+});
+
+test('ABNT — o catálogo aplica a citação mesmo em chunk legado já verificado', () => {
+  const enriched = enrichDocumentReferenceMetadata({
+    drive_file_id: '1if-C_IzjQFeg3nPTTcXNWJKT8YooUHIR',
+    reference_source: 'catalog',
+    reference_verified: true,
+    reference_title: 'Título antigo gravado no chunk',
+    page_number: 1,
+  });
+  const catalogEntry = DOCUMENT_REFERENCE_CATALOG['1if-C_IzjQFeg3nPTTcXNWJKT8YooUHIR'];
+  // Enquanto a planilha não for importada não há citação ABNT no bootstrap; o
+  // contrato verificado aqui é que, havendo uma, ela vence o metadado legado.
+  if (catalogEntry?.reference_abnt) {
+    assert.equal(enriched.reference_abnt, catalogEntry.reference_abnt);
+  } else {
+    assert.equal(enriched.reference_title, 'Título antigo gravado no chunk');
+  }
+});

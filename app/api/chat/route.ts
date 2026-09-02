@@ -367,20 +367,22 @@ type ResponseKind = 'navigation' | 'summary' | 'quiz_question' | 'quiz_feedback'
 
 // ── Helpers de formatação RAG ─────────────────────────────────────────────────
 
+// O nome técnico do arquivo nunca pode virar referência (Prompt 01, seção 4,
+// item 2 e Exemplo F). Entregá-lo ao modelo em toda chamada era um convite a
+// exatamente esse erro, então ele deixou de ser enviado: a identidade
+// bibliográfica vem do catálogo, por drive_file_id, e é montada pela aplicação.
+// O prefixo "[n]" também saiu — ele ensinava o modelo a produzir os marcadores
+// de citação inline que a regra 9 proíbe. A sigla interna do mecanismo de busca
+// não aparece mais no contexto (Prompt 01, seção 5).
 function formatContext(docs: Document[]): string {
   if (!docs.length) return 'Nenhum material disponível.';
   return docs
     .map((d, i) => {
       const page = Number(d.metadata.page_number);
-      const chunk = Number(d.metadata.chunk_index);
-      const location = [
-        `arquivo: ${d.source}`,
-        Number.isFinite(page) && page > 0 ? `página: ${page}` : null,
-        Number.isFinite(chunk) && chunk >= 0 ? `trecho: ${chunk + 1}` : null,
-      ].filter(Boolean).join('; ');
-      return `[${i + 1}] Trecho RAG ${i + 1} (${location}; similaridade: ${d.similarity.toFixed(2)})\n${d.content}`;
+      const location = Number.isFinite(page) && page > 0 ? `, página ${page}` : '';
+      return `--- Trecho ${i + 1}${location} ---\n${d.content}`;
     })
-    .join('\n\n---\n\n');
+    .join('\n\n');
 }
 
 function formatHistory(history: Array<{ role: string; content: string }>): string {

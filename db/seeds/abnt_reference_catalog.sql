@@ -1,0 +1,10 @@
+-- Placeholder. Este arquivo é GERADO por scripts/import_abnt_references.py a
+-- partir da planilha de catalogação ABNT do cliente e não deve ser editado à mão.
+--
+-- Enquanto a planilha não for importada, ele fica vazio de propósito: aplicar
+-- este arquivo como está não altera nenhuma linha.
+--
+-- Fluxo:
+--   1. psql < db/migrations/043_add_abnt_reference_to_catalog.sql
+--   2. python scripts/import_abnt_references.py referencias_enfermagem_perioperatoria.xlsx
+--   3. psql < db/seeds/abnt_reference_catalog.sql

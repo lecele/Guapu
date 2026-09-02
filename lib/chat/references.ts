@@ -7,8 +7,18 @@ export interface RetrievedSource {
   metadata?: Record<string, unknown>;
 }
 
-const REFERENCE_HEADING = /(?:^|\n)\s*(?:\*\*)?refer[êe]ncias:?\*{0,2}\s*/i;
+// Um cabecalho de secao e uma linha cujo unico conteudo e a palavra
+// "Referencias" (com ou sem asteriscos/dois-pontos) ou que abre imediatamente
+// uma lista. Uma frase em prosa que apenas comeca com essa palavra — por
+// exemplo "Referencias bibliograficas basicas estao no Moodle", presente no
+// proprio Plano de Ensino — NAO e um cabecalho e nao pode truncar a resposta.
+const REFERENCE_HEADING_CANDIDATE = /(?:^|\n)([ \t]*(?:\*{1,2})?[ \t]*refer[êe]ncias\b[ \t]*(:?)[ \t]*(?:\*{1,2})?[ \t]*)([^\n]*)/gi;
+const REFERENCE_LIST_START = /^(?:[-•*–—]|\d+[.)])\s*/;
 const CONTINUATION = /\n\s*\n(?=(?:\*{0,2})?(?:deseja|gostaria de|por favor|qual tema|quest[aã]o))/i;
+// Pergunta de encerramento que a aplicacao (ou o modelo) coloca ao final. O
+// cliente especifica a ordem conteudo -> **Referencias** -> pergunta, entao ela
+// e destacada antes de anexar a secao e recolocada depois.
+const CLOSING_QUESTION = /(?:^|\n)[ \t]*((?:\*{0,2})(?:deseja|gostaria)\b[^\n]*\?[ \t]*(?:\*{0,2}))[ \t]*$/i;
 
 /**
  * Termos do mecanismo interno de recuperação nunca devem aparecer para o
@@ -49,6 +59,11 @@ export function isLikelyInfoInsufficient(question: string, answer: string): bool
   return absence && guidance;
 }
 
+// O cliente pede dedupe por documento e uma lista enxuta. Com 5 trechos
+// recuperados, publicar 5 obras transformava a seção em uma bibliografia do
+// acervo em vez da evidência da resposta.
+const MAX_REFERENCES = 3;
+
 function needsReferences(mode: GenerationMode): boolean {
   return ['resumo', 'resumo_aprofundar', 'resumo_reformular', 'info', 'livre'].includes(mode);
 }
@@ -63,7 +78,10 @@ function isSourceOnlyReference(reference: string): boolean {
 
 function isInsufficientOrRefusal(text: string): boolean {
   const normalized = text.replace(/\s+/g, ' ');
-  return /(?:^|\s)(?:n[aã]o posso responder|n[aã]o encontrei.*(?:materiais|conte[uú]do|informa[cç][aã]o)|fora do escopo|informa[cç][aã]o n[aã]o dispon[ií]vel no artigo|n[aã]o (?:est[aá]|foi) detalhad[ao]|n[aã]o h[aá] informa[cç][aã]o suficiente)/i.test(normalized)
+  // A v1.5.0 criou a mensagem "fora do escopo da disciplina" (Prompt 01, 3.2),
+  // que nao usa nenhuma das expressoes da recusa por guardrail. Recusa, fora de
+  // escopo e conteudo insuficiente nunca podem levar secao de Referencias.
+  return /(?:^|\s)(?:n[aã]o posso responder|n[aã]o encontrei.*(?:materiais|conte[uú]do|informa[cç][aã]o)|fora do escopo|foge ao escopo|n[aã]o (?:consta|constam|faz parte|fazem parte|pertence|pertencem)\s+(?:d[oa]s?\s+)?(?:plano de ensino|escopo|ementa|conte[uú]do program[aá]tico|disciplina)|informa[cç][aã]o n[aã]o dispon[ií]vel no artigo|n[aã]o (?:est[aá]|foi) detalhad[ao]|n[aã]o h[aá] informa[cç][aã]o suficiente)/i.test(normalized)
     || /(?:f[oó]rmula|informa[cç][aã]o).{0,120}(?:n[aã]o|sem).{0,120}(?:detalhad|dispon[ií]vel|encontrad)/i.test(normalized)
     || /n[aã]o (?:apresentam?|trazem?|cont[eê]m|possuem?).{0,120}(?:f[oó]rmula|tabela|dado|informa[cç][aã]o)/i.test(normalized)
     || /n[aã]o [eé] poss[ií]vel deduzir|dados? recuperados n[aã]o trazem/i.test(normalized);
@@ -76,6 +94,11 @@ const REFERENCE_STOPWORDS = new Set([
   'cuidado', 'cuidados', 'enfermagem', 'paciente', 'pacientes', 'procedimento',
   'procedimentos', 'cirurgico', 'cirurgicos', 'cirurgica', 'cirurgicas',
   'material', 'materiais', 'conteudo', 'disciplina', 'fase',
+  // Vocabulario onipresente no acervo desta disciplina: compartilhar uma
+  // destas palavras com a pergunta nao e evidencia de que a obra foi usada.
+  'cirurgia', 'cirurgias', 'hospital', 'hospitalar', 'hospitalares', 'saude',
+  'livro', 'livros', 'apostila', 'tratado', 'manual', 'edicao', 'volume',
+  'revista', 'journal',
 ]);
 
 function meaningfulOverlapCount(answer: string, reference: string): number {
@@ -218,6 +241,15 @@ function referenceFromContent(
   // técnicas oficiais podem ter títulos longos e ainda assim são referências
   // bibliográficas válidas; não reaplicar o heurístico de título aqui.
   if (isVerifiedCatalogReference(metadata) && storedTitle.length > 0) {
+    // Citação ABNT curada: usada literalmente, sem remontagem. É o que garante
+    // "sempre a mesma estrutura, em qualquer modalidade, independentemente do
+    // modelo em uso" (Prompt 01, seção 4, item 8).
+    const abnt = typeof metadata?.reference_abnt === 'string' ? metadata.reference_abnt.trim() : '';
+    if (abnt) {
+      const abntPage = Number(metadata?.page_number);
+      const withPeriod = abnt.replace(/\s*$/, '').replace(/([^.])$/, '$1.');
+      return Number.isFinite(abntPage) && abntPage > 0 ? `${withPeriod} p. ${abntPage}.` : withPeriod;
+    }
     const edition = typeof metadata?.reference_edition === 'string' ? metadata.reference_edition.trim() : '';
     const publisher = typeof metadata?.reference_publisher === 'string' ? metadata.reference_publisher.trim() : '';
     const page = Number(metadata?.page_number);
@@ -337,15 +369,74 @@ function referenceFromContent(
   return '';
 }
 
+/**
+ * Localiza um cabeçalho de seção de referências escrito pelo modelo. Só conta
+ * como cabeçalho a linha cujo restante está vazio, abre uma lista ou usa
+ * dois-pontos. Uma frase de prosa iniciada por "Referências" é preservada —
+ * antes, ela apagava silenciosamente todo o texto seguinte da resposta.
+ */
+function findModelReferenceHeading(text: string): { index: number; length: number } | null {
+  let found: { index: number; length: number } | null = null;
+  for (const match of text.matchAll(REFERENCE_HEADING_CANDIDATE)) {
+    if (match.index === undefined) continue;
+    const [full, headPart, colon, rest] = match;
+    const trimmedRest = (rest || '').trim();
+    const isHeading = Boolean(colon) || trimmedRest === '' || REFERENCE_LIST_START.test(trimmedRest);
+    if (!isHeading) continue;
+    // A última ocorrência é a seção final; ocorrências anteriores costumam ser
+    // citações do próprio material.
+    found = { index: match.index + (full.startsWith('\n') ? 1 : 0), length: headPart.length };
+  }
+  return found;
+}
+
 function removeModelReferences(text: string): string {
-  const heading = text.match(REFERENCE_HEADING);
-  if (!heading || heading.index === undefined) return text.trim();
+  const heading = findModelReferenceHeading(text);
+  if (!heading) return text.trim();
 
   const before = text.slice(0, heading.index).trimEnd();
-  const after = text.slice(heading.index + heading[0].length);
+  const after = text.slice(heading.index + heading.length);
   const continuation = after.match(CONTINUATION);
   const tail = continuation?.index === undefined ? '' : after.slice(continuation.index).trim();
   return [before, tail].filter(Boolean).join('\n\n');
+}
+
+/**
+ * Marcadores de citação herdados da fonte (regra 9 do cliente). Listas com mais
+ * de um elemento são sempre notas de rodapé. Um colchete com um único número é
+ * ambíguo: `[2]` depois de uma palavra é nota de rodapé, mas `de [0] a [10]` é
+ * um intervalo numérico do próprio conteúdo clínico e não pode ser apagado.
+ */
+const CITATION_LIST = /\[\s*\d+(?:\s*(?:[.,;:]\s*|\s+)(?:\d+(?:\.\d+)*|p\.?\s*\d+))+\s*\]/gi;
+const SINGLE_MARKER = /\[\s*\d{1,3}\s*\]/g;
+const NUMERIC_RANGE_LEAD = /(?:^|[^\p{L}])(?:de|desde|entre|at[eé]|entre|a|e|ou|em|com|por|nos|nas|no|na)\s*$/iu;
+
+function stripInheritedCitationMarkers(text: string): string {
+  return text
+    .replace(CITATION_LIST, '')
+    .replace(SINGLE_MARKER, (marker, offset: number, whole: string) => {
+      const before = whole.slice(0, offset);
+      const after = whole.slice(offset + marker.length);
+      // "de [0] a [10]", "entre [2] e [4]": valores, não citações.
+      if (NUMERIC_RANGE_LEAD.test(before)) return marker;
+      if (/^\s*(?:a|at[eé]|e|ou|-|–|—)\s*\[\s*\d/.test(after)) return marker;
+      // Uma nota de rodapé se apoia no texto que a precede.
+      if (!/[\p{L}\p{N}"'”’)\]]\s?$/u.test(before)) return marker;
+      return '';
+    });
+}
+
+/**
+ * Separa a pergunta de encerramento do corpo da resposta para que a seção
+ * `**Referências**` fique antes dela, conforme os Exemplos A e H do Prompt 03.
+ */
+function splitClosingQuestion(text: string): { body: string; closing: string } {
+  const match = text.match(CLOSING_QUESTION);
+  if (!match || match.index === undefined) return { body: text, closing: '' };
+  return {
+    body: text.slice(0, match.index).trimEnd(),
+    closing: match[1].trim(),
+  };
 }
 
 /**
@@ -359,10 +450,8 @@ export function finalizeReferences(
   enabled = true,
   relevanceText = text,
 ): string {
-  const withoutModelReferences = sanitizeStudentFacingText(removeModelReferences(text)
-    // Remove marcadores numéricos herdados da fonte, inclusive os que trazem
-    // subseções, separadores ou indicação de página (ex.: [3, 6.2.3; 4]).
-    .replace(/\[\s*\d+(?:\s*(?:[.,;:]\s*|\s+)(?:\d+(?:\.\d+)*|p\.?\s*\d+))*\s*\]/gi, '')
+  const withoutModelReferences = sanitizeStudentFacingText(
+    stripInheritedCitationMarkers(removeModelReferences(text))
     .replace(/[ \t]{2,}/g, ' ')
     .replace(/\n[ \t]+\n/g, '\n\n')
     .trim());
@@ -377,6 +466,7 @@ export function finalizeReferences(
     return {
       reference,
       source: doc.source,
+      content: doc.content || '',
       structuredNoise: isLikelyStructuredNoise(doc.content),
       documentQuestionMatch: meaningfulOverlapCount(relevanceText, doc.content || '') > 0,
       similarity: Number(doc.similarity ?? 0),
@@ -397,39 +487,80 @@ export function finalizeReferences(
   const explicitSourceScope = sourceScopeStart >= 0
     ? relevanceText.slice(sourceScopeStart + sourceScopeMarker.length).replace(/__$/u, '')
     : '';
+  // O banco compara a fonte sem diferenciar maiúsculas (migrações 023/041).
+  // Comparar de forma sensível a caixa aqui zeraria as referências em silêncio.
   const scopedExtracted = explicitSourceScope
-    ? extracted.filter((item) => item.source === explicitSourceScope)
+    ? extracted.filter((item) => (
+      item.source.toLocaleLowerCase('pt-BR') === explicitSourceScope.toLocaleLowerCase('pt-BR')
+    ))
     : extracted;
   // A camada 3 só é permitida quando nenhum dos trechos trouxe pista
   // bibliográfica melhor. Nunca misture uma referência identificada com
   // rótulos de arquivo ou uma linha de fallback.
   const identified = scopedExtracted.filter((item) => item.reference && !isSourceOnlyReference(item.reference) && !item.structuredNoise);
-  const relevant = identified.filter((item) => {
-    // A referência precisa estar relacionada à pergunta ou ter pelo menos
-    // duas pistas distintivas na resposta. Isso evita publicar um documento
-    // apenas porque compartilha palavras genéricas com o texto gerado.
+
+  // Evidência de uso: quantas pistas distintivas do trecho reaparecem na
+  // resposta efetivamente gerada. Uma obra recuperada por aproximação, que o
+  // texto final não usou, tem pontuação muito abaixo da obra que sustentou a
+  // explicação. O limiar é relativo ao melhor trecho da própria recuperação;
+  // quando nenhum trecho pontua (resposta muito curta, sem sinal), o portão é
+  // neutro e a decisão volta para os critérios textuais abaixo.
+  const scored = identified.map((item) => ({
+    ...item,
+    useScore: meaningfulOverlapCount(withoutModelReferences, item.content),
+  }));
+  const bestUseScore = scored.reduce((best, item) => Math.max(best, item.useScore), 0);
+  const useThreshold = bestUseScore > 0 ? Math.max(1, Math.ceil(bestUseScore * 0.5)) : 0;
+
+  const relevant = scored.filter((item) => {
+    const explicitSourceMatch = Boolean(explicitSourceScope)
+      && item.source.toLocaleLowerCase('pt-BR') === explicitSourceScope.toLocaleLowerCase('pt-BR');
+    const usedInAnswer = item.useScore >= useThreshold || singleDocumentScope || explicitSourceMatch;
+    if (!usedInAnswer) return false;
     const questionMatch = hasMeaningfulOverlap(relevanceText, item.reference);
+    // Identidade catalogada foi conferida no documento: basta comprovar que o
+    // trecho ou o título pertencem ao assunto tratado nesta chamada.
+    if (item.catalog) {
+      return singleDocumentScope || explicitSourceMatch || item.documentQuestionMatch || questionMatch;
+    }
+    // Referência derivada por heurística do próprio trecho: continua exigindo
+    // relação textual explícita com a pergunta ou com a resposta.
     const answerMatchCount = meaningfulOverlapCount(withoutModelReferences, item.reference);
-    const explicitSourceMatch = typeof relevanceText === 'string'
-      && relevanceText.includes(`__SOURCE_SCOPE__${item.source}__`);
-    return questionMatch || answerMatchCount >= 2 || (
-      item.catalog && (singleDocumentScope || explicitSourceMatch || item.documentQuestionMatch)
-    );
+    return questionMatch || answerMatchCount >= 2;
   });
+
+  const { body, closing } = splitClosingQuestion(withoutModelReferences);
+
   if (relevant.length === 0) {
     // O fallback é uma referência válida quando houve uso efetivo dos
     // materiais, mas nenhum trecho trouxe título, capítulo, autoria ou outro
     // identificador bibliográfico verificável. Ele não deve aparecer em
     // recusa, conteúdo insuficiente, quiz ou Informações da disciplina.
     if (allowsReferenceFallback(mode) && docs.some((doc) => Boolean(doc.content?.trim()))) {
-      return `${withoutModelReferences}\n\n**Referências**\n- Informação não disponível no artigo, consultar o Plano de Ensino ou docentes.`.trim();
+      return [
+        body,
+        '**Referências**\n- Informação não disponível no artigo, consultar o Plano de Ensino ou docentes.',
+        closing,
+      ].filter(Boolean).join('\n\n').trim();
     }
     return withoutModelReferences;
   }
-  const sources = relevant.filter((item, index, all) => (
+
+  // A ordem de exibição segue a força da recuperação, não a ordem em que o
+  // banco devolveu as linhas. O corte curto evita a lista longa de obras
+  // apenas tangenciais relatada pelo cliente.
+  const ranked = [...relevant]
+    .map((item, index) => ({ item, index }))
+    .sort((a, b) => (b.item.similarity - a.item.similarity) || (a.index - b.index))
+    .map(({ item }) => item);
+  const sources = ranked.filter((item, index, all) => (
     all.findIndex((candidate) => candidate.key === item.key) === index
-  )).slice(0, 5);
+  )).slice(0, MAX_REFERENCES);
   const lines = sources.map((item) => `- ${item.reference}`);
 
-  return `${withoutModelReferences}\n\n**Referências**\n${lines.join('\n')}`.trim();
+  return [
+    body,
+    `**Referências**\n${lines.join('\n')}`,
+    closing,
+  ].filter(Boolean).join('\n\n').trim();
 }
