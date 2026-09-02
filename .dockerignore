@@ -15,3 +15,9 @@ scratch
 *.pdf
 *.jsonl
 *.gz
+
+# Os backups de deploy ficam dentro de /opt/guapu-app na VPS. Sem esta
+# linha eles entram no contexto do build e o TypeScript tenta verificar
+# copias de arquivos fora do lugar, quebrando o build (02/09/2026).
+backups
+**/backups
