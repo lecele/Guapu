@@ -79,6 +79,12 @@ class Settings(BaseSettings):
     ingestion_chunk_size: int = Field(default=1000, ge=200, le=4000)
     ingestion_chunk_overlap: int = Field(default=150, ge=0, le=500)
     ingestion_batch_size: int = Field(default=20, ge=1, le=100)
+    ingestion_batch_delay_seconds: float = Field(
+        default=1.5,
+        ge=0.0,
+        le=30.0,
+        description="Pausa entre lotes de embedding para nao estourar a cota da API do Gemini",
+    )
     drive_sync_max_files: int = Field(
         default=10,
         ge=1,

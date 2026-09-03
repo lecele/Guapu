@@ -504,7 +504,7 @@ def _log_embedding_retry(retry_state: RetryCallState) -> None:
     logger.warning(
         "ingestion_embedding_retry",
         attempt=retry_state.attempt_number,
-        max_attempts=3,
+        max_attempts=5,
         batch_size=batch_size,
         wait_seconds=next_action.sleep if next_action else None,
         error=str(error)[:300] if error else None,
@@ -512,8 +512,11 @@ def _log_embedding_retry(retry_state: RetryCallState) -> None:
 
 
 @retry(
-    stop=stop_after_attempt(3),
-    wait=wait_exponential(multiplier=1, min=2, max=10),
+    # 429 RESOURCE_EXHAUSTED da API do Gemini costuma liberar por minuto;
+    # 5 tentativas com backoff ate 60s da margem real para a cota voltar,
+    # em vez de desistir em poucos segundos como antes.
+    stop=stop_after_attempt(5),
+    wait=wait_exponential(multiplier=2, min=4, max=60),
     before_sleep=_log_embedding_retry,
     reraise=True,
 )
@@ -637,6 +640,9 @@ def upsert_chunks_to_supabase(
                 "ingestion_batch_done",
                 written=batch_inserted,
             )
+            batch_delay_seconds = getattr(settings, "ingestion_batch_delay_seconds", 0)
+            if batch_delay_seconds > 0:
+                time.sleep(batch_delay_seconds)
 
         except Exception as exc:
             logger.error("ingestion_upsert_error", error=str(exc))
@@ -746,6 +752,9 @@ def upsert_chunk_stream_to_supabase(
                 upsert_ms=upsert_elapsed_ms,
                 write_path=write_path,
             )
+            batch_delay_seconds = getattr(settings, "ingestion_batch_delay_seconds", 0)
+            if batch_delay_seconds > 0:
+                time.sleep(batch_delay_seconds)
         except Exception as exc:
             logger.error("ingestion_stream_batch_error", batch=batch_number, error=str(exc))
             if direct_connection is not None:
